@@ -66,13 +66,13 @@ export function DataTable<TData, TValue>({
   const skeletonRows = 10
 
   return (
-    <>
+    <div className="rounded-lg border bg-card overflow-hidden">
       <Table>
         <TableHeader className="bg-table">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="hover:bg-transparent">
               {headerGroup.headers.map((header) => (
-                <TableHead key={header.id} className="text-table-accent-foreground font-normal text-base">
+                <TableHead key={header.id} className="bg-accent text-table-foreground font-medium">
                   {header.isPlaceholder
                     ? null
                     : flexRender(
@@ -87,9 +87,9 @@ export function DataTable<TData, TValue>({
         <TableBody className="border-b border-table-border">
           {isLoading ? (
             Array.from({ length: skeletonRows }).map((_, rowIdx) => (
-              <TableRow key={`skeleton-row-${rowIdx}`}>
+              <TableRow key={`skeleton-row-${rowIdx}`} >
                 {columns.map((_, colIdx) => (
-                  <TableCell key={`skeleton-cell-${colIdx}`}>
+                  <TableCell key={`skeleton-cell-${colIdx}`} >
                     <Skeleton className="h-4 w-full" />
                   </TableCell>
                 ))}
@@ -100,7 +100,7 @@ export function DataTable<TData, TValue>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
-                className="bg-table-accent text-table-foreground font-medium hover:bg-table/70 border-table-border"
+                className="hover:bg-accent-foreground/10 cursor-text"
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell
@@ -110,7 +110,7 @@ export function DataTable<TData, TValue>({
                       className={
                         `py-0
               ${cell.column.getIndex() !== 0 && cell.column.getIndex() !== row.getVisibleCells().length - 1
-                          ? "border-r border-table-border"
+                          ? "pl-2"
                           : ""}`
                       }
                     >
@@ -132,6 +132,6 @@ export function DataTable<TData, TValue>({
       {table.getPrePaginationRowModel().rows.length > 9 && !isLoading &&
         <TablePagination table={table} tabelaRepeticoes={tabelaRepeticoes} />
       }
-    </>
+    </div>
   )
 }

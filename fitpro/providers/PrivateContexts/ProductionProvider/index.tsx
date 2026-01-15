@@ -31,102 +31,96 @@ export function ProductionProvider({ children }: { children: ReactNode }) {
   const [movimentacoes, setMovimentacoes] = useState<MovimentacaoEstoque[]>([]);
   const [lotes, setLotes] = useState<LoteProducao[]>(sampleLotes);
   const [conferencias, setConferencias] = useState<Conferencia[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const generateId = () => Math.random().toString(36).substr(2, 9);
+  const generateId = () => crypto.randomUUID();
 
-  // Colaboradores
-  const addColaborador = (colaborador: Omit<Colaborador, 'id' | 'criadoEm'>) => {
-    setColaboradores(prev => [...prev, { ...colaborador, id: generateId(), criadoEm: new Date() }]);
+  function createActions<T extends { id: string; criadoEm?: Date }>(
+  setState: React.Dispatch<React.SetStateAction<T[]>>
+) {
+  return {
+    
+    add: async (item: Omit<T, 'id' | 'criadoEm'>) => {
+      setIsLoading(true);
+      await new Promise(resolve => setTimeout(resolve, 500)); 
+      
+      setState(prev => [
+        ...prev, 
+        { ...item, id: generateId(), criadoEm: new Date() } as T 
+      ]);
+      setIsLoading(false);
+    },
+
+    update: async (id: string, item: Partial<T>) => {
+      setIsLoading(true);
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      setState(prev => prev.map(i => i.id === id ? { ...i, ...item } : i));
+      setIsLoading(false);
+    },
+
+    remove: async (id: string) => {
+      setIsLoading(true);
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      setState(prev => prev.filter(i => i.id !== id));
+      setIsLoading(false);
+    }
   };
+}
 
-  const updateColaborador = (id: string, colaborador: Partial<Colaborador>) => {
-    setColaboradores(prev => prev.map(c => c.id === id ? { ...c, ...colaborador } : c));
-  };
-
-  // Fornecedores
-  const addFornecedor = (fornecedor: Omit<Fornecedor, 'id' | 'criadoEm'>) => {
-    setFornecedores(prev => [...prev, { ...fornecedor, id: generateId(), criadoEm: new Date() }]);
-  };
-
-  const updateFornecedor = (id: string, fornecedor: Partial<Fornecedor>) => {
-    setFornecedores(prev => prev.map(f => f.id === id ? { ...f, ...fornecedor } : f));
-  };
-
-  // Facções
-  const addFaccao = (faccao: Omit<Faccao, 'id' | 'criadoEm'>) => {
-    setFaccoes(prev => [...prev, { ...faccao, id: generateId(), criadoEm: new Date() }]);
-  };
-
-  const updateFaccao = (id: string, faccao: Partial<Faccao>) => {
-    setFaccoes(prev => prev.map(f => f.id === id ? { ...f, ...faccao } : f));
-  };
-
-  // Tecidos
-  const addTecido = (tecido: Omit<Tecido, 'id' | 'criadoEm'>) => {
-    setTecidos(prev => [...prev, { ...tecido, id: generateId(), criadoEm: new Date() }]);
-  };
-
-  const updateTecido = (id: string, tecido: Partial<Tecido>) => {
-    setTecidos(prev => prev.map(t => t.id === id ? { ...t, ...tecido } : t));
-  };
-
-  // Rolos
-  const addRolo = (rolo: Omit<RoloTecido, 'id' | 'criadoEm'>) => {
-    setRolos(prev => [...prev, { ...rolo, id: generateId(), criadoEm: new Date() }]);
-  };
-
-  const updateRolo = (id: string, rolo: Partial<RoloTecido>) => {
-    setRolos(prev => prev.map(r => r.id === id ? { ...r, ...rolo } : r));
-  };
-
-  // Movimentações
-  const addMovimentacao = (mov: Omit<MovimentacaoEstoque, 'id'>) => {
-    setMovimentacoes(prev => [...prev, { ...mov, id: generateId() }]);
-  };
-
-  // Lotes
-  const addLote = (lote: Omit<LoteProducao, 'id'>) => {
-    setLotes(prev => [...prev, { ...lote, id: generateId() }]);
-  };
-
-  const updateLote = (id: string, lote: Partial<LoteProducao>) => {
-    setLotes(prev => prev.map(l => l.id === id ? { ...l, ...lote } : l));
-  };
-
-  // Conferências
-  const addConferencia = (conferencia: Omit<Conferencia, 'id'>) => {
-    setConferencias(prev => [...prev, { ...conferencia, id: generateId() }]);
-  };
-
-  const updateConferencia = (id: string, conferencia: Partial<Conferencia>) => {
-    setConferencias(prev => prev.map(c => c.id === id ? { ...c, ...conferencia } : c));
-  };
+  const colaboradorActions = createActions(setColaboradores);
+  const fornecedorActions = createActions(setFornecedores);
+  const faccaoActions = createActions(setFaccoes);
+  const tecidoActions = createActions(setTecidos);
+  const roloActions = createActions(setRolos);
+  const loteActions = createActions(setLotes);
+  const movimentacaoActions = createActions(setMovimentacoes);
+  const conferenciaActions = createActions(setConferencias);
 
   return (
     <ProductionContext.Provider value={{
+      isLoading,
+      setIsLoading,
       colaboradores,
-      addColaborador,
-      updateColaborador,
+      addColaborador: colaboradorActions.add,
+      updateColaborador: colaboradorActions.update,
+      removeColaborador: colaboradorActions.remove,
+
       fornecedores,
-      addFornecedor,
-      updateFornecedor,
+      addFornecedor: fornecedorActions.add,
+      updateFornecedor: fornecedorActions.update,
+      removeFornecedor: fornecedorActions.remove,
+
       faccoes,
-      addFaccao,
-      updateFaccao,
+      addFaccao: faccaoActions.add,
+      updateFaccao: faccaoActions.update,
+      removeFaccao: faccaoActions.remove,
+
       tecidos,
-      addTecido,
-      updateTecido,
+      addTecido: tecidoActions.add,
+      updateTecido: tecidoActions.update,
+      removeTecido: tecidoActions.remove,
+
       rolos,
-      addRolo,
-      updateRolo,
+      addRolo: roloActions.add,
+      updateRolo: roloActions.update,
+      removeRolo: roloActions.remove,
+
       movimentacoes,
-      addMovimentacao,
+      addMovimentacao: movimentacaoActions.add,
+      updateMovimentacao: movimentacaoActions.update,
+      removeMovimentacao: movimentacaoActions.remove,
+    
       lotes,
-      addLote,
-      updateLote,
+      addLote: loteActions.add,
+      updateLote: loteActions.update,
+      removeLote: loteActions.remove,
+
       conferencias,
-      addConferencia,
-      updateConferencia,
+      addConferencia: conferenciaActions.add,
+      updateConferencia: conferenciaActions.update,
+      removeConferencia: conferenciaActions.remove,
     }}>
       {children}
     </ProductionContext.Provider>

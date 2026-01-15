@@ -154,7 +154,7 @@ function SidebarTrigger({
     const { modifierKey } = usePlatform()
 
   return (
-    <Tooltip>
+    <Tooltip >
       <TooltipTrigger asChild>
         <Button
           data-sidebar="trigger"
@@ -173,7 +173,7 @@ function SidebarTrigger({
         </Button>
       </TooltipTrigger>
 
-      <TooltipContent>
+      <TooltipContent className="hidden md:block" side="right" align="center">
         <span className="flex gap-4 items-center">
           <p>{open ? "Fechar barra lateral" : "Abrir barra lateral"}</p>
           <KbdGroup>
