@@ -90,7 +90,7 @@ export default function Tecidos() {
       </div>
 
 
-      //so abre quando clicar para remover
+      {/* //so abre quando clicar para remover */}
         <RemoveItemWarning
           id={removingItemId || ''}
           isOpen={isRemoveOpen}
