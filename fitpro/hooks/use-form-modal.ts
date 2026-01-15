@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { UseFormReturn, FieldValues, DefaultValues, Path } from 'react-hook-form';
+import { set } from 'zod';
 
 interface UseFormModalProps<T extends FieldValues> {
   form: UseFormReturn<T>;
@@ -13,7 +14,10 @@ export function useFormModal<T extends FieldValues, TItem extends { id: string }
   onSave,
 }: UseFormModalProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isRemoveOpen, setIsRemoveOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<TItem | null>(null);
+  const [removingItemId, setRemovingItemId] = useState<string | null>(null);
+
 
   const handleOpen = () => {
     setEditingItem(null);
@@ -39,8 +43,20 @@ export function useFormModal<T extends FieldValues, TItem extends { id: string }
     handleClose();
   };
 
+  const handleRemove = (id: string) => {
+    setIsRemoveOpen(true);
+    setRemovingItemId(id);
+  }
+
+
+
+
   return {
     isOpen,
+    removingItemId,
+    handleRemove,
+    isRemoveOpen,
+    setIsRemoveOpen,
     setIsOpen,
     editingItem,
     handleOpen,

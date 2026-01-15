@@ -10,7 +10,7 @@ import {
 
 interface BaseModalProps {
   trigger?: ReactNode
-  title: string
+  title?: string
   description?: string
   children: ReactNode
   open?: boolean
@@ -23,7 +23,7 @@ export function BaseModal({ trigger, title, description, children, open, onOpenC
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="sm:max-w-125">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          {title && <DialogTitle>{title}</DialogTitle>}
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
         {children}

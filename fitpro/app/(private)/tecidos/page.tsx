@@ -1,5 +1,4 @@
 'use client';
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useProduction } from '@/providers/PrivateContexts/ProductionProvider';
 import { Plus } from 'lucide-react';
@@ -11,8 +10,8 @@ import { FabricFormValues, fabricSchema } from '@/schemas/tecido-schema';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFormModal } from '@/hooks/use-form-modal';
-import { on } from 'events';
 import { MobileViewFabric } from '@/components/Cards/FabricCard';
+import { RemoveItemWarning } from '@/components/ErrorManagementComponent/WarnningRemoveItem';
 
 const initialValues: FabricFormValues = {
   tipo: '',
@@ -36,11 +35,15 @@ export default function Tecidos() {
   const {
     isOpen,
     editingItem,
+    handleRemove,
+    removingItemId,
     handleOpen,
     handleEdit,
     handleClose,
     onSubmit,
-    isSubmitting
+    isSubmitting,
+    isRemoveOpen,
+    setIsRemoveOpen,
   } = useFormModal({
     form,
     initialValues,
@@ -52,6 +55,7 @@ export default function Tecidos() {
       }
       handleClose();
     }
+
   });
 
 
@@ -60,7 +64,8 @@ export default function Tecidos() {
   return (
     <main>
       <div className="flex justify-between items-center mb-6">
-        <div className="text-sm text-muted-foreground">
+
+        <div className="text-sm text-muted-foreground p-4 items-center">
           {tecidos.length} tecidos cadastrados
         </div>
 
@@ -78,13 +83,24 @@ export default function Tecidos() {
         >
 
           <Form {...form} >
-            <FabricForm fornecedores={fornecedores} />
+            <FabricForm fornecedores={fornecedores.filter(f => f.tipo === 'tecido')} />
           </Form>
 
         </FormModal>
-
       </div>
 
+
+      //so abre quando clicar para remover
+        <RemoveItemWarning
+          id={removingItemId || ''}
+          isOpen={isRemoveOpen}
+          onClose={() => setIsRemoveOpen(false)} 
+          title='Deseja Remover?'
+          onConfirm={(id) => {
+            removeTecido(id);
+            setIsRemoveOpen(false); 
+          }}
+        />
 
       <div className="hidden md:block">
         <FabricTable
@@ -92,18 +108,17 @@ export default function Tecidos() {
           isLoading={isLoading}
           fornecedores={fornecedores}
           onEdit={handleEdit}
-          onRemove={removeTecido}
+          onRemove={handleRemove}
         />
       </div>
 
-      {/* Versão Mobile - Escondida em telas maiores que MD */}
       <div className="block md:hidden">
         <MobileViewFabric
           tecido={tecidos}
           isLoading={isLoading}
           fornecedores={fornecedores}
           onEdit={handleEdit}
-          onRemove={removeTecido}
+          onRemove={handleRemove}
         />
       </div>
 

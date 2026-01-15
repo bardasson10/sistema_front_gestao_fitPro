@@ -15,10 +15,10 @@ interface BaseCardProps {
   content?: React.ReactNode;
   footer?: React.ReactNode;
   cardClassName?: string; 
-  cardTitleClassName?: string; // Estilo específico para o Título do Card
-  headerClassName?: string; // Estilo específico para o Header
-  contentClassName?: string; // Estilo específico para o Conteúdo
-  footerClassName?: string;  // Estilo específico para o Footer
+  cardTitleClassName?: string; 
+  headerClassName?: string; 
+  contentClassName?: string; 
+  footerClassName?: string; 
 }
 
 export const BaseCard = ({ 
