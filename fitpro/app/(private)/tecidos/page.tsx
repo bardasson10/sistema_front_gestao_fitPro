@@ -10,7 +10,7 @@ import { FabricFormValues, fabricSchema } from '@/schemas/tecido-schema';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFormModal } from '@/hooks/use-form-modal';
-import { MobileViewFabric } from '@/components/Cards/FabricCard';
+import { MobileViewFabric } from '@/components/MobileViewCards/FabricCard';
 import { RemoveItemWarning } from '@/components/ErrorManagementComponent/WarnningRemoveItem';
 
 const initialValues: FabricFormValues = {
@@ -83,14 +83,14 @@ export default function Tecidos() {
         >
 
           <Form {...form} >
-            <FabricForm fornecedores={fornecedores.filter(f => f.tipo === 'tecido')} />
+            <FabricForm fornecedores={fornecedores} />
           </Form>
 
         </FormModal>
       </div>
 
 
-      {/* //so abre quando clicar para remover */}
+      {/* so abre quando clicar para remover */}
         <RemoveItemWarning
           id={removingItemId || ''}
           isOpen={isRemoveOpen}
@@ -100,11 +100,11 @@ export default function Tecidos() {
             removeTecido(id);
             setIsRemoveOpen(false); 
           }}
-        />
+        />  
 
       <div className="hidden md:block">
         <FabricTable
-          tecido={tecidos}
+          tecidos={tecidos}
           isLoading={isLoading}
           fornecedores={fornecedores}
           onEdit={handleEdit}
@@ -114,7 +114,7 @@ export default function Tecidos() {
 
       <div className="block md:hidden">
         <MobileViewFabric
-          tecido={tecidos}
+          tecidos={tecidos}
           isLoading={isLoading}
           fornecedores={fornecedores}
           onEdit={handleEdit}

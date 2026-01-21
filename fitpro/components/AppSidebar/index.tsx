@@ -24,6 +24,11 @@ const data = {
         url: "/tecidos",
         icon: ChartColumnIncreasing,
       },
+      {
+        title: "Estoque",
+        url: "/estoque",
+        icon: ChartColumnIncreasing,
+      },
     ],
   }
 }

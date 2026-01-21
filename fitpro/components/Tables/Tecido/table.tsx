@@ -12,7 +12,7 @@ interface FabricTableProps extends FabricProps {
 }
 
 export const FabricTable: React.FC<FabricTableProps> = ({
-  tecido,
+  tecidos,
   isLoading,
   fornecedores,
   onEdit,
@@ -25,10 +25,10 @@ export const FabricTable: React.FC<FabricTableProps> = ({
 
   return (
     <div className="w-full">
-      <SemDadosComponent<Tecido> nomeDado="tecido" data={tecido} />
+      <SemDadosComponent<Tecido> nomeDado="tecido" data={tecidos} />
       <DataTable
         columns={columns}
-        data={tecido}
+        data={tecidos}
         isLoading={isLoading}
         getRowId={(row) => row.id}
       />

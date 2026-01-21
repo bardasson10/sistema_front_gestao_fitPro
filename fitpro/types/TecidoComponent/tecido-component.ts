@@ -1,7 +1,7 @@
 import { Tecido } from "../production";
 
 export interface FabricProps {
-  tecido: Tecido[];
+  tecidos: Tecido[];
   isLoading: boolean;
   fornecedores: { id: string; nome: string }[];
   onEdit: (item: Tecido) => void;

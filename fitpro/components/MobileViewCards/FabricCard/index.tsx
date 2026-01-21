@@ -1,13 +1,13 @@
 import { FabricProps } from "@/types/TecidoComponent/tecido-component"
 import { BaseCard } from "../base-card"
 import { Button } from "@/components/ui/button"
-import { Pencil, Trash2 } from "lucide-react" // Corrigido: Trash2 é o padrão e removido duplicata
-import { getColorPreview } from "../../Tables/Tecido/colums" // Reutilize sua função de cores
+import { Pencil, Trash2 } from "lucide-react" 
+import { getColorPreview } from "../../Tables/Tecido/colums" 
 import { SemDadosComponent } from "@/components/ErrorManagementComponent/AnyData"
 import { Tecido } from "@/types/production"
 
 export const MobileViewFabric = ({  
-  tecido,
+  tecidos,
   isLoading,
   fornecedores,
   onEdit,
@@ -26,8 +26,8 @@ export const MobileViewFabric = ({
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <SemDadosComponent<Tecido> nomeDado="tecido" data={tecido} />
-      {tecido.map((item) => (
+      <SemDadosComponent<Tecido> nomeDado="tecido" data={tecidos} />
+      {tecidos.map((item) => (
         <BaseCard
           key={item.id}
           title={item.tipo}

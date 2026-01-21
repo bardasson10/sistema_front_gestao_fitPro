@@ -4,13 +4,13 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Pencil, Trash } from "lucide-react";
 
 // Função auxiliar movida para fora ou para um arquivo de utils
-export const getColorPreview = (cor: string) => {
+export const getColorPreview = (cor: string | undefined) => {
   const colorMap: Record<string, string> = {
     preto: '#1a1a1a', branco: '#ffffff', rosa: '#f472b6',
     marrom: '#92400e', azul: '#3b82f6', vermelho: '#ef4444',
     verde: '#22c55e', amarelo: '#eab308', roxo: '#a855f7', laranja: '#f97316',
   };
-  return colorMap[cor.toLowerCase()] || '#6b7280';
+  return colorMap[cor?.toLowerCase() || ""] || '#6b7280';
 };
 
 export const getFabricColumns = (
