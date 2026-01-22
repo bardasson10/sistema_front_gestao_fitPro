@@ -11,7 +11,7 @@ export interface Colaborador {
 export interface Fornecedor {
   id: string;
   nome: string;
-  tipo: 'tecido' | 'aviamento' | 'servico';
+  tipo: 'tecido' | 'aviamento' | 'servico' | '';
   contato: string;
   criadoEm: Date;
 }

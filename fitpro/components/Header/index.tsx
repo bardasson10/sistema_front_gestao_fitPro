@@ -11,6 +11,9 @@ export const Header = () => {
       '/': 'Dashboard',
       '/tecidos': 'Tecidos',
       '/colaboradores': 'Colaboradores',
+      '/fornecedores': 'Fornecedores',
+      '/faccoes': 'Facções',
+      '/rolos': 'Rolos de Tecido',
     };
     return titles[pathname] || '';
   };
@@ -19,12 +22,16 @@ export const Header = () => {
     const descriptions: Record<string, string> = {
       '/': 'Visão geral do sistema',
       '/tecidos': 'Gerencie seus tecidos',
+      '/colaboradores': 'Gerencie seus colaboradores',
+      '/fornecedores': 'Gerencie seus fornecedores',
+      '/faccoes': 'Gerencie suas facções',
+      '/rolos': 'Gerencie seus rolos de tecido',
     };
     return descriptions[pathname] || '';
   };
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10 w-full">
+    <header className="flex h-16 shrink-0 items-center justify-between border-b px-4 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-10 w-full">
       <div className="flex items-center gap-2">
         <SidebarTrigger className="h-9 w-9 mb-0 sm:mb-4" />
         

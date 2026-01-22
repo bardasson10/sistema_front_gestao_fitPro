@@ -1,14 +1,12 @@
 
-
-
 import { useFormContext } from "react-hook-form";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ColaboradorFormValues } from "@/schemas/colaborador-schema";
+import { FornecedorFormValues } from "@/schemas/fornecedor-schema";
 
-export function ColaboradoresForm() {
-  const { control } = useFormContext<ColaboradorFormValues>();
+export function FornecedoresForm() {
+  const { control } = useFormContext<FornecedorFormValues>();
 
   return (
     <div className="space-y-4">
@@ -27,16 +25,16 @@ export function ColaboradoresForm() {
 
       <FormField
         control={control}
-        name="funcao"
+        name="tipo"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Função</FormLabel>
+            <FormLabel>Tipo</FormLabel>
             <Select onValueChange={field.onChange} value={field.value}>
               <FormControl>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               </FormControl>
               <SelectContent>
-                {['cortador' ,'costureira_interna' , 'expedicao' , 'responsavel' , 'auxiliar'].map((funcao) => (
+                {['tecido', 'aviamento', 'servico'].map((funcao) => (
                   <SelectItem key={funcao} value={funcao}>{funcao}</SelectItem>
                 ))}
               </SelectContent>
@@ -48,24 +46,16 @@ export function ColaboradoresForm() {
 
       <FormField
         control={control}
-        name="status"
+        name="contato"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Status</FormLabel>
-            <Select onValueChange={field.onChange} value={field.value}>
-              <FormControl>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {['ativo','inativo'].map((status) => (
-                  <SelectItem key={status} value={status}>{status}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <FormLabel>Contato</FormLabel>
+            <FormControl><Input {...field} placeholder="Ex: João Silva" /></FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
+
 
     </div>
   );
