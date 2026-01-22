@@ -3,8 +3,8 @@
 export interface Colaborador {
   id: string;
   nome: string;
-  funcao: 'cortador' | 'costureira_interna' | 'expedicao' | 'responsavel' | 'auxiliar';
-  status: 'ativo' | 'inativo';
+  funcao: 'cortador' | 'costureira interna' | 'expedicao' | 'responsavel' | 'auxiliar' | '';
+  status: 'ativo' | 'inativo' | '';
   criadoEm: Date;
 }
 

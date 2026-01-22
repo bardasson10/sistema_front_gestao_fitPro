@@ -20,6 +20,21 @@ const data = {
         icon: ChartColumnIncreasing,
       },
       {
+        title: "Colaboradores",
+        url: "/colaboradores",
+        icon: ChartColumnIncreasing,
+      },
+      {
+        title: "Fornecedores",
+        url: "/fornecedores",
+        icon: ChartColumnIncreasing,
+      },
+      {
+        title: "Facções",
+        url: "/faccoes",
+        icon: ChartColumnIncreasing,
+      },
+      {
         title: "Tecidos",
         url: "/tecidos",
         icon: ChartColumnIncreasing,
@@ -27,6 +42,21 @@ const data = {
       {
         title: "Estoque",
         url: "/estoque",
+        icon: ChartColumnIncreasing,
+      },
+      {
+        title: "Lotes",
+        url: "/lotes",
+        icon: ChartColumnIncreasing,
+      },
+      {
+        title: "Produção",
+        url: "/producao",
+        icon: ChartColumnIncreasing,
+      },
+      {
+        title: "Conferência",
+        url: "/conferencia",
         icon: ChartColumnIncreasing,
       },
     ],

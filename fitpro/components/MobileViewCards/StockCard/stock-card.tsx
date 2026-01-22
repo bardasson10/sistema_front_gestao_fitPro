@@ -1,6 +1,6 @@
 import { SemDadosComponent } from "@/components/ErrorManagementComponent/AnyData"
 import { BaseCard } from "@/components/MobileViewCards/base-card"
-import { getColorPreview } from "@/components/Tables/Tecido/colums"
+import { getColorPreview } from "@/components/DataTable/Tables/Tecido/colums"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { RoloTecido } from "@/types/production"

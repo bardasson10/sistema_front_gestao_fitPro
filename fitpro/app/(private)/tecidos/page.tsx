@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button';
 import { useProduction } from '@/providers/PrivateContexts/ProductionProvider';
 import { Plus } from 'lucide-react';
-import { FabricTable } from '@/components/Tables/Tecido/table';
+import { FabricTable } from '@/components/DataTable/Tables/Tecido/table';
 import { FormModal } from '@/components/Modal/base-modal-form';
 import { FabricForm } from '@/components/Forms/fabric-form';
 import { Form } from '@/components/ui/form';

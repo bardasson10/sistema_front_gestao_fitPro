@@ -1,18 +1,17 @@
-import { FabricProps } from "@/types/TecidoComponent/tecido-component"
+
 import { BaseCard } from "../base-card"
 import { Button } from "@/components/ui/button"
 import { Pencil, Trash2 } from "lucide-react" 
-import { getColorPreview } from "../../DataTable/Tables/Tecido/colums" 
 import { SemDadosComponent } from "@/components/ErrorManagementComponent/AnyData"
-import { Tecido } from "@/types/production"
+import { Colaborador } from "@/types/production"
+import { ColaboradorProps } from "@/types/ColaboradorComponents/colaborador-component"
 
-export const MobileViewFabric = ({  
-  tecidos,
+export const MobileViewColaborador = ({  
+  colaboradores,
   isLoading,
-  fornecedores,
   onEdit,
   onRemove,
-}: FabricProps) => {
+}: ColaboradorProps) => {
 
   if (isLoading) {
     return (
@@ -22,39 +21,37 @@ export const MobileViewFabric = ({
         ))}
       </div>
     )
-  } 
+  }
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <SemDadosComponent<Tecido> nomeDado="tecido" data={tecidos} />
-      {tecidos.map((item) => (
+      <SemDadosComponent<Colaborador> nomeDado="colaborador" data={colaboradores} />
+      {colaboradores.map((item) => (
         <BaseCard
           key={item.id}
-          title={item.tipo}
+          title={item.nome}
           cardClassName="min-h-fit"
           headerClassName="pb-2"
           action={
             <div 
-              className="h-5 w-5 rounded-full border shadow-sm"
-              style={{ backgroundColor: getColorPreview(item.cor) }}
-              title={item.cor}
+              className={`h-5 w-5 rounded-full border shadow-sm ${item.status === 'ativo' ? 'border-green-500 bg-green-500' : item.status === 'inativo' ? 'border-red-500 bg-red-500' : 'border-gray-500 bg-gray-500'}`}
+              
+              title={item.status}
             />
           }
           content={
             <div className="grid gap-1 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Fornecedor:</span>
+                <span className="text-muted-foreground">Status:</span>
                 <span className="font-medium">
-                  {fornecedores.find(f => f.id === item.fornecedorId)?.nome || '-'}
+                  {item.status || '-'}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Rendimento:</span>
-                <span className="font-medium">{item.rendimento} m/{item.unidade}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Largura:</span>
-                <span className="font-medium">{item.largura} cm</span>
+                <span className="text-muted-foreground">Função:</span>
+                <span className="font-medium">
+                  {item.funcao || '-'}
+                </span>
               </div>
             </div>
           }
@@ -80,7 +77,6 @@ export const MobileViewFabric = ({
           footerClassName="border-t 0 bg-muted/50 px-6 py-8"
         />
       ))}
-
     </div>
   )
 }

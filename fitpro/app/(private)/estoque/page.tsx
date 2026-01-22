@@ -1,10 +1,10 @@
 'use client';
 import React from "react";
-import { getGroupedStockColumns } from "@/components/Tables/Estoque/resume-colums";
+import { getGroupedStockColumns } from "@/components/DataTable/Tables/Estoque/resume-colums";
 import { MetricCard } from "@/components/ui/metric-card";
 import { useProduction } from "@/providers/PrivateContexts/ProductionProvider";
 import { Layers, Package, Plus, Weight } from "lucide-react";
-import { StockTable } from "@/components/Tables/Estoque/table";
+import { StockTable } from "@/components/DataTable/Tables/Estoque/table";
 import { useFormModal } from "@/hooks/use-form-modal";
 import { RoloTecidoFormValues, roloTecidoSchema } from "@/schemas/rolo-tecido-schema";
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { StockFabricForm } from "@/components/Forms/stock-fabric-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ResumeStockTable } from "@/components/Tables/Estoque/resume-table";
+import { ResumeStockTable } from "@/components/DataTable/Tables/Estoque/resume-table";
 import { MobileViewStock } from "@/components/MobileViewCards/StockCard/stock-card";
 import { MobileViewStockResume } from "@/components/MobileViewCards/StockCard/stock-card-resume";
 
