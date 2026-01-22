@@ -22,7 +22,7 @@ export interface Faccao {
   responsavel: string;
   contato: string;
   prazoMedio: number; // dias
-  status: 'ativo' | 'inativo';
+  status: 'ativo' | 'inativo' | '';
   criadoEm: Date;
 }
 
