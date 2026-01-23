@@ -41,9 +41,10 @@ export function FormModal({
               </Button>
             </>
           ) : (
-            <Button type="button" variant="outline" onClick={onClose}>
-              Fechar
-            </Button>
+            <></>
+            // <Button type="button" variant="outline" onClick={onClose}>
+            //   Fechar
+            // </Button>
           )}
         </div>
       </form>

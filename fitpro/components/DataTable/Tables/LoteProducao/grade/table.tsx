@@ -14,12 +14,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 
 interface LoteProducaoGradeTableProps extends LoteProducaoGradeProps {
-
+  isViewComponent?: boolean;
 }
 const PRODUTOS_DISPONIVEIS = ['legging', 'short', 'top', 'calca', 'conjunto', 'body', 'macaquinho'];
 export const LoteProducaoTableGrade: React.FC<LoteProducaoGradeTableProps> = ({
   grade,
   isLoading,
+  isViewComponent,
   viewOnRemove,
 }) => {
   const { control } = useFormContext<LoteProducaoFormValues>();
@@ -66,7 +67,7 @@ export const LoteProducaoTableGrade: React.FC<LoteProducaoGradeTableProps> = ({
 
   return (
     <div className="w-full">
-      <SemDadosComponent<GradeProduto> nomeDado="lote de produção" data={grade} />
+      {isViewComponent && <SemDadosComponent<GradeProduto> nomeDado="lote de produção" data={grade} />}
       <DataTable
         columns={columns}
         data={fields as unknown as GradeProduto[]}
@@ -104,7 +105,7 @@ export const LoteProducaoTableGrade: React.FC<LoteProducaoGradeTableProps> = ({
                 type="number"
                 min={0}
                 className="bg-background h-9 w-14 text-center px-1 shadow-sm transition-all focus:w-16"
-                value={(novoItem as any)[key]}
+                value={(novoItem as any)[key] === 0 ? '' : (novoItem as any)[key]}
                 onChange={(e) => setNovoItem({ ...novoItem, [key]: Number(e.target.value) })}
               />
             </div>

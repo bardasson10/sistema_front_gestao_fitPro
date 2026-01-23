@@ -39,7 +39,7 @@ export function LoteProducaoForm() {
             <FormItem>
               <FormLabel>Status</FormLabel>
               <FormControl>
-                <Badge loteProducaoStatus={field.value || "criado"} className="w-16 h-8 font-medium">{field.value}</Badge>
+                <Badge loteProducaoStatus={field.value || "criado"} className="w-fit h-8 font-medium">{field.value}</Badge>
               </FormControl>
               <FormMessage />
             </FormItem>

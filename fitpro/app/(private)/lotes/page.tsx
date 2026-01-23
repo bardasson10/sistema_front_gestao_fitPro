@@ -66,19 +66,13 @@ export default function Lotes() {
     }
   });
 
-  // Funções de Navegação
   const nextStep = async () => {
-    // Dica: Aqui você pode adicionar form.trigger(["campo1", "campo2"]) se quiser validar antes de avançar
-    // Por enquanto, valida tudo ou avança direto:
-    // const isValid = await form.trigger(); 
-    // if (isValid) setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
-    
     setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
   };
-
   const prevStep = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
+
   return (
     <main>
       <div className="flex justify-between items-center mb-6">
@@ -86,16 +80,13 @@ export default function Lotes() {
           {lotes.length} lotes cadastrados
         </div>
 
-        <FormModal
+        {!editingItem && (<FormModal
           key={"modal-Add"}
           open={isOpen}
-          onSubmit={() => {}}
+          onSubmit={onSubmit}
           onClose={() => { handleClose(); setCurrentStep(1); }}
           Icon={<ScissorsIcon className="mr-2 h-6 w-6" />}
-          title={"Novo Lote "} // Use watch para atualizar titulo dinamicamente
-          // onSubmit={onSubmit} <--- REMOVA ISSO SE O MODAL TIVER BOTÃO PADRÃO
-          // Se o seu FormModal renderiza botões automaticamente, você precisará ocultá-los
-          // ou passar um prop 'footer={null}' se existir, pois usaremos botões customizados abaixo.
+          title={"Novo Lote "}
           loading={isSubmitting}
           trigger={
             <Button onClick={handleOpen}>
@@ -104,9 +95,8 @@ export default function Lotes() {
           }
         >
           <Form {...form}>
-            <div className="flex flex-col h-full min-h-[400px]"> {/* Altura mínima para evitar pulos de layout */}
+            <div className="flex flex-col h-full min-h-100"> 
 
-              {/* 1. INDICADOR DE PASSOS */}
               <div className="mb-6">
                 <StepIndicator
                   currentStep={currentStep}
@@ -115,14 +105,11 @@ export default function Lotes() {
                 />
               </div>
 
-              {/* 2. CONTEÚDO DO PASSO ATUAL (AQUI ESTAVA O ERRO) */}
               <div className="flex-1 py-4">
                 {CurrentStepComponent && <CurrentStepComponent />}
               </div>
 
-              {/* 3. BOTÕES DE NAVEGAÇÃO */}
               <div className="flex justify-between items-center mt-6 border-t pt-4">
-                {/* Botão Voltar (Oculto no passo 1) */}
                 <Button
                   type="button"
                   variant="outline"
@@ -133,11 +120,10 @@ export default function Lotes() {
                   <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
                 </Button>
 
-                {/* Botão Próximo ou Salvar */}
                 {currentStep === totalSteps ? (
                   <Button
-                    type="button" // Use type="button" e chame o handleSubmit manualmente
-                    onClick={onSubmit}
+                    type="button"
+                    onClick={() => { onSubmit(); handleClose(); }}
                     disabled={isSubmitting}
                   >
                     <Save className="mr-2 h-4 w-4" /> Salvar Lote
@@ -151,9 +137,9 @@ export default function Lotes() {
 
             </div>
           </Form>
-        </FormModal>
+        </FormModal>)}
 
-        {/* <FormModal
+        {editingItem && (<FormModal
           key={"modal-edit"}
           open={isOpen}
           onClose={handleClose}
@@ -165,10 +151,9 @@ export default function Lotes() {
           <Form {...form}>
             <LoteProducaoForm />
           </Form>
-
-        </FormModal> */}
-
+        </FormModal>)}
       </div>
+
       <div className="hidden md:block">
         <LoteProducaoTable
           lotesProducao={lotes}
