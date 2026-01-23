@@ -63,7 +63,7 @@ export interface LoteProducao {
   dataCreacao: Date;
   responsavelId: string;
   responsavel?: Colaborador;
-  status: 'criado' | 'cortado' | 'em_producao' | 'finalizado';
+  status: 'criado' | 'cortado' | 'em_producao' | 'finalizado' | '';
   tecidosUtilizados: TecidoLote[];
   grade: GradeProduto[];
   direcionamentos: Direcionamento[];
@@ -79,7 +79,7 @@ export interface TecidoLote {
 
 export interface GradeProduto {
   id: string;
-  produto: 'legging' | 'short' | 'top' | 'calca' | 'conjunto' | 'body' | 'macaquinho';
+  produto: 'legging' | 'short' | 'top' | 'calca' | 'conjunto' | 'body' | 'macaquinho' | '';
   gradePP: number;
   gradeP: number;
   gradeM: number;
@@ -91,13 +91,13 @@ export interface GradeProduto {
 export interface Direcionamento {
   id: string;
   loteId: string;
-  tipoProducao: 'interna' | 'faccao';
+  tipoProducao: 'interna' | 'faccao' | '';
   faccaoId?: string;
   faccao?: Faccao;
   dataSaida: Date; // data de saída para produção
   dataEntregaConferencia?: Date; // data real de entrega na conferência
   produtos: ProdutoDirecionado[];
-  status: 'em_producao' | 'atrasado' | 'concluido';
+  status: 'em_producao' | 'atrasado' | 'concluido' | '';
 }
 
 export interface ProdutoDirecionado {
@@ -111,11 +111,11 @@ export interface Conferencia {
   lote?: LoteProducao;
   direcionamentoId: string;
   faccaoId?: string;
-  tipoProducao: 'interna' | 'faccao';
+  tipoProducao: 'interna' | 'faccao' | '';
   produtosEsperados: ProdutoDirecionado[];
   produtosRecebidos: ProdutoDirecionado[];
   divergencia: boolean;
-  avaliacaoQualidade: 'aprovado' | 'reprovado' | 'parcial';
+  avaliacaoQualidade: 'aprovado' | 'reprovado' | 'parcial' | '';
   observacoes?: string;
   dataConferencia: Date;
   liberadoPagamento: boolean;

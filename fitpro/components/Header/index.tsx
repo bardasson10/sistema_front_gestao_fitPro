@@ -14,6 +14,7 @@ export const Header = () => {
       '/fornecedores': 'Fornecedores',
       '/faccoes': 'Facções',
       '/rolos': 'Rolos de Tecido',
+      '/estoque': 'Estoque',
     };
     return titles[pathname] || '';
   };
@@ -26,6 +27,7 @@ export const Header = () => {
       '/fornecedores': 'Gerencie seus fornecedores',
       '/faccoes': 'Gerencie suas facções',
       '/rolos': 'Gerencie seus rolos de tecido',
+      '/estoque': 'Gerencie seu estoque',
     };
     return descriptions[pathname] || '';
   };

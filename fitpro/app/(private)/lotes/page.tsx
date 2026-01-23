@@ -1,5 +1,181 @@
+'use client';
+import { LoteProducaoTable } from "@/components/DataTable/Tables/LoteProducao/table";
+import { LoteProducaoForm } from "@/components/Forms/LoteProducao/loteProducao-form";
 
+import { FormModal } from "@/components/Modal/base-modal-form";
+import STEPS from "@/components/StepIndicator/LoteProducaoForm/steps";
+import StepIndicator from "@/components/StepIndicator/step-indicador";
+import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
+import { useFormModal } from "@/hooks/use-form-modal";
+import { useProduction } from "@/providers/PrivateContexts/ProductionProvider";
+import { LoteProducaoFormValues, loteProducaoSchema } from "@/schemas/LoteProducao/lote-producao-schemas";
+import { Colaborador } from "@/types/production";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft, ArrowRight, Plus, Save, Scissors, ScissorsIcon } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+
+
+
+const initialValues: LoteProducaoFormValues = {
+  codigo: '',
+  status: '',
+  dataCreacao: new Date(),
+  responsavelId: '',
+  responsavel: {} as Colaborador,
+  grade: [],
+  tecidosUtilizados: [],
+  direcionamentos: [],
+
+};
 
 export default function Lotes() {
-  return <div>Lotes Page</div>;
+  const { lotes, updateLote, addLote, isLoading } = useProduction();
+  const [currentStep, setCurrentStep] = useState(1)
+  const totalSteps = STEPS.length
+  const CurrentStepComponent = STEPS.find(step => step.id === currentStep)?.component
+
+  const form = useForm<LoteProducaoFormValues>({
+    resolver: zodResolver(loteProducaoSchema),
+    defaultValues: initialValues,
+  });
+
+  const {
+    isOpen,
+    editingItem,
+    handleRemove,
+    removingItemId,
+    handleOpen,
+    handleEdit,
+    handleClose,
+    onSubmit,
+    isSubmitting,
+    isRemoveOpen,
+    setIsRemoveOpen,
+  } = useFormModal({
+    form,
+    initialValues,
+    onSave: (values, id?: string) => {
+      if (id) {
+        updateLote(id, values);
+      } else {
+        addLote(values);
+      }
+      handleClose();
+    }
+  });
+
+  // Funções de Navegação
+  const nextStep = async () => {
+    // Dica: Aqui você pode adicionar form.trigger(["campo1", "campo2"]) se quiser validar antes de avançar
+    // Por enquanto, valida tudo ou avança direto:
+    // const isValid = await form.trigger(); 
+    // if (isValid) setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
+    
+    setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
+  };
+
+  const prevStep = () => {
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
+  };
+  return (
+    <main>
+      <div className="flex justify-between items-center mb-6">
+        <div className="text-sm text-muted-foreground p-4 items-center">
+          {lotes.length} lotes cadastrados
+        </div>
+
+        <FormModal
+          key={"modal-Add"}
+          open={isOpen}
+          onSubmit={() => {}}
+          onClose={() => { handleClose(); setCurrentStep(1); }}
+          Icon={<ScissorsIcon className="mr-2 h-6 w-6" />}
+          title={"Novo Lote "} // Use watch para atualizar titulo dinamicamente
+          // onSubmit={onSubmit} <--- REMOVA ISSO SE O MODAL TIVER BOTÃO PADRÃO
+          // Se o seu FormModal renderiza botões automaticamente, você precisará ocultá-los
+          // ou passar um prop 'footer={null}' se existir, pois usaremos botões customizados abaixo.
+          loading={isSubmitting}
+          trigger={
+            <Button onClick={handleOpen}>
+              <Plus className="mr-2 h-4 w-4" /> Novo Lote
+            </Button>
+          }
+        >
+          <Form {...form}>
+            <div className="flex flex-col h-full min-h-[400px]"> {/* Altura mínima para evitar pulos de layout */}
+
+              {/* 1. INDICADOR DE PASSOS */}
+              <div className="mb-6">
+                <StepIndicator
+                  currentStep={currentStep}
+                  titles={STEPS.map(t => t.title)}
+                  totalSteps={totalSteps}
+                />
+              </div>
+
+              {/* 2. CONTEÚDO DO PASSO ATUAL (AQUI ESTAVA O ERRO) */}
+              <div className="flex-1 py-4">
+                {CurrentStepComponent && <CurrentStepComponent />}
+              </div>
+
+              {/* 3. BOTÕES DE NAVEGAÇÃO */}
+              <div className="flex justify-between items-center mt-6 border-t pt-4">
+                {/* Botão Voltar (Oculto no passo 1) */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={prevStep}
+                  disabled={currentStep === 1}
+                  className={currentStep === 1 ? "invisible" : ""}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
+                </Button>
+
+                {/* Botão Próximo ou Salvar */}
+                {currentStep === totalSteps ? (
+                  <Button
+                    type="button" // Use type="button" e chame o handleSubmit manualmente
+                    onClick={onSubmit}
+                    disabled={isSubmitting}
+                  >
+                    <Save className="mr-2 h-4 w-4" /> Salvar Lote
+                  </Button>
+                ) : (
+                  <Button type="button" onClick={nextStep}>
+                    Próximo <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+
+            </div>
+          </Form>
+        </FormModal>
+
+        {/* <FormModal
+          key={"modal-edit"}
+          open={isOpen}
+          onClose={handleClose}
+          Icon={<ScissorsIcon className="mr-2 h-6 w-6" />}
+          title={`Detalhes do Lote ${form.getValues('codigo')}`}
+          onSubmit={onSubmit}
+          loading={isSubmitting}
+        >
+          <Form {...form}>
+            <LoteProducaoForm />
+          </Form>
+
+        </FormModal> */}
+
+      </div>
+      <div className="hidden md:block">
+        <LoteProducaoTable
+          lotesProducao={lotes}
+          isLoading={isLoading}
+          onView={handleEdit}
+        />
+      </div>
+    </main>
+  )
 }

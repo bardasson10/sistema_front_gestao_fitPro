@@ -39,7 +39,7 @@ export function useFormModal<T extends FieldValues, TItem extends { id: string }
   };
 
   const onSubmit = (values: T) => {
-    onSave(values, editingItem?.id);
+    onSave?.(values, editingItem?.id);
     handleClose();
   };
 

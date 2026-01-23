@@ -10,6 +10,7 @@ import {
 
 interface BaseModalProps {
   trigger?: ReactNode
+  Icon?: ReactNode
   title?: string
   description?: string
   children: ReactNode
@@ -17,13 +18,13 @@ interface BaseModalProps {
   onOpenChange?: (open: boolean) => void
 }
 
-export function BaseModal({ trigger, title, description, children, open, onOpenChange }: BaseModalProps) {
+export function BaseModal({ trigger, Icon, title, description, children, open, onOpenChange }: BaseModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="sm:max-w-125">
+      <DialogContent className="sm:max-w-170 w-full">
         <DialogHeader>
-          {title && <DialogTitle>{title}</DialogTitle>}
+          {title && <DialogTitle className="flex items-center">{Icon}{title}</DialogTitle>}
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
         {children}

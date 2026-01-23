@@ -5,13 +5,11 @@ import {
   Tecido,
   RoloTecido,
   LoteProducao,
-  Conferencia,
-  MovimentacaoEstoque,
 } from '@/types/production';
 
 export const sampleColaboradores: Colaborador[] = [
   { id: '1', nome: 'Maria Silva', funcao: 'cortador', status: 'ativo', criadoEm: new Date() },
-  { id: '2', nome: 'João Santos', funcao: 'costureira_interna', status: 'ativo', criadoEm: new Date() },
+  { id: '2', nome: 'João Santos', funcao: 'costureira interna', status: 'ativo', criadoEm: new Date() },
   { id: '3', nome: 'Ana Costa', funcao: 'responsavel', status: 'ativo', criadoEm: new Date() },
 ];
 
