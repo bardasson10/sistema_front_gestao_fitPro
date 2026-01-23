@@ -8,7 +8,7 @@ interface FormModalProps {
   title: string
   Icon?: ReactNode
   children: ReactNode
-  onSubmit: (e: any) => void
+  onSubmit: (e: any) => void | Promise<void>
   onClose: () => void
   open: boolean
   submitText?: string
@@ -27,7 +27,7 @@ export function FormModal({
       title={title}
       Icon={Icon}
     >
-      <form onSubmit={onSubmit} className="space-y-4 ">
+      <form onSubmit={onSubmit} className="space-y-4">
         {children}
         
         <div className="flex justify-end gap-2 pt-4">
@@ -42,9 +42,6 @@ export function FormModal({
             </>
           ) : (
             <></>
-            // <Button type="button" variant="outline" onClick={onClose}>
-            //   Fechar
-            // </Button>
           )}
         </div>
       </form>
