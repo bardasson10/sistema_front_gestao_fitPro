@@ -50,6 +50,11 @@ export const getFabricColumns = (
     cell: ({ row }) => <span className="text-muted-foreground">{row.original.rendimento} m/{row.original.unidade}</span>,
   },
   {
+    accessorKey: 'valorPorKg',
+    header: 'Valor por Kg',
+    cell: ({ row }) => <span className="text-muted-foreground">R$ {row.original.valorPorKg.toFixed(2)}</span>,
+  },
+  {
     accessorKey: 'unidade',
     header: 'Unidade',
     cell: ({ row }) => <span className="text-muted-foreground">{row.original.unidade.toUpperCase()}</span>,

@@ -49,6 +49,10 @@ export const MobileViewFabric = ({
                 </span>
               </div>
               <div className="flex justify-between">
+                <span className="text-muted-foreground">Peso por Kg:</span>
+                <span className="font-medium">R$ {item.valorPorKg.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
                 <span className="text-muted-foreground">Rendimento:</span>
                 <span className="font-medium">{item.rendimento} m/{item.unidade}</span>
               </div>

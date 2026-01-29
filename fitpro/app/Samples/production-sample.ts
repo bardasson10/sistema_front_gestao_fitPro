@@ -24,10 +24,10 @@ export const sampleFaccoes: Faccao[] = [
 ];
 
 export const sampleTecidos: Tecido[] = [
-  { id: '1', tipo: 'Suplex', cor: 'Preto', largura: 150, rendimento: 2.5, unidade: 'kg', fornecedorId: '1', criadoEm: new Date() },
-  { id: '2', tipo: 'Suplex', cor: 'Branco', largura: 150, rendimento: 2.5, unidade: 'kg', fornecedorId: '1', criadoEm: new Date() },
-  { id: '3', tipo: 'Dry Fit', cor: 'Rosa', largura: 160, rendimento: 2.8, unidade: 'kg', fornecedorId: '1', criadoEm: new Date() },
-  { id: '4', tipo: 'Cirrê', cor: 'Marrom', largura: 140, rendimento: 2.2, unidade: 'kg', fornecedorId: '2', criadoEm: new Date() },
+  { id: '1', tipo: 'Suplex', cor: 'Preto', largura: 150, rendimento: 2.5, valorPorKg: 50.0, unidade: 'kg', fornecedorId: '1', criadoEm: new Date() },
+  { id: '2', tipo: 'Suplex', cor: 'Branco', largura: 150, rendimento: 2.5, valorPorKg: 48.0, unidade: 'kg', fornecedorId: '1', criadoEm: new Date() },
+  { id: '3', tipo: 'Dry Fit', cor: 'Rosa', largura: 160, rendimento: 2.8, valorPorKg: 55.0, unidade: 'kg', fornecedorId: '1', criadoEm: new Date() },
+  { id: '4', tipo: 'Cirrê', cor: 'Marrom', largura: 140, rendimento: 2.2, valorPorKg: 60.0, unidade: 'kg', fornecedorId: '2', criadoEm: new Date() },
 ];
 
 export const sampleRolos: RoloTecido[] = [

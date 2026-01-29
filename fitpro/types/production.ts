@@ -32,6 +32,7 @@ export interface Tecido {
   cor: string;
   largura: number; // cm
   rendimento: number; // metros por kg
+  valorPorKg: number; // R$
   unidade: 'kg';
   fornecedorId: string; // vínculo com fornecedor
   criadoEm: Date;

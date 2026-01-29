@@ -80,6 +80,17 @@ export function FabricForm({ fornecedores }: { fornecedores: Fornecedor[] }) {
             </FormItem>
           )}
         />
+        <FormField
+          control={control}
+          name="valorPorKg"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Valor por Kg (R$)</FormLabel>
+              <FormControl><Input type="number" step="0.01" {...field} onChange={(e) => field.onChange(parseNumber(e.target.value))} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
     </div>
   );
