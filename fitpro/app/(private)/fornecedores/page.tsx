@@ -84,37 +84,30 @@ export default function Fornecedores() {
     }
   }, [editingItem, form]);
 
-
-
-
   return (
-    <main>
-      <div className="flex justify-between items-center mb-6">
-
-        <div className="text-sm text-muted-foreground p-4 items-center">
+    <main className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div className="text-sm text-muted-foreground">
           {fornecedores.length} fornecedores cadastrados
         </div>
 
-        <FormModal
-          open={isOpen}
-          onClose={handleClose}
-          title={editingItem ? 'Editar Fornecedor' : "Novo Fornecedor"}
-          onSubmit={onSubmit}
-          loading={isSubmitting || isCreating || isUpdating}
-          trigger={
-            <Button onClick={handleOpen}>
-              <Plus className="mr-2 h-4 w-4" /> Novo Fornecedor
-            </Button>
-          }
-        >
-          <Form {...form}>
-            <FornecedoresForm />
-          </Form>
-        </FormModal>
+        <Button onClick={handleOpen}>
+          <Plus className="mr-2 h-4 w-4" /> Novo Fornecedor
+        </Button>
       </div>
 
+      <FormModal
+        open={isOpen}
+        onClose={handleClose}
+        title={editingItem ? 'Editar Fornecedor' : 'Novo Fornecedor'}
+        onSubmit={onSubmit}
+        loading={isSubmitting || isCreating || isUpdating}
+      >
+        <Form {...form}>
+          <FornecedoresForm />
+        </Form>
+      </FormModal>
 
-      {/* so abre quando clicar para remover */}
       <RemoveItemWarning
         id={removingItemId || ''}
         isOpen={isRemoveOpen}
@@ -143,7 +136,7 @@ export default function Fornecedores() {
           onRemove={handleRemove}
         />
       </div>
-
     </main>
   );
+
 }

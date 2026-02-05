@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 interface Fornecedor {
     id: string;
     nome: string;
-    tipo: string;
+    tipo: 'tecido' | 'aviamento' | 'servico' | '';
     contato: string;
     createdAt: string;
 }

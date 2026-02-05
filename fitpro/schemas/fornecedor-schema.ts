@@ -1,7 +1,7 @@
 import * as z from "zod";
 
-
 export const fornecedorSchema = z.object({
+  id: z.string().optional(),
   nome: z.string().min(1, "O nome é obrigatório"),
   tipo: z.enum(['tecido', 'aviamento', 'servico', '']),
   contato: z.string().min(1, "O contato é obrigatório"),
