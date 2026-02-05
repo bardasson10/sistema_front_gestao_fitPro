@@ -48,9 +48,9 @@ export const Header = () => {
         </div>
       </div>
 
-      {/* Espaço para ações globais (notificação, perfil) se houver no futuro */}
+      {/* Espaço para ações globais (notificações, etc.) */}
       <div className="flex items-center gap-2">
-        {/* Ex: <UserNav /> */}
+        {/* Ações futuras */}
       </div>
     </header>
   );

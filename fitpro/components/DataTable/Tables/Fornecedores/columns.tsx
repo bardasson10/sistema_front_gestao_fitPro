@@ -25,9 +25,9 @@ export const getFornecedoresColumns = (
     cell: ({ row }) => <span className="text-muted-foreground">{row.original.contato}</span>,
   },
   {
-    accessorKey: 'criadoEm',
+    accessorKey: 'createdAt',
     header: 'Criado Em',
-    cell: ({ row }) => <span className="text-muted-foreground">{row.original.criadoEm.toDateString()}</span>,
+    cell: ({ row }) => <span className="text-muted-foreground">{new Date(row.original.createdAt).toLocaleDateString('pt-BR')}</span>,
   },
   {
     id: 'actions',

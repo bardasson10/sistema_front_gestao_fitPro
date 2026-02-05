@@ -27,7 +27,7 @@ export const MobileViewFornecedor = ({
   return (
     <div className="flex flex-col gap-4 p-4">
       <SemDadosComponent<Fornecedor> nomeDado="fornecedor" data={fornecedores} />
-      {fornecedores.map((item) => (
+      {Array.isArray(fornecedores) && fornecedores.map((item) => (
         <BaseCard
           key={item.id}
           title={item.nome}

@@ -1,14 +1,25 @@
 'use client'
 import { LogOut } from "lucide-react";
 import { Button } from "../ui/button";
-
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { removeAuthCookies } from "@/utils/Cookies/auth";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 
 export function LogOutButton() {
+  const router = useRouter();
 
   const handleLogout = async () => {
-    console.log("Logging out...");
+    try {
+      await removeAuthCookies();
+      toast.success("Logout realizado com sucesso!");
+      router.push('/login');
+      router.refresh();
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+      toast.error("Erro ao fazer logout. Tente novamente.");
+    }
   }
 
   return (
