@@ -1,16 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/services/api/api-client';
 import { toast } from 'sonner';
+import { Fornecedor } from '@/types/production';
 
 // ============ TIPOS ============
 
-interface Fornecedor {
-    id: string;
-    nome: string;
-    tipo: 'tecido' | 'aviamento' | 'servico' | '';
-    contato: string;
-    createdAt: string;
-}
 
 interface Cor {
     id: string;
@@ -91,7 +85,7 @@ export const useAtualizarFornecedor = () => {
             toast.success('Fornecedor atualizado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao atualizar fornecedor');
+            toast.error(error.response?.data?.error);
         },
     });
 };
@@ -108,7 +102,7 @@ export const useDeletarFornecedor = () => {
             toast.success('Fornecedor deletado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao deletar fornecedor');
+            toast.error(error.response?.data?.error);
         },
     });
 };

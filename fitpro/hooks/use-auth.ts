@@ -1,34 +1,33 @@
 'use client';
+import { getAuthUserData } from '@/utils/Cookies/auth';
 import { useEffect, useState } from 'react';
 
 interface UserData {
-  id: string;
-  nome: string;
-  email: string;
-  perfil: "ADM" | "GERENTE" | "FUNCIONARIO";
+    id: string;
+    nome: string;
+    email: string;
+    perfil: "ADM" | "GERENTE" | "FUNCIONARIO";
 }
 
+let cachedUserData: UserData | null = null;
+let cacheTime = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+
 export function useAuth() {
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+    const [user, setUser] = useState({ nome: "", email: "", perfil: "", urlAvatar: "" })
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await fetch('/api/auth/me');
-        if (response.ok) {
-          const data = await response.json();
-          setUserData(data);
+    useEffect(() => {
+        const fetchUserData = async () => {
+            const userData = await getAuthUserData();
+            setUser({
+                nome: userData?.nome || "",
+                email: userData?.email || "",
+                perfil: userData?.perfil || "",
+                urlAvatar: "",
+            })
         }
-      } catch (error) {
-        console.error('Erro ao buscar dados do usuário:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+        fetchUserData()
+    }, [])
 
-    fetchUserData();
-  }, []);
-
-  return { userData, isLoading };
+    return { user };
 }

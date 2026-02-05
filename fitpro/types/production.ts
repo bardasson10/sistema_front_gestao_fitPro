@@ -13,7 +13,7 @@ export interface Fornecedor {
   nome: string;
   tipo: 'tecido' | 'aviamento' | 'servico' | '';
   contato: string;
-  createdAt?: string;
+  createdAt: string;
   updatedAt?: string;
 }
 

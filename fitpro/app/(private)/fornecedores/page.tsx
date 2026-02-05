@@ -102,6 +102,7 @@ export default function Fornecedores() {
         title={editingItem ? 'Editar Fornecedor' : 'Novo Fornecedor'}
         onSubmit={onSubmit}
         loading={isSubmitting || isCreating || isUpdating}
+          isViewSaveOrCancel={true}
       >
         <Form {...form}>
           <FornecedoresForm />

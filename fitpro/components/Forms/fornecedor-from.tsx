@@ -50,7 +50,7 @@ export function FornecedoresForm() {
         render={({ field }) => (
           <FormItem>
             <FormLabel>Contato</FormLabel>
-            <FormControl><Input {...field} placeholder="Ex: João Silva" /></FormControl>
+            <FormControl><Input {...field} placeholder="Ex: 22 99999-9999" /></FormControl>
             <FormMessage />
           </FormItem>
         )}
