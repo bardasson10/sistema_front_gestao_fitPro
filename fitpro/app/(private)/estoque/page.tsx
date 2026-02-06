@@ -17,67 +17,87 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResumeStockTable } from "@/components/DataTable/Tables/Estoque/resume-table";
 import { MobileViewStock } from "@/components/MobileViewCards/StockCard/stock-card";
 import { MobileViewStockResume } from "@/components/MobileViewCards/StockCard/stock-card-resume";
+import { useAtualizarEstoqueTecido, useCriarEstoqueTecido, useDeletarEstoqueTecido, useEstoqueTecidos, useRelatorioEstoque } from "@/hooks/queries/useEstoque";
+import { useCores, useTecidos } from "@/hooks/queries/useMateriais";
 
 const initialValues: RoloTecidoFormValues = {
-  tecidoId: '',
-  identificacao: '',
-  pesoKg: 0,
-  status: "disponivel"
+  tecidoId: "",
+  codigoBarraRolo: "",
+  pesoInicialKg: 0,
+  pesoAtualKg: 0,
+  situacao: "",
 };
 
 export default function Estoque() {
-  // const { tecidos, rolos, isLoading, addRolo, updateRolo } = useProduction();
 
-  // const { id, cor, tipo } = tecidos.map(t => t)[0] || { id: '', cor: '', tipo: '' };
-  // const estoqueAgrupado = React.useMemo(
-  //   () => getGroupedStockColumns(rolos, [{ id, cor, tipo }]),
-  //   [rolos, tecidos]
-  // );
+  const { data: tecidosData } = useTecidos();
+  const tecidos = tecidosData || [];
 
-  // const pesoTotal = rolos.reduce((acc, curr) => acc + (Number(curr.pesoKg) || 0), 0);
+  const { data: coresData } = useCores();
+  const cores = coresData || [];
+  
+  const { data: rolosData, isLoading } = useEstoqueTecidos();
+  const rolos = rolosData || [];
 
-  // const form = useForm<RoloTecidoFormValues>({
-  //   resolver: zodResolver(roloTecidoSchema),
-  //   defaultValues: initialValues,
-  // });
+  const {data: estoqueAgrupadoData} = useRelatorioEstoque();
+  const estoqueAgrupado = estoqueAgrupadoData || [];
 
-  // const {
-  //   isOpen,
-  //   editingItem,
-  //   handleOpen,
-  //   handleEdit,
-  //   onSubmit,
-  //   isSubmitting,
-  //   handleClose } = useFormModal({
-  //     initialValues,
-  //     form,
-  //     onSave: (values, id) => {
-  //       if (id) {
-  //         updateRolo(id, values);
-  //       } else {
-  //         addRolo(values);
-  //       }
-  //       handleClose();
-  //     }
-  //   });
+
+    const { mutate: criar, isPending: isCreating } = useCriarEstoqueTecido();
+    const { mutate: atualizar, isPending: isUpdating } = useAtualizarEstoqueTecido();
+    const { mutate: deletar } = useDeletarEstoqueTecido();
+
+  const form = useForm<RoloTecidoFormValues>({
+    resolver: zodResolver(roloTecidoSchema),
+    defaultValues: initialValues,
+  });
+
+  const {
+    isOpen,
+    editingItem,
+    handleOpen,
+    handleEdit,
+    onSubmit,
+    isSubmitting,
+    handleClose } = useFormModal({
+      initialValues,
+      form,
+      onSave: (values, id) => {
+        if (id) {
+          atualizar({
+            id,
+            ...values,
+        }) }
+        else {
+          criar({
+            tecidoId: values.tecidoId,
+            codigoBarraRolo: values.codigoBarraRolo,
+            pesoInicialKg: values.pesoInicialKg,
+            pesoAtualKg: values.pesoAtualKg,
+            situacao: values.situacao as 'disponivel' | 'reservado' | 'em_uso' | 'descartado',
+          });
+        }
+        handleClose();
+      }
+    });
   return (
     <main>
-      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <MetricCard
           title="Rolos Disponíveis"
-          value={rolos.length}
+          value={`${estoqueAgrupadoData?.totalRolos} rolos`}
           icon={Package}
           variant="primary"
         />
         <MetricCard
           title="Peso Total"
-          value={`${pesoTotal} kg`}
+          value={`${estoqueAgrupadoData?.pesoTotal} kg`}
           icon={Weight}
           variant="success"
         />
         <MetricCard
           title="Tipos de Tecido"
-          value={`${estoqueAgrupado.map((f) => f.rolos)}`}
+          value={`${estoqueAgrupadoData?.rolosDisponíveis} tipos`}
           icon={Layers}
           variant="default"
         />
@@ -103,7 +123,7 @@ export default function Estoque() {
           >
 
             <Form {...form} >
-              <StockFabricForm tecidos={tecidos} />
+              <StockFabricForm tecidos={tecidos} cores={cores} />
             </Form>
 
           </FormModal>
@@ -112,6 +132,7 @@ export default function Estoque() {
           <div className="hidden md:block">
             <StockTable
               isLoading={isLoading}
+              cores={cores}
               rolos={rolos}
               tecidos={tecidos}
               onEdit={handleEdit}
@@ -122,6 +143,7 @@ export default function Estoque() {
             isLoading={isLoading}
             rolos={rolos}
             tecidos={tecidos}
+            cores={cores}
             onEdit={handleEdit}
             />
           </div>
@@ -131,14 +153,15 @@ export default function Estoque() {
             <ResumeStockTable
               isLoading={isLoading}
               rolos={rolos}
+              cores={cores}
               tecidos={tecidos}
             />
           </div>
           <div className="block md:hidden">
-            <MobileViewStockResume isLoading={isLoading} rolos={rolos} tecidos={tecidos} />
+            <MobileViewStockResume isLoading={isLoading} rolos={rolos} tecidos={tecidos} cores={cores} />
           </div>
         </TabsContent>
-      </Tabs> */}
+      </Tabs>
     </main>
   )
 }

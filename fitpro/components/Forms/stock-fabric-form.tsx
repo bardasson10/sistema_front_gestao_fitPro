@@ -4,18 +4,24 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FabricFormValues } from "@/schemas/tecido-schema";
-import { Fornecedor } from "@/types/production";
+import { Cor, Fornecedor, Tecido } from "@/types/production";
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
 import { RoloTecidoFormValues } from "@/schemas/rolo-tecido-schema";
 
-export function StockFabricForm({ tecidos }: { tecidos: { id: string; cor: string; tipo: string }[] }) {
+interface StockFabricFormProps {
+  tecidos: Tecido[];
+  cores: Cor[];
+}
+
+
+export function StockFabricForm({ tecidos, cores }: StockFabricFormProps)  {
   const { control } = useFormContext<RoloTecidoFormValues>();
 
   return (
     <div className="space-y-4">
       <FormField
         control={control}
-        name="identificacao"
+        name="codigoBarraRolo"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Tipo de Tecido</FormLabel>
@@ -36,8 +42,8 @@ export function StockFabricForm({ tecidos }: { tecidos: { id: string; cor: strin
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               </FormControl>
               <SelectContent>
-                {tecidos.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>{t.tipo} - {t.cor}</SelectItem>
+                {tecidos.map(tecido => (
+                  <SelectItem key={tecido.id} value={tecido.id}>{tecido.tipo} - {cores.find(cor => cor.id === tecido.corId)?.nome}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -49,7 +55,7 @@ export function StockFabricForm({ tecidos }: { tecidos: { id: string; cor: strin
       <div className="grid grid-cols-2 gap-4">
         <FormField
           control={control}
-          name="pesoKg"
+          name="pesoAtualKg"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Peso (kg)</FormLabel>
@@ -60,7 +66,7 @@ export function StockFabricForm({ tecidos }: { tecidos: { id: string; cor: strin
         />
         <FormField
           control={control}
-          name="status"
+          name="situacao"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Status</FormLabel>

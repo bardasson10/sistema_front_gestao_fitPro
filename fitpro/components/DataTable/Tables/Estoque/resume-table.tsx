@@ -8,25 +8,30 @@ interface ResumeStockTableProps extends StockResumeProps {
 
 }
 
-export const ResumeStockTable = ({ rolos, tecidos, isLoading }: ResumeStockTableProps) => {
-  
+export const ResumeStockTable = ({ rolos, cores, tecidos, isLoading }: ResumeStockTableProps) => {
+  const safeRolos = Array.isArray(rolos) ? rolos : [];
   const resumoData = React.useMemo(
-    () => getGroupedStockColumns(rolos, tecidos),
-    [rolos, tecidos]
+    () => getGroupedStockColumns(safeRolos, tecidos, cores),
+    [safeRolos, cores, tecidos]
   );
   const columns = React.useMemo(
     () => getStockColumnsResume(),
     []
   );
+  const data = safeRolos;
   return (
     <div className="w-full" >
-      <SemDadosComponent<StockResume> nomeDado="tecido" data={resumoData} />
-      <DataTable
-        columns={columns}
-        data={resumoData}
-        isLoading={isLoading}
-        getRowId={(row) => row.id}
-      />
+      {
+        data.length === 0 ?
+          (<SemDadosComponent<StockResume> nomeDado="tecido" data={resumoData} />)
+          :
+          (<DataTable
+            columns={columns}
+            data={resumoData}
+            isLoading={isLoading}
+            getRowId={(row) => row.id}
+          />)
+      }
     </div>
   )
 }

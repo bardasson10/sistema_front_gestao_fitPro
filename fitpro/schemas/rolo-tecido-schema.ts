@@ -1,10 +1,11 @@
 import * as z from "zod";
 
 export const roloTecidoSchema = z.object({
-  tecidoId: z.string().min(1, "Selecione um tecido"),
-  identificacao: z.string().min(1, "A identificação é obrigatória"),
-  pesoKg: z.number().min(0.1, "O peso deve ser no mínimo 0.1 Kg"),
-  status: z.enum(["disponivel", "reservado", "utilizado"]),
+  tecidoId: z.uuid("ID de tecido inválido"),
+  codigoBarraRolo: z.string().min(1, "Código de barra é obrigatório"),
+  pesoInicialKg: z.number().positive("Peso inicial deve ser positivo"),
+  pesoAtualKg: z.number().positive("Peso atual deve ser positivo"),
+  situacao: z.enum(["disponivel", "reservado", "em_uso", "descartado", ""]),
 });
 
 export type RoloTecidoFormValues = z.infer<typeof roloTecidoSchema>;

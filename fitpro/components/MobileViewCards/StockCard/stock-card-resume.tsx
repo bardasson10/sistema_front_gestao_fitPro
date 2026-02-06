@@ -1,12 +1,8 @@
 import { SemDadosComponent } from "@/components/ErrorManagementComponent/AnyData"
 import { BaseCard } from "@/components/MobileViewCards/base-card"
 import { getGroupedStockColumns } from "@/components/DataTable/Tables/Estoque/resume-colums"
-// import { getColorPreview } from "@/components/DataTable/Tables/Tecido/colums"
-import { Button } from "@/components/ui/button"
-import { StatusBadge } from "@/components/ui/status-badge"
-import { RoloTecido } from "@/types/production"
+import { EstoqueTecido } from "@/types/production"
 import { StockResumeProps } from "@/types/StockComponents/stock-components"
-import { Pencil } from "lucide-react"
 import React from "react"
 
 
@@ -14,6 +10,7 @@ import React from "react"
 export const MobileViewStockResume = ({
   rolos,
   tecidos,
+  cores,
   isLoading,
 }: StockResumeProps) => {
 
@@ -27,14 +24,14 @@ export const MobileViewStockResume = ({
     )
   }
 
-    const resumoData = React.useMemo(
-      () => getGroupedStockColumns(rolos, tecidos),
-      [rolos, tecidos]
-    );
+  const resumoData = React.useMemo(
+    () => getGroupedStockColumns(rolos, tecidos, cores),
+    [rolos, tecidos, cores]
+  );
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <SemDadosComponent<RoloTecido> nomeDado="tecido" data={rolos} />
+      <SemDadosComponent<EstoqueTecido> nomeDado="tecido" data={rolos} />
       {resumoData.map((item) => (
         <BaseCard
           key={item.id}
@@ -44,8 +41,8 @@ export const MobileViewStockResume = ({
           action={
             <div
               className="h-5 w-5 rounded-full border shadow-sm"
-              style={{ backgroundColor: "" }}
-              title={item.cor}
+              style={{ backgroundColor: item.cor }}
+              title={item.nomeCor}
             />
           }
           content={
@@ -62,26 +59,26 @@ export const MobileViewStockResume = ({
               </div>
             </div>
           }
-          // footer={
-        //     <div className="flex w-full gap-2">
-        //       <Button
-        //         variant="outline"
-        //         className="flex-1"
-        //         onClick={() => onEdit(item)}
-        //       >
-        //         <Pencil className="mr-2 h-4 w-4" />
-        //         Editar
-        //       </Button>
-        //       {/* <Button
-        //         variant="destructive"
-        //         size="icon"
-        //         onClick={() => onRemove(item.id)}
-        //       >
-        //         <Trash2 className="h-4 w-4" />
-        //       </Button> */}
-        //     </div>
-        //   }
-        //   footerClassName="border-t 0 bg-muted/50 px-6 py-8"
+        //     footer={
+        //       <div className="flex w-full gap-2">
+        //         <Button
+        //           variant="outline"
+        //           className="flex-1"
+        //           onClick={() => onEdit(item)}
+        //         >
+        //           <Pencil className="mr-2 h-4 w-4" />
+        //           Editar
+        //         </Button>
+        //         {/* <Button
+        //            variant="destructive"
+        //            size="icon"
+        //            onClick={() => onRemove(item.id)}
+        //          >
+        //            <Trash2 className="h-4 w-4" />
+        //          </Button> */}
+        //       </div>
+        //     }
+        //     footerClassName="border-t 0 bg-muted/50 px-6 py-8"
         />
       ))}
 

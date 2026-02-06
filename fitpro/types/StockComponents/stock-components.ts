@@ -1,25 +1,27 @@
-import { RoloTecido } from "../production";
+import { Cor, EstoqueTecido, Tecido } from "../production";
 
 export interface StockProps {
-  rolos: RoloTecido[];
-  tecidos: { id: string; cor: string; tipo: string }[]
+  rolos: EstoqueTecido[];
+  tecidos: Tecido[];
+  cores: Cor[];
   isLoading: boolean;
-  onEdit: (item: RoloTecido) => void;
+  onEdit: (item: EstoqueTecido) => void;
 
 }
-
 
 export interface StockResume {
   id: string;
   tipo: string;
   cor: string;
+  nomeCor: string;
   rolos: number;
   pesoKg: number;
 }
 
 export interface StockResumeProps {
-  rolos: RoloTecido[];
-  tecidos: { id: string; cor: string; tipo: string }[]
+  rolos: EstoqueTecido[];
+  tecidos: Tecido[];
+  cores: Cor[];
   isLoading: boolean;
 
 }

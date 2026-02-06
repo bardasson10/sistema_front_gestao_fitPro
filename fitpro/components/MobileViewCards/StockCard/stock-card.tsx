@@ -1,9 +1,8 @@
 import { SemDadosComponent } from "@/components/ErrorManagementComponent/AnyData"
 import { BaseCard } from "@/components/MobileViewCards/base-card"
-
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/ui/status-badge"
-import { RoloTecido } from "@/types/production"
+import { EstoqueTecido } from "@/types/production"
 import { StockProps } from "@/types/StockComponents/stock-components"
 import { Pencil } from "lucide-react"
 
@@ -12,6 +11,7 @@ import { Pencil } from "lucide-react"
 export const MobileViewStock = ({
   rolos,
   tecidos,
+  cores,
   isLoading,
   onEdit,
 }: StockProps) => {
@@ -37,12 +37,11 @@ export const MobileViewStock = ({
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <SemDadosComponent<RoloTecido> nomeDado="tecido" data={rolos} />
-      {rolos.map((item) => {
+      <SemDadosComponent<EstoqueTecido> nomeDado="tecido" data={rolos} />
+      {Array.isArray(rolos) && rolos.map((item) => {
         const tecidoDoRolo = tecidos.find(t => t.id === item.tecidoId);
         
-        // Busca o status específico deste rolo
-        // const statusInfo = statusMap[item.status as keyof typeof statusMap] || statusMap.disponivel;
+        const statusInfo = statusMap[item.situacao as keyof typeof statusMap] || statusMap.disponivel;
         return (
           <BaseCard
             key={item.id}
@@ -53,8 +52,8 @@ export const MobileViewStock = ({
               <div
                 key={tecidoDoRolo?.id}
                 className="h-5 w-5 rounded-full border shadow-sm"
-                style={{ backgroundColor: "" }}
-                title={tecidoDoRolo?.cor}
+                style={{ backgroundColor: cores.find(c => c.id === tecidoDoRolo?.corId)?.codigoHex || '' }}
+                title={cores.find(c => c.id === tecidoDoRolo?.corId)?.nome || ''}
               />
 
             }
@@ -63,12 +62,12 @@ export const MobileViewStock = ({
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Peso:</span>
                   <span className="font-medium">
-                    {/* {item.pesoKg.toFixed(1)} Kg */}
+                    {item.pesoAtualKg} Kg
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Status:</span>
-                  {/* <StatusBadge status={statusInfo.type}>{statusInfo.label}</StatusBadge> */}
+                  <StatusBadge status={statusInfo.type}>{statusInfo.label}</StatusBadge>
                 </div>
               </div>
             }

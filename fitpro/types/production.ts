@@ -58,25 +58,25 @@ export interface Tecido {
   updatedAt?: string;
 }
 
-export interface RoloTecido {
+export interface EstoqueTecido {
   id: string;
   tecidoId: string;
   codigoBarraRolo: string;
   pesoInicialKg: number;
   pesoAtualKg: number;
-  situacao: string;
+  situacao: "disponivel" | "reservado" | "em_uso" | "descartado" | "";
   createdAt: string;
   updatedAt?: string;
+  movimentacoes: MovimentacaoEstoque[];
 }
 
 export interface MovimentacaoEstoque {
   id: string;
-  roloId: string;
-  tipo: 'entrada' | 'saida';
-  quantidade: number;
-  loteId?: string;
-  observacao?: string;
-  data: Date;
+  estoqueRoloId: string;
+  usuarioId: string;
+  tipoMovimentacao: 'entrada' | 'saida' | 'ajuste' | 'devolucao';
+  pesoMovimentado: number;
+  createdAt: string;
 }
 
 export interface LoteProducao {
@@ -93,7 +93,7 @@ export interface LoteProducao {
 
 export interface TecidoLote {
   roloId: string;
-  rolo?: RoloTecido;
+  rolo?: EstoqueTecido;
   tecidoTipo: string;
   cor: string;
   pesoKg: number;
@@ -177,9 +177,9 @@ export interface ProductionContextType {
   removeTecido: (id: string) => void;
   
   // Rolos de Tecido
-  rolos: RoloTecido[];
-  addRolo: (rolo: Omit<RoloTecido, 'id' | 'createdAt'>) => void;
-  updateRolo: (id: string, rolo: Partial<RoloTecido>) => void;
+  rolos: EstoqueTecido[];
+  addRolo: (rolo: Omit<EstoqueTecido, 'id' | 'createdAt'>) => void;
+  updateRolo: (id: string, rolo: Partial<EstoqueTecido>) => void;
   removeRolo: (id: string) => void;
   
   // Movimentações

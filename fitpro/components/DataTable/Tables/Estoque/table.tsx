@@ -1,5 +1,5 @@
 import { SemDadosComponent } from "@/components/ErrorManagementComponent/AnyData"
-import { RoloTecido } from "@/types/production"
+import { EstoqueTecido } from "@/types/production"
 import { StockProps } from "@/types/StockComponents/stock-components"
 import React from "react";
 import { getStockColumns } from "./colums";
@@ -9,20 +9,21 @@ interface StockTableProps extends StockProps {
 
 }
 
-export const StockTable = ({ rolos, tecidos, isLoading, onEdit }: StockTableProps) => {
+export const StockTable = ({ rolos, tecidos, cores, isLoading, onEdit }: StockTableProps) => {
   const columns = React.useMemo(
-    () => getStockColumns(onEdit!, tecidos),
-    [tecidos, onEdit]
-  );
+    () => getStockColumns(onEdit!, tecidos, cores),
+    [tecidos, onEdit, cores]);
+  const data = Array.isArray(rolos) ? rolos : [];
   return (
     <div className="w-full" >
-      <SemDadosComponent<RoloTecido> nomeDado="tecido" data={rolos} />
-      <DataTable
+      {data.length === 0 ? (<SemDadosComponent<EstoqueTecido> nomeDado="tecido" data={rolos} />)
+      :
+      ( <DataTable
         columns={columns}
         data={rolos}
         isLoading={isLoading}
         getRowId={(row) => row.id}
-      />
+      />)}
     </div>
   )
 }

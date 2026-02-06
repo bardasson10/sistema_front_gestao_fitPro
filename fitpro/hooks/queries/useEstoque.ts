@@ -1,31 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/services/api/api-client';
 import { toast } from 'sonner';
+import { EstoqueTecido, MovimentacaoEstoque } from '@/types/production';
 
 // ============ TIPOS ============
 
-interface EstoqueRolo {
-    id: string;
-    tecidoId: string;
-    codigoBarraRolo: string;
-    pesoInicialKg: number;
-    pesoAtualKg: number;
-    situacao: 'disponivel' | 'reservado' | 'em_uso' | 'descartado';
-    tecido: any;
-    movimentacoes: MovimentacaoEstoque[];
-    createdAt: string;
-}
 
-interface MovimentacaoEstoque {
-    id: string;
-    estoqueRoloId: string;
-    usuarioId: string;
-    tipoMovimentacao: 'entrada' | 'saida' | 'ajuste' | 'devolucao';
-    pesoMovimentado: number;
-    rolo: EstoqueRolo;
-    usuario: any;
-    createdAt: string;
-}
+
 
 interface RelatorioEstoque {
     totalRolos: number;
@@ -39,7 +20,7 @@ interface RelatorioEstoque {
 
 // ============ ESTOQUE ROLOS ============
 
-export const useEstoqueRolos = (filtros?: { tecidoId?: string; situacao?: string }) => {
+export const useEstoqueTecidos = (filtros?: { tecidoId?: string; situacao?: string }) => {
     return useQuery({
         queryKey: ['estoque-rolos', filtros],
         queryFn: async () => {
@@ -48,7 +29,7 @@ export const useEstoqueRolos = (filtros?: { tecidoId?: string; situacao?: string
             if (filtros?.situacao) params.append('situacao', filtros.situacao);
 
             const queryString = params.toString();
-            const { data } = await apiClient.get<EstoqueRolo[]>(
+            const { data } = await apiClient.get<EstoqueTecido[]>(
                 `/estoque-rolos${queryString ? `?${queryString}` : ''}`
             );
             return data;
@@ -56,18 +37,18 @@ export const useEstoqueRolos = (filtros?: { tecidoId?: string; situacao?: string
     });
 };
 
-export const useEstoqueRolo = (id: string) => {
+export const useEstoqueTecido = (id: string) => {
     return useQuery({
         queryKey: ['estoque-rolos', id],
         queryFn: async () => {
-            const { data } = await apiClient.get<EstoqueRolo>(`/estoque-rolos/${id}`);
+            const { data } = await apiClient.get<EstoqueTecido>(`/estoque-rolos/${id}`);
             return data;
         },
         enabled: !!id,
     });
 };
 
-export const useCriarEstoqueRolo = () => {
+export const useCriarEstoqueTecido = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -78,7 +59,7 @@ export const useCriarEstoqueRolo = () => {
             pesoAtualKg: number;
             situacao: 'disponivel' | 'reservado' | 'em_uso' | 'descartado';
         }) => {
-            const { data } = await apiClient.post<EstoqueRolo>('/estoque-rolos', dados);
+            const { data } = await apiClient.post<EstoqueTecido>('/estoque-rolos', dados);
             return data;
         },
         onSuccess: () => {
@@ -91,12 +72,12 @@ export const useCriarEstoqueRolo = () => {
     });
 };
 
-export const useAtualizarEstoqueRolo = () => {
+export const useAtualizarEstoqueTecido = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: async ({ id, ...dados }: any) => {
-            const { data } = await apiClient.put<EstoqueRolo>(`/estoque-rolos/${id}`, dados);
+            const { data } = await apiClient.put<EstoqueTecido>(`/estoque-rolos/${id}`, dados);
             return data;
         },
         onSuccess: (data) => {
@@ -110,7 +91,7 @@ export const useAtualizarEstoqueRolo = () => {
     });
 };
 
-export const useDeletarEstoqueRolo = () => {
+export const useDeletarEstoqueTecido = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -142,7 +123,7 @@ export const useRelatorioEstoque = () => {
 // ============ MOVIMENTAÇÕES DE ESTOQUE ============
 
 export const useMovimentacoesEstoque = (filtros?: {
-    estoqueRoloId?: string;
+    EstoqueTecidoId?: string;
     tipoMovimentacao?: string;
     dataInicio?: string;
     dataFim?: string;
@@ -151,7 +132,7 @@ export const useMovimentacoesEstoque = (filtros?: {
         queryKey: ['movimentacoes-estoque', filtros],
         queryFn: async () => {
             const params = new URLSearchParams();
-            if (filtros?.estoqueRoloId) params.append('estoqueRoloId', filtros.estoqueRoloId);
+            if (filtros?.EstoqueTecidoId) params.append('EstoqueTecidoId', filtros.EstoqueTecidoId);
             if (filtros?.tipoMovimentacao) params.append('tipoMovimentacao', filtros.tipoMovimentacao);
             if (filtros?.dataInicio) params.append('dataInicio', filtros.dataInicio);
             if (filtros?.dataFim) params.append('dataFim', filtros.dataFim);
@@ -183,7 +164,7 @@ export const useCriarMovimentacaoEstoque = () => {
 
     return useMutation({
         mutationFn: async (dados: {
-            estoqueRoloId: string;
+            EstoqueTecidoId: string;
             tipoMovimentacao: 'entrada' | 'saida' | 'ajuste' | 'devolucao';
             pesoMovimentado: number;
         }) => {
@@ -200,20 +181,20 @@ export const useCriarMovimentacaoEstoque = () => {
             toast.success('Movimentação registrada com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao registrar movimentação');
+            toast.error(error.response?.data?.error || 'Erro ao registrar movimentação');
         },
     });
 };
 
-export const useHistoricoRolo = (estoqueRoloId: string) => {
+export const useHistoricoRolo = (EstoqueTecidoId: string) => {
     return useQuery({
-        queryKey: ['movimentacoes-estoque', estoqueRoloId, 'historico'],
+        queryKey: ['movimentacoes-estoque', EstoqueTecidoId, 'historico'],
         queryFn: async () => {
             const { data } = await apiClient.get(
-                `/movimentacoes-estoque/${estoqueRoloId}/historico`
+                `/movimentacoes-estoque/${EstoqueTecidoId}/historico`
             );
             return data;
         },
-        enabled: !!estoqueRoloId,
+        enabled: !!EstoqueTecidoId,
     });
 };
