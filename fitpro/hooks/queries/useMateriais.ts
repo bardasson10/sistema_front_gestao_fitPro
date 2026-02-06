@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/services/api/api-client';
 import { toast } from 'sonner';
-import { Fornecedor } from '@/types/production';
+import { Fornecedor, Tecido } from '@/types/production';
 
 // ============ TIPOS ============
 
@@ -13,22 +13,7 @@ interface Cor {
     createdAt: string;
 }
 
-interface Tecido {
-    id: string;
-    fornecedorId: string;
-    corId: string;
-    nome: string;
-    codigoReferencia: string;
-    rendimentoMetroKg: number;
-    larguraMetros: number;
-    valorPorKg: number;
-    gramatura: number;
-    fornecedor: Fornecedor;
-    cor: Cor;
-    rolos: any[];
-    lotes: any[];
-    createdAt: string;
-}
+
 
 // ============ FORNECEDORES ============
 
@@ -113,8 +98,8 @@ export const useCores = () => {
     return useQuery({
         queryKey: ['cores'],
         queryFn: async () => {
-            const { data } = await apiClient.get<Cor[]>('/cores');
-            return data;
+            const response = await apiClient.get<{ data: Cor[], pagination: any }>('/cores');
+            return response.data.data;
         },
     });
 };
@@ -195,10 +180,10 @@ export const useTecidos = (filtros?: { fornecedorId?: string; corId?: string }) 
             if (filtros?.corId) params.append('corId', filtros.corId);
 
             const queryString = params.toString();
-            const { data } = await apiClient.get<Tecido[]>(
+            const response = await apiClient.get<{ data: Tecido[], pagination: any }>(
                 `/tecidos${queryString ? `?${queryString}` : ''}`
             );
-            return data;
+            return response.data.data;
         },
     });
 };
@@ -236,7 +221,7 @@ export const useCriarTecido = () => {
             toast.success('Tecido criado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao criar tecido');
+            toast.error(error.response?.data?.error);
         },
     });
 };
@@ -245,7 +230,7 @@ export const useAtualizarTecido = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async ({ id, ...dados }: any) => {
+        mutationFn: async ({ id, ...dados }: { id: string } & Partial<Omit<Tecido, 'id' | 'createdAt' | 'updatedAt'>>) => {
             const { data } = await apiClient.put<Tecido>(`/tecidos/${id}`, dados);
             return data;
         },
@@ -255,7 +240,7 @@ export const useAtualizarTecido = () => {
             toast.success('Tecido atualizado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao atualizar tecido');
+            toast.error(error.response?.data?.error || 'Erro ao atualizar tecido');
         },
     });
 };

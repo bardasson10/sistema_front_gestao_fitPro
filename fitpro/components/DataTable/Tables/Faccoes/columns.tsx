@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import {  Faccao } from "@/types/production";
+import { dataFormatter } from "@/utils/Formatter/data-brasil-format";
 import { ColumnDef } from "@tanstack/react-table";
 import { Pencil, Trash } from "lucide-react";
 
@@ -27,7 +28,7 @@ export const getFaccoesColumns = (
   {
     accessorKey: 'prazoMedio',
     header: 'Prazo Médio',
-    cell: ({ row }) => <span className="text-muted-foreground">{row.original.prazoMedio}</span>,
+    cell: ({ row }) => <span className="text-muted-foreground">{row.original.prazoMedioDias}</span>,
   },
   {
     accessorKey: 'status',
@@ -43,9 +44,9 @@ export const getFaccoesColumns = (
     },
   },
   {
-    accessorKey: 'criadoEm',
+    accessorKey: 'createdAt',
     header: 'Criado Em',
-    cell: ({ row }) => <span className="text-muted-foreground">{row.original.criadoEm.toDateString()}</span>,
+    cell: ({ row }) => <span className="text-muted-foreground">{dataFormatter(row.original.createdAt)}</span>,
   },
   {
     id: 'actions',

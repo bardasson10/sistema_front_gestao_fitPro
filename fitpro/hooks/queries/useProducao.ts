@@ -1,18 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/services/api/api-client';
 import { toast } from 'sonner';
+import { Faccao } from '@/types/production';
 
 // ============ TIPOS ============
 
-interface Faccao {
-    id: string;
-    nome: string;
-    responsavel: string;
-    contato: string;
-    prazoMedioDias: number;
-    status: 'ativo' | 'inativo';
-    createdAt: string;
-}
+
 
 interface LoteProducao {
     id: string;
@@ -91,8 +84,8 @@ export const useFaccoes = (status?: 'ativo' | 'inativo') => {
         queryKey: ['faccoes', status],
         queryFn: async () => {
             const queryString = status ? `?status=${status}` : '';
-            const { data } = await apiClient.get<Faccao[]>(`/faccoes${queryString}`);
-            return data;
+            const response = await apiClient.get<{ data: Faccao[], pagination: any }>(`/faccoes${queryString}`);
+            return response.data.data;
         },
     });
 };

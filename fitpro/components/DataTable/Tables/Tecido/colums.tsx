@@ -1,40 +1,42 @@
 import { Button } from "@/components/ui/button";
 import { Tecido } from "@/types/production";
+import { dataFormatter } from "@/utils/Formatter/data-brasil-format";
 import { ColumnDef } from "@tanstack/react-table";
 import { Pencil, Trash } from "lucide-react";
 
 // Função auxiliar movida para fora ou para um arquivo de utils
-export const getColorPreview = (cor: string | undefined) => {
-  const colorMap: Record<string, string> = {
-    preto: '#1a1a1a', branco: '#ffffff', rosa: '#f472b6',
-    marrom: '#92400e', azul: '#3b82f6', vermelho: '#ef4444',
-    verde: '#22c55e', amarelo: '#eab308', roxo: '#a855f7', laranja: '#f97316',
-  };
-  return colorMap[cor?.toLowerCase() || ""] || '#6b7280';
-};
+;
 
 export const getFabricColumns = (
   onEdit: (item: Tecido) => void, 
   onRemove: (id: string) => void,
-  fornecedores: { id: string; nome: string }[]
+  fornecedores: { id: string; nome: string }[],
+  cores: {id: string; nome: string; codigoHex: string }[]
 ): ColumnDef<Tecido>[] => [
   {
-    accessorKey: 'tipo',
-    header: 'Tipo',
-    cell: ({ row }) => <span className="font-medium text-foreground">{row.original.tipo}</span>,
+    accessorKey: 'nome',
+    header: 'Nome',
+    cell: ({ row }) => <span className="font-medium text-foreground">{row.original.nome}</span>,
   },
   {
-    accessorKey: 'cor',
+    accessorKey: 'codigoReferencia',
+    header: 'Codigo Referência',
+    cell: ({ row }) => <span className="text-muted-foreground">{row.original.codigoReferencia.toUpperCase()}</span>,
+  },
+  {
+    accessorKey: 'corId',
     header: 'Cor',
-    cell: ({ row }) => (
+    cell: ({ row }) => { 
+      const cor = Array.isArray(cores) ? cores.find(c => c.id === row.original.corId) : null;
+      return (
       <div className="flex items-center gap-2">
         <div 
-          className="h-4 w-4 rounded-full border" 
-          style={{ backgroundColor: getColorPreview(row.original.cor) }} 
+          className="h-6 w-6 rounded-full border dark:border-green-50" 
+          style={{ backgroundColor: cor?.codigoHex || '#FFFFFF' }} 
         />
-        <span>{row.original.cor}</span>
+        <span>{cor?.nome || '-'}</span>
       </div>
-    ),
+    )},
   },
   {
     accessorKey: 'fornecedorId',
@@ -45,19 +47,32 @@ export const getFabricColumns = (
     },
   },
   {
-    accessorKey: 'rendimento',
+    accessorKey: 'rendimentoMetroKg',
     header: 'Rendimento',
-    cell: ({ row }) => <span className="text-muted-foreground">{row.original.rendimento} m/{row.original.unidade}</span>,
+    cell: ({ row }) => <span className="text-muted-foreground">{row.original.rendimentoMetroKg} m/Kg</span>,
+  },
+  {
+    accessorKey: 'larguraMetros',
+    header: 'Largura (m)',
+    cell: ({ row }) => <span className="text-muted-foreground">{row.original.larguraMetros} m</span>,
+  },
+  {
+    accessorKey: 'gramatura',
+    header: 'Gramatura',
+    cell: ({ row }) => <span className="text-muted-foreground">{row.original.gramatura} g/m²</span>,
   },
   {
     accessorKey: 'valorPorKg',
     header: 'Valor por Kg',
-    cell: ({ row }) => <span className="text-muted-foreground">R$ {row.original.valorPorKg.toFixed(2)}</span>,
+    cell: ({ row }) => {
+      const valor = Number(row.original.valorPorKg) || 0;
+      return <span className="text-muted-foreground">R$ {valor.toFixed(2)}</span>;
+    },
   },
   {
-    accessorKey: 'unidade',
-    header: 'Unidade',
-    cell: ({ row }) => <span className="text-muted-foreground">{row.original.unidade.toUpperCase()}</span>,
+    accessorKey: 'createdAt',
+    header: 'Criado Em',
+    cell: ({ row }) => <span className="text-muted-foreground">{dataFormatter(row.original.createdAt)}</span>,
   },
   {
     id: 'actions',

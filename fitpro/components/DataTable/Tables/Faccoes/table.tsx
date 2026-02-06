@@ -3,7 +3,7 @@
 "use client";
 
 import React from "react";
-import { Faccao} from "@/types/production";
+import { Faccao } from "@/types/production";
 import { DataTable } from "@/components/DataTable";
 import { getFaccoesColumns } from "./columns";
 import { SemDadosComponent } from "@/components/ErrorManagementComponent/AnyData";
@@ -25,16 +25,19 @@ export const FaccoesTable: React.FC<FaccoesTableProps> = ({
     [onEdit, onRemove]
   );
 
+  const data = Array.isArray(faccoes) ? faccoes : [];
+
   return (
     <div className="w-full">
-      <SemDadosComponent<Faccao> nomeDado="facção" data={faccoes} />
-      <DataTable
-        columns={columns}
-        data={faccoes}
-        isLoading={isLoading}
-        getRowId={(row) => row.id}
-      />
-      
+      {data.length === 0 ? (
+        <SemDadosComponent<Faccao> nomeDado="facção" data={data} />) :
+        (<DataTable
+          columns={columns}
+          data={data}
+          isLoading={isLoading}
+          getRowId={(row) => row.id}
+        />)}
+
     </div>
   );
 };

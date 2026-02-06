@@ -3,7 +3,7 @@
 "use client";
 
 import React from "react";
-import { Fornecedor} from "@/types/production";
+import { Fornecedor } from "@/types/production";
 import { DataTable } from "@/components/DataTable";
 import { getFornecedoresColumns } from "./columns";
 import { SemDadosComponent } from "@/components/ErrorManagementComponent/AnyData";
@@ -26,13 +26,15 @@ export const FornecedorTable: React.FC<FornecedorTableProps> = ({
 
   return (
     <div className="w-full">
-      <SemDadosComponent<Fornecedor> nomeDado="fornecedor" data={fornecedores} />
-      <DataTable
-        columns={columns}
-        data={fornecedores}
-        isLoading={isLoading}
-        getRowId={(row) => row.id}
-      />
+      {fornecedores.length === 0 ? (
+        <SemDadosComponent<Fornecedor> nomeDado="fornecedor" data={fornecedores} />
+      ) : (
+        <DataTable
+          columns={columns}
+          data={fornecedores}
+          isLoading={isLoading}
+          getRowId={(row) => row.id}
+        />)}
     </div>
   );
 };

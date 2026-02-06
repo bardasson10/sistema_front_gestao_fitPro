@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
 import { FaccoesFormValues } from "@/schemas/faccoes-schemas";
+import { boolean } from "zod";
 
-export function FaccaoForm() {
+export function FaccaoForm({isEditing}: {isEditing: boolean}) {
   const { control } = useFormContext<FaccoesFormValues>();
 
   return (
@@ -35,6 +36,7 @@ export function FaccaoForm() {
         )}
       />
 
+      {isEditing && (
       <FormField
         control={control}
         name="status"
@@ -54,16 +56,16 @@ export function FaccaoForm() {
             <FormMessage />
           </FormItem>
         )}
-      />
+      />)}
 
       <div className="grid grid-cols-2 gap-4">
         <FormField
           control={control}
-          name="prazoMedio"
+          name="prazoMedioDias"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Prazo médio</FormLabel>
-              <FormControl><Input type="number" {...field} onChange={(e) => field.onChange(parseNumber(e.target.value))} /></FormControl>
+              <FormControl><Input type="number" defaultValue={field.value} onChange={(e) => field.onChange(parseNumber(e.target.value))} /></FormControl>
               <FormMessage />
             </FormItem>
           )}

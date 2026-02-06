@@ -22,31 +22,41 @@ export interface Faccao {
   nome: string;
   responsavel: string;
   contato: string;
-  prazoMedio: number; // dias
+  prazoMedioDias: number; // dias
   status: 'ativo' | 'inativo' | '';
-  criadoEm: Date;
+  createdAt: string;
+}
+
+export interface Cor {
+  id: string;
+  nome: string;
+  codigoHex: string;
 }
 
 export interface Tecido {
   id: string;
   tipo: string;
-  cor: string;
-  largura: number; // cm
-  rendimento: number; // metros por kg
-  valorPorKg: number; // R$
-  unidade: 'kg';
-  fornecedorId: string; // vínculo com fornecedor
-  criadoEm: Date;
+  corId: string;
+  nome: string;
+  codigoReferencia: string;
+  fornecedorId: string;
+  rendimentoMetroKg: number;
+  larguraMetros: number;
+  valorPorKg: number;
+  gramatura: number;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export interface RoloTecido {
   id: string;
   tecidoId: string;
-  tecido?: Tecido;
-  identificacao: string;
-  pesoKg: number;
-  status: 'disponivel' | 'reservado' | 'utilizado';
-  criadoEm: Date;
+  codigoBarraRolo: string;
+  pesoInicialKg: number;
+  pesoAtualKg: number;
+  situacao: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export interface MovimentacaoEstoque {

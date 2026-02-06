@@ -4,17 +4,17 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FabricFormValues } from "@/schemas/tecido-schema";
-import { Fornecedor } from "@/types/production";
+import { Cor, Fornecedor } from "@/types/production";
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
 
-export function FabricForm({ fornecedores }: { fornecedores: Fornecedor[] }) {
+export function FabricForm({ fornecedores, cores }: { fornecedores: Fornecedor[]; cores: Cor[] }) {
   const { control } = useFormContext<FabricFormValues>();
 
   return (
     <div className="space-y-4">
       <FormField
         control={control}
-        name="tipo"
+        name="nome"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Tipo de Tecido</FormLabel>
@@ -26,11 +26,32 @@ export function FabricForm({ fornecedores }: { fornecedores: Fornecedor[] }) {
 
       <FormField
         control={control}
-        name="cor"
+        name="codigoReferencia"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Código de Referência</FormLabel>
+            <FormControl><Input {...field} placeholder="Ex: REF123" /></FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="corId"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Cor</FormLabel>
-            <FormControl><Input {...field} placeholder="Ex: Preto" /></FormControl>
+            <Select onValueChange={field.onChange} value={field.value}>
+              <FormControl>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {cores.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.nome} - {c.codigoHex}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <FormMessage />
           </FormItem>
         )}
@@ -56,26 +77,27 @@ export function FabricForm({ fornecedores }: { fornecedores: Fornecedor[] }) {
           </FormItem>
         )}
       />
+      
 
       <div className="grid grid-cols-2 gap-4">
         <FormField
           control={control}
-          name="largura"
+          name="larguraMetros"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Largura (cm)</FormLabel>
-              <FormControl><Input type="number" {...field} onChange={(e) => field.onChange(parseNumber(e.target.value))} /></FormControl>
+              <FormControl><Input step={0.1} type="number" value={parseNumber(field.value)} onChange={(e) => field.onChange(parseNumber(e.target.valueAsNumber))} /></FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         <FormField
           control={control}
-          name="rendimento"
+          name="rendimentoMetroKg"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Rendimento (m/kg)</FormLabel>
-              <FormControl><Input type="number" step="0.1" {...field} onChange={(e) => field.onChange(parseNumber(e.target.value))} /></FormControl>
+              <FormControl><Input step={0.01} type="number"  value={parseNumber(field.value)} onChange={(e) => field.onChange(parseNumber(e.target.valueAsNumber))} /></FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -86,11 +108,23 @@ export function FabricForm({ fornecedores }: { fornecedores: Fornecedor[] }) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Valor por Kg (R$)</FormLabel>
-              <FormControl><Input type="number" step="0.01" {...field} onChange={(e) => field.onChange(parseNumber(e.target.value))} /></FormControl>
+              <FormControl><Input step={0.01} type="number" value={parseNumber(field.value)} onChange={(e) => field.onChange(parseNumber(e.target.valueAsNumber))} /></FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+        <FormField
+          control={control}
+          name="gramatura"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Gramatura (g/m²)</FormLabel>
+              <FormControl><Input type="number" value={parseNumber(field.value)} onChange={(e) => field.onChange(parseNumber(e.target.valueAsNumber))} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
       </div>
     </div>
   );
