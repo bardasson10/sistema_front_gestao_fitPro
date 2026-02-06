@@ -26,43 +26,43 @@ const initialValues: RoloTecidoFormValues = {
 };
 
 export default function Estoque() {
-  const { tecidos, rolos, isLoading, addRolo, updateRolo } = useProduction();
+  // const { tecidos, rolos, isLoading, addRolo, updateRolo } = useProduction();
 
-  const { id, cor, tipo } = tecidos.map(t => t)[0] || { id: '', cor: '', tipo: '' };
-  const estoqueAgrupado = React.useMemo(
-    () => getGroupedStockColumns(rolos, [{ id, cor, tipo }]),
-    [rolos, tecidos]
-  );
+  // const { id, cor, tipo } = tecidos.map(t => t)[0] || { id: '', cor: '', tipo: '' };
+  // const estoqueAgrupado = React.useMemo(
+  //   () => getGroupedStockColumns(rolos, [{ id, cor, tipo }]),
+  //   [rolos, tecidos]
+  // );
 
-  const pesoTotal = rolos.reduce((acc, curr) => acc + (Number(curr.pesoKg) || 0), 0);
+  // const pesoTotal = rolos.reduce((acc, curr) => acc + (Number(curr.pesoKg) || 0), 0);
 
-  const form = useForm<RoloTecidoFormValues>({
-    resolver: zodResolver(roloTecidoSchema),
-    defaultValues: initialValues,
-  });
+  // const form = useForm<RoloTecidoFormValues>({
+  //   resolver: zodResolver(roloTecidoSchema),
+  //   defaultValues: initialValues,
+  // });
 
-  const {
-    isOpen,
-    editingItem,
-    handleOpen,
-    handleEdit,
-    onSubmit,
-    isSubmitting,
-    handleClose } = useFormModal({
-      initialValues,
-      form,
-      onSave: (values, id) => {
-        if (id) {
-          updateRolo(id, values);
-        } else {
-          addRolo(values);
-        }
-        handleClose();
-      }
-    });
+  // const {
+  //   isOpen,
+  //   editingItem,
+  //   handleOpen,
+  //   handleEdit,
+  //   onSubmit,
+  //   isSubmitting,
+  //   handleClose } = useFormModal({
+  //     initialValues,
+  //     form,
+  //     onSave: (values, id) => {
+  //       if (id) {
+  //         updateRolo(id, values);
+  //       } else {
+  //         addRolo(values);
+  //       }
+  //       handleClose();
+  //     }
+  //   });
   return (
     <main>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <MetricCard
           title="Rolos Disponíveis"
           value={rolos.length}
@@ -138,7 +138,7 @@ export default function Estoque() {
             <MobileViewStockResume isLoading={isLoading} rolos={rolos} tecidos={tecidos} />
           </div>
         </TabsContent>
-      </Tabs>
+      </Tabs> */}
     </main>
   )
 }

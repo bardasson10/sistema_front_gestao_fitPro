@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Colaborador } from "@/types/production";
+import { dataFormatter } from "@/utils/Formatter/data-brasil-format";
 import { ColumnDef } from "@tanstack/react-table";
 import { Pencil, Trash } from "lucide-react";
 
@@ -15,9 +16,9 @@ export const getColaboradoresColumns = (
     cell: ({ row }) => <span className="font-medium text-foreground">{row.original.nome}</span>,
   },
   {
-    accessorKey: 'funcao',
+    accessorKey: 'funcaoSetor',
     header: 'Função',
-    cell: ({ row }) => <span className="text-muted-foreground">{row.original.funcao}</span>,
+    cell: ({ row }) => <span className="text-muted-foreground">{row.original.funcaoSetor}</span>,
   },
   {
     accessorKey: 'status',
@@ -33,9 +34,9 @@ export const getColaboradoresColumns = (
     },
   },
   {
-    accessorKey: 'criadoEm',
+    accessorKey: 'createdAt',
     header: 'Criado Em',
-    cell: ({ row }) => <span className="text-muted-foreground">{row.original.criadoEm.toDateString()}</span>,
+    cell: ({ row }) => <span className="text-muted-foreground">{dataFormatter(row.original.createdAt)}</span>,
   },
   {
     id: 'actions',

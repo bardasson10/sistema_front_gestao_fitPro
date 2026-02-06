@@ -3,7 +3,7 @@
 "use client";
 
 import React from "react";
-import { Colaborador} from "@/types/production";
+import { Colaborador } from "@/types/production";
 import { DataTable } from "@/components/DataTable";
 import { getColaboradoresColumns } from "./columns";
 import { SemDadosComponent } from "@/components/ErrorManagementComponent/AnyData";
@@ -24,16 +24,21 @@ export const ColaboradorTable: React.FC<ColaboradorTableProps> = ({
     [onEdit, onRemove]
   );
 
+  const data = Array.isArray(colaboradores) ? colaboradores : [];
   return (
     <div className="w-full">
-      <SemDadosComponent<Colaborador> nomeDado="colaborador" data={colaboradores} />
-      <DataTable
-        columns={columns}
-        data={colaboradores}
-        isLoading={isLoading}
-        getRowId={(row) => row.id}
-      />
-      
+      {
+        data.length === 0 ?
+          (<SemDadosComponent<Colaborador> nomeDado="colaborador" data={colaboradores} />) 
+          :
+          (<DataTable
+            columns={columns}
+            data={colaboradores}
+            isLoading={isLoading}
+            getRowId={(row) => row.id}
+          />)
+          }
+
     </div>
   );
 };

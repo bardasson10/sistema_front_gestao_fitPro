@@ -6,8 +6,9 @@ import { MobileViewColaborador } from "@/components/MobileViewCards/ColaboradorC
 import { FormModal } from "@/components/Modal/base-modal-form";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
+import { useAtualizarColaborador, useColaborador, useColaboradores, useCriarColaborador, useDeletarColaborador } from "@/hooks/queries/useColaboradores";
+import { useAuth } from "@/hooks/use-auth";
 import { useFormModal } from "@/hooks/use-form-modal";
-import { useProduction } from "@/providers/PrivateContexts/ProductionProvider";
 import { ColaboradorFormValues, colaboradorSchema } from "@/schemas/colaborador-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
@@ -15,14 +16,27 @@ import { useForm } from "react-hook-form";
 
 const initialValues: ColaboradorFormValues = {
   nome: '',
-  funcao: '',
+  email: '',
+  perfil: '',
+  funcaoSetor: '',
   status: '',
 };
   
 
 export default function Colaboradores() {
-  const { colaboradores, addColaborador, updateColaborador, removeColaborador, isLoading } = useProduction();
 
+  const { user } = useAuth();
+  
+  const { data: colaboradoresData, isLoading } = useColaboradores({
+    userPerfil: user.perfil as 'ADM' | 'GERENTE' | 'FUNCIONARIO',
+    excludeUserId: user.id,
+  });
+
+  const colaboradores = colaboradoresData?.data || [];
+
+  const {mutate: criarColaborador, isPending: isCreating} = useCriarColaborador();
+  const { mutate: atualizar, isPending: isUpdating } = useAtualizarColaborador();
+  const { mutate: deletar } = useDeletarColaborador();
 
   const form = useForm<ColaboradorFormValues>({
     resolver: zodResolver(colaboradorSchema),
@@ -47,9 +61,9 @@ export default function Colaboradores() {
     initialValues,
     onSave: (values, id) => {
       if (id) {
-        updateColaborador(id, values);
+        atualizar({ id, ...values });
       } else {
-        addColaborador(values);
+        criarColaborador(values);
       }
       handleClose();
     }
@@ -64,7 +78,7 @@ export default function Colaboradores() {
       <div className="flex justify-between items-center mb-6">
 
         <div className="text-sm text-muted-foreground p-4 items-center">
-          {colaboradores.length} colaboradores cadastrados
+          {colaboradoresData?.pagination.total || 0} colaboradores cadastrados
         </div>
 
         <FormModal
@@ -73,6 +87,7 @@ export default function Colaboradores() {
           title={editingItem ? 'Editar Colaborador' : "Novo Colaborador"}
           onSubmit={onSubmit}
           loading={isSubmitting}
+          isViewSaveOrCancel={true}
           trigger={
             <Button onClick={handleOpen} >
               <Plus className="mr-2 h-4 w-4" /> Novo Colaborador
@@ -95,7 +110,7 @@ export default function Colaboradores() {
           onClose={() => setIsRemoveOpen(false)} 
           title='Deseja Remover?'
           onConfirm={(id) => {
-            removeColaborador(id);
+            deletar(id);
             setIsRemoveOpen(false); 
           }}
         />  

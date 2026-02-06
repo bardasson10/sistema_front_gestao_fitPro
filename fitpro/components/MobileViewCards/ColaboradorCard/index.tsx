@@ -26,7 +26,7 @@ export const MobileViewColaborador = ({
   return (
     <div className="flex flex-col gap-4 p-4">
       <SemDadosComponent<Colaborador> nomeDado="colaborador" data={colaboradores} />
-      {colaboradores.map((item) => (
+      {Array.isArray(colaboradores) && colaboradores.map((item) => (
         <BaseCard
           key={item.id}
           title={item.nome}
@@ -50,7 +50,7 @@ export const MobileViewColaborador = ({
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Função:</span>
                 <span className="font-medium">
-                  {item.funcao || '-'}
+                  {item.funcaoSetor || '-'}
                 </span>
               </div>
             </div>

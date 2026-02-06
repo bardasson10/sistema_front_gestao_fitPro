@@ -62,7 +62,7 @@ export const MobileViewFaccao = ({
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Prazo médio:</span>
                 <span className="font-medium">
-                  {item.prazoMedio || '-'}
+                  {item.prazoMedioDias || '-'}
                 </span>
               </div>
             </div>

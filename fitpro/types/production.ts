@@ -1,11 +1,21 @@
 // Core types for the production management system
+export interface PaginatedResponse {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+}
 
 export interface Colaborador {
   id: string;
   nome: string;
-  funcao: 'cortador' | 'costureira interna' | 'expedicao' | 'responsavel' | 'auxiliar' | '';
+  email: string;
+  perfil: 'ADM' | 'GERENTE' | 'FUNCIONARIO' | '';
   status: 'ativo' | 'inativo' | '';
-  criadoEm: Date;
+  funcaoSetor: string;
+  createdAt: string;
+  updatedAt?: string;
+  pagination?: PaginatedResponse;
 }
 
 export interface Fornecedor {
@@ -133,7 +143,7 @@ export interface Conferencia {
   liberadoPagamento: boolean;
 }
 
-export type FuncaoColaborador = Colaborador['funcao'];
+export type FuncaoColaborador = Colaborador['funcaoSetor'];
 export type TipoFornecedor = Fornecedor['tipo'];
 export type StatusLote = LoteProducao['status'];
 export type TipoProduto = GradeProduto['produto'];
@@ -144,31 +154,31 @@ export type AvaliacaoQualidade = Conferencia['avaliacaoQualidade'];
 export interface ProductionContextType {
   // Colaboradores
   colaboradores: Colaborador[];
-  addColaborador: (colaborador: Omit<Colaborador, 'id' | 'criadoEm'>) => void;
+  addColaborador: (colaborador: Omit<Colaborador, 'id' | 'createdAt'>) => void;
   updateColaborador: (id: string, colaborador: Partial<Colaborador>) => void;
   removeColaborador: (id: string) => void;
   
   // Fornecedores
   fornecedores: Fornecedor[];
-  addFornecedor: (fornecedor: Omit<Fornecedor, 'id' | 'criadoEm'>) => void;
+  addFornecedor: (fornecedor: Omit<Fornecedor, 'id' | 'createdAt'>) => void;
   updateFornecedor: (id: string, fornecedor: Partial<Fornecedor>) => void;
   removeFornecedor: (id: string) => void;
   
   // Facções
   faccoes: Faccao[];
-  addFaccao: (faccao: Omit<Faccao, 'id' | 'criadoEm'>) => void;
+  addFaccao: (faccao: Omit<Faccao, 'id' | 'createdAt'>) => void;
   updateFaccao: (id: string, faccao: Partial<Faccao>) => void;
   removeFaccao: (id: string) => void;
   
   // Tecidos
   tecidos: Tecido[];
-  addTecido: (tecido: Omit<Tecido, 'id' | 'criadoEm'>) => void;
+  addTecido: (tecido: Omit<Tecido, 'id' | 'createdAt'>) => void;
   updateTecido: (id: string, tecido: Partial<Tecido>) => void;
   removeTecido: (id: string) => void;
   
   // Rolos de Tecido
   rolos: RoloTecido[];
-  addRolo: (rolo: Omit<RoloTecido, 'id' | 'criadoEm'>) => void;
+  addRolo: (rolo: Omit<RoloTecido, 'id' | 'createdAt'>) => void;
   updateRolo: (id: string, rolo: Partial<RoloTecido>) => void;
   removeRolo: (id: string) => void;
   

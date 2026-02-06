@@ -14,12 +14,13 @@ let cacheTime = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 
 export function useAuth() {
-    const [user, setUser] = useState({ nome: "", email: "", perfil: "", urlAvatar: "" })
+    const [user, setUser] = useState({id: "", nome: "", email: "", perfil: "", urlAvatar: "" })
 
     useEffect(() => {
         const fetchUserData = async () => {
             const userData = await getAuthUserData();
             setUser({
+                id: userData?.id || "",
                 nome: userData?.nome || "",
                 email: userData?.email || "",
                 perfil: userData?.perfil || "",

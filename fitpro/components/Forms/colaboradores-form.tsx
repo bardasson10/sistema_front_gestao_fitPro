@@ -12,6 +12,7 @@ export function ColaboradoresForm() {
 
   return (
     <div className="space-y-4">
+      
       <FormField
         control={control}
         name="nome"
@@ -24,10 +25,42 @@ export function ColaboradoresForm() {
         )}
       />
 
+      <FormField
+        control={control}
+        name="email"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Email</FormLabel>
+            <FormControl><Input {...field} placeholder="Ex: joao.silva@example.com" /></FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
       <FormField
         control={control}
-        name="funcao"
+        name="perfil"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Perfil</FormLabel>
+            <Select onValueChange={field.onChange} value={field.value}>
+              <FormControl>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {["ADM", "GERENTE", "FUNCIONARIO"].map((perfil) => (
+                  <SelectItem key={perfil} value={perfil}>{perfil}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="funcaoSetor"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Função</FormLabel>
@@ -36,7 +69,7 @@ export function ColaboradoresForm() {
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               </FormControl>
               <SelectContent>
-                {['cortador' ,'costureira_interna' , 'expedicao' , 'responsavel' , 'auxiliar'].map((funcao) => (
+                {['cortador' ,'costureira interna' , 'expedicao' , 'responsavel' , 'auxiliar'].map((funcao) => (
                   <SelectItem key={funcao} value={funcao}>{funcao}</SelectItem>
                 ))}
               </SelectContent>

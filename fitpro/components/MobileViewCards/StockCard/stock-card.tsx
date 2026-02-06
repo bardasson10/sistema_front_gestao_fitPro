@@ -1,6 +1,6 @@
 import { SemDadosComponent } from "@/components/ErrorManagementComponent/AnyData"
 import { BaseCard } from "@/components/MobileViewCards/base-card"
-import { getColorPreview } from "@/components/DataTable/Tables/Tecido/colums"
+
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { RoloTecido } from "@/types/production"
@@ -42,18 +42,18 @@ export const MobileViewStock = ({
         const tecidoDoRolo = tecidos.find(t => t.id === item.tecidoId);
         
         // Busca o status específico deste rolo
-        const statusInfo = statusMap[item.status as keyof typeof statusMap] || statusMap.disponivel;
+        // const statusInfo = statusMap[item.status as keyof typeof statusMap] || statusMap.disponivel;
         return (
           <BaseCard
             key={item.id}
-            title={item.identificacao}
+            // title={item.identificacao}
             cardClassName="min-h-fit"
             headerClassName="pb-2"
             action={
               <div
                 key={tecidoDoRolo?.id}
                 className="h-5 w-5 rounded-full border shadow-sm"
-                style={{ backgroundColor: getColorPreview(tecidoDoRolo?.cor || "") }}
+                style={{ backgroundColor: "" }}
                 title={tecidoDoRolo?.cor}
               />
 
@@ -63,12 +63,12 @@ export const MobileViewStock = ({
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Peso:</span>
                   <span className="font-medium">
-                    {item.pesoKg.toFixed(1)} Kg
+                    {/* {item.pesoKg.toFixed(1)} Kg */}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Status:</span>
-                  <StatusBadge status={statusInfo.type}>{statusInfo.label}</StatusBadge>
+                  {/* <StatusBadge status={statusInfo.type}>{statusInfo.label}</StatusBadge> */}
                 </div>
               </div>
             }
