@@ -82,7 +82,7 @@ export default function Fornecedores() {
     if (editingItem) {
       form.reset(editingItem as FornecedorFormValues);
     }
-  }, [editingItem, form]);
+  }, [editingItem]);
 
   return (
     <main className="space-y-6">

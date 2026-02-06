@@ -86,7 +86,7 @@ export default function Faccoes() {
     if (editingItem) {
       form.reset(editingItem as FaccoesFormValues);
     }
-  }, [editingItem, form]);
+  }, [editingItem]);
 
   return (
     <main className="space-y-6">

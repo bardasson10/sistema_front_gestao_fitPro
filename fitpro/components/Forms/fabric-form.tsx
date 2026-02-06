@@ -7,6 +7,7 @@ import { FabricFormValues } from "@/schemas/tecido-schema";
 import { Cor, Fornecedor } from "@/types/production";
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
 
+
 export function FabricForm({ fornecedores, cores }: { fornecedores: Fornecedor[]; cores: Cor[] }) {
   const { control } = useFormContext<FabricFormValues>();
 
@@ -86,7 +87,7 @@ export function FabricForm({ fornecedores, cores }: { fornecedores: Fornecedor[]
           render={({ field }) => (
             <FormItem>
               <FormLabel>Largura (cm)</FormLabel>
-              <FormControl><Input step={0.1} type="number" value={parseNumber(field.value)} onChange={(e) => field.onChange(parseNumber(e.target.valueAsNumber))} /></FormControl>
+              <FormControl><Input step={0.1} type="number" value={parseNumber(field.value)} onChange={(e) => field.onChange(parseNumber(e.target.value))} /></FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -97,7 +98,7 @@ export function FabricForm({ fornecedores, cores }: { fornecedores: Fornecedor[]
           render={({ field }) => (
             <FormItem>
               <FormLabel>Rendimento (m/kg)</FormLabel>
-              <FormControl><Input step={0.01} type="number"  value={parseNumber(field.value)} onChange={(e) => field.onChange(parseNumber(e.target.valueAsNumber))} /></FormControl>
+              <FormControl><Input step={0.01} type="number"  value={parseNumber(field.value)} onChange={(e) => field.onChange(parseNumber(e.target.value))} /></FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -108,7 +109,7 @@ export function FabricForm({ fornecedores, cores }: { fornecedores: Fornecedor[]
           render={({ field }) => (
             <FormItem>
               <FormLabel>Valor por Kg (R$)</FormLabel>
-              <FormControl><Input step={0.01} type="number" value={parseNumber(field.value)} onChange={(e) => field.onChange(parseNumber(e.target.valueAsNumber))} /></FormControl>
+              <FormControl><Input step={0.01} type="number" value={parseNumber(field.value)} onChange={(e) => field.onChange(parseNumber(e.target.value))} /></FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -119,7 +120,7 @@ export function FabricForm({ fornecedores, cores }: { fornecedores: Fornecedor[]
           render={({ field }) => (
             <FormItem>
               <FormLabel>Gramatura (g/m²)</FormLabel>
-              <FormControl><Input type="number" value={parseNumber(field.value)} onChange={(e) => field.onChange(parseNumber(e.target.valueAsNumber))} /></FormControl>
+              <FormControl><Input  step={0.01} type="number" value={parseNumber(field.value)} onChange={(e) => field.onChange(parseNumber(e.target.value))} /></FormControl>
               <FormMessage />
             </FormItem>
           )}

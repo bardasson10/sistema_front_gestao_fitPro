@@ -38,7 +38,7 @@ export default function Tecidos() {
   // Queries
   const { data: tecidosData, isLoading } = useTecidos();
   const tecidos = tecidosData || [];
-  
+
   const { data: fornecedoresData } = useFornecedores();
   const fornecedores = fornecedoresData || [];
 
@@ -54,6 +54,7 @@ export default function Tecidos() {
     resolver: zodResolver(fabricSchema),
     defaultValues: initialValues,
   });
+
 
   const {
     isOpen,
@@ -72,8 +73,8 @@ export default function Tecidos() {
     initialValues,
     onSave: (values, id) => {
       if (id) {
-        atualizar({ 
-          id, 
+        atualizar({
+          id,
           fornecedorId: values.fornecedorId,
           corId: values.corId,
           nome: values.nome,
@@ -109,9 +110,20 @@ export default function Tecidos() {
   // Atualizar formulário quando selecionando item para editar
   useEffect(() => {
     if (editingItem) {
-      form.reset(editingItem as FabricFormValues);
+      form.reset({
+        editingItem,
+        fornecedorId: form.getValues("fornecedorId"),
+        corId: form.getValues("corId"),
+        nome: form.getValues("nome"),
+        codigoReferencia: form.getValues("codigoReferencia") || '',
+        rendimentoMetroKg: parseNumber(form.getValues("rendimentoMetroKg")) || 0,
+        larguraMetros: parseNumber(form.getValues("larguraMetros")) || 0,
+        valorPorKg: parseNumber(form.getValues("valorPorKg")) || 0,
+        gramatura: parseNumber(form.getValues("gramatura")) || 0,
+      } as FabricFormValues);
     }
-  }, [editingItem, form]);
+  }, [editingItem]);
+
 
 
   return (

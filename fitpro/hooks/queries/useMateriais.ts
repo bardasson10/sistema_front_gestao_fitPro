@@ -240,7 +240,7 @@ export const useAtualizarTecido = () => {
             toast.success('Tecido atualizado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error || 'Erro ao atualizar tecido');
+            toast.error(error.response?.data?.error);
         },
     });
 };

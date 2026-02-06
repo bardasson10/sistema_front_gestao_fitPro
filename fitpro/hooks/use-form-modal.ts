@@ -1,18 +1,19 @@
 import { useState } from 'react';
 import { UseFormReturn, FieldValues, DefaultValues, Path } from 'react-hook-form';
-import { set } from 'zod';
 
-interface UseFormModalProps<T extends FieldValues> {
+interface UseFormModalProps<T extends FieldValues, TItem extends { id: string } = { id: string }> {
   form: UseFormReturn<T>;
   initialValues: DefaultValues<T>;
   onSave: (values: T, id?: string) => void;
+  transformItemToForm?: (item: TItem) => T;
 }
 
-export function useFormModal<T extends FieldValues, TItem extends { id: string }>({
+export function useFormModal<T extends FieldValues, TItem extends { id: string } = { id: string }>({
   form,
   initialValues,
   onSave,
-}: UseFormModalProps<T>) {
+  transformItemToForm,
+}: UseFormModalProps<T, TItem>) {
   const [isOpen, setIsOpen] = useState(false);
   const [isRemoveOpen, setIsRemoveOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<TItem | null>(null);
@@ -27,7 +28,8 @@ export function useFormModal<T extends FieldValues, TItem extends { id: string }
 
   const handleEdit = (item: TItem) => {
     setEditingItem(item);
-    form.reset(item as unknown as any);
+    const formValues = transformItemToForm ? transformItemToForm(item) : (item as unknown as T);
+    form.reset(formValues);
     setIsOpen(true);
   };
 
