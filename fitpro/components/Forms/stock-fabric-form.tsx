@@ -14,7 +14,7 @@ interface StockFabricFormProps {
 }
 
 
-export function StockFabricForm({ tecidos, cores }: StockFabricFormProps)  {
+export function StockFabricForm({ tecidos, cores }: StockFabricFormProps) {
   const { control } = useFormContext<RoloTecidoFormValues>();
 
   return (
@@ -43,7 +43,10 @@ export function StockFabricForm({ tecidos, cores }: StockFabricFormProps)  {
               </FormControl>
               <SelectContent>
                 {tecidos.map(tecido => (
-                  <SelectItem key={tecido.id} value={tecido.id}>{tecido.tipo} - {cores.find(cor => cor.id === tecido.corId)?.nome}</SelectItem>
+                  <SelectItem
+                    key={tecido.id}
+                    value={tecido.id}>{tecido.codigoReferencia} - {cores.find(cor => cor.id === tecido.corId)?.nome}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -53,37 +56,52 @@ export function StockFabricForm({ tecidos, cores }: StockFabricFormProps)  {
       />
 
       <div className="grid grid-cols-2 gap-4">
-        <FormField
+        {/* <FormField
           control={control}
-          name="pesoAtualKg"
+          name="pesoInicialKg"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Peso (kg)</FormLabel>
-              <FormControl><Input type="number" {...field} onChange={(e) => field.onChange(parseNumber(e.target.value))} /></FormControl>
+              <FormLabel>Peso Inicial (kg)</FormLabel>
+              <FormControl><Input type="number" step="0.01" {...field} onChange={(e) => field.onChange(parseNumber(e.target.value))} /></FormControl>
               <FormMessage />
             </FormItem>
           )}
-        />
-        <FormField
-          control={control}
-          name="situacao"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Status</FormLabel>
+        /> */}
+
+          <FormField
+            control={control}
+            name="pesoAtualKg"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Peso (kg)</FormLabel>
+                <FormControl><Input type="number" step="0.01" {...field} onChange={(e) => field.onChange(parseNumber(e.target.value))} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+      </div>
+
+      <FormField
+        control={control}
+        name="situacao"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Status</FormLabel>
             <Select onValueChange={field.onChange} value={field.value}>
               <FormControl>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               </FormControl>
               <SelectContent>
                 <SelectItem value="disponivel">Disponível</SelectItem>
-                <SelectItem value="indisponivel">Indisponível</SelectItem>
                 <SelectItem value="reservado">Reservado</SelectItem>
+                <SelectItem value="em_uso">Em Uso</SelectItem>
+                <SelectItem value="descartado">Descartado</SelectItem>
               </SelectContent>
             </Select>
-            </FormItem>
-          )}
-        />
-      </div>
+          </FormItem>
+        )}
+      />
     </div>
   );
 }

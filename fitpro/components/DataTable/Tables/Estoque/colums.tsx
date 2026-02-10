@@ -33,14 +33,14 @@ export const getStockColumns = (
         )
       },
     },
-    {
-      accessorKey: 'pesoInicialKg',
-      header: 'Peso (Kg)',
-      cell: ({ row }) => <span className="text-muted-foreground">{row.original.pesoInicialKg}</span>,
-    },
+    // {
+    //   accessorKey: 'pesoInicialKg',
+    //   header: 'Peso Inicial (Kg)',
+    //   cell: ({ row }) => <span className="text-muted-foreground">{row.original.pesoInicialKg}</span>,
+    // },
     {
       accessorKey: 'pesoAtualKg',
-      header: 'Peso (Kg)',
+      header: 'Peso Atual (Kg)',
       cell: ({ row }) => <span className="text-muted-foreground">{row.original.pesoAtualKg}</span>,
     },
     {

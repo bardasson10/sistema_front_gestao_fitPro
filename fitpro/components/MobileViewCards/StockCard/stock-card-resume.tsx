@@ -35,7 +35,7 @@ export const MobileViewStockResume = ({
       {resumoData.map((item) => (
         <BaseCard
           key={item.id}
-          title={item.tipo}
+          title={item.codigoReferencia}
           cardClassName="min-h-fit"
           headerClassName="pb-2"
           action={

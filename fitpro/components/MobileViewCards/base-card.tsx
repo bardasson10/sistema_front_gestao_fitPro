@@ -9,7 +9,7 @@ import {
 import { cn } from "@/lib/utils"
 
 interface BaseCardProps {
-  title?: string;
+  title?: React.ReactNode;
   description?: string;
   action?: React.ReactNode;
   content?: React.ReactNode;

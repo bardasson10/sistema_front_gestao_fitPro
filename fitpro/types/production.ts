@@ -73,10 +73,14 @@ export interface EstoqueTecido {
 export interface MovimentacaoEstoque {
   id: string;
   estoqueRoloId: string;
-  usuarioId: string;
   tipoMovimentacao: 'entrada' | 'saida' | 'ajuste' | 'devolucao';
   pesoMovimentado: number;
   createdAt: string;
+  usuario: {
+    id: string;
+    nome: string;
+    funcaoSetor: string;
+  }
 }
 
 export interface LoteProducao {

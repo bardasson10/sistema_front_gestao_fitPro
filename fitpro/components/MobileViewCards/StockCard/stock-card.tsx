@@ -45,7 +45,7 @@ export const MobileViewStock = ({
         return (
           <BaseCard
             key={item.id}
-            // title={item.identificacao}
+            title={tecidoDoRolo?.codigoReferencia || 'Tecido Desconhecido'}
             cardClassName="min-h-fit"
             headerClassName="pb-2"
             action={
@@ -60,7 +60,13 @@ export const MobileViewStock = ({
             content={
               <div className="grid gap-1 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Peso:</span>
+                  <span className="text-muted-foreground">Peso Inicial:</span>
+                  <span className="font-medium">
+                    {item.pesoInicialKg} Kg
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Peso Atual:</span>
                   <span className="font-medium">
                     {item.pesoAtualKg} Kg
                   </span>

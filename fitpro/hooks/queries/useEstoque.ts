@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/services/api/api-client';
 import { toast } from 'sonner';
-import { EstoqueTecido, MovimentacaoEstoque } from '@/types/production';
+import { EstoqueTecido, MovimentacaoEstoque, PaginatedResponse } from '@/types/production';
 
 // ============ TIPOS ============
 
@@ -18,6 +18,16 @@ interface RelatorioEstoque {
     movimentacoesMes: number;
 }
 
+interface EstoqueTecidoListResponse {
+    data: EstoqueTecido[];
+    pagination: PaginatedResponse;
+}
+
+interface MovimentacaoEstoqueListResponse {
+    data: MovimentacaoEstoque[];
+    pagination: PaginatedResponse;
+}
+
 // ============ ESTOQUE ROLOS ============
 
 export const useEstoqueTecidos = (filtros?: { tecidoId?: string; situacao?: string }) => {
@@ -29,10 +39,10 @@ export const useEstoqueTecidos = (filtros?: { tecidoId?: string; situacao?: stri
             if (filtros?.situacao) params.append('situacao', filtros.situacao);
 
             const queryString = params.toString();
-            const { data } = await apiClient.get<EstoqueTecido[]>(
+            const { data } = await apiClient.get<EstoqueTecido[] | EstoqueTecidoListResponse>(
                 `/estoque-rolos${queryString ? `?${queryString}` : ''}`
             );
-            return data;
+            return Array.isArray(data) ? data : data.data;
         },
     });
 };
@@ -72,11 +82,16 @@ export const useCriarEstoqueTecido = () => {
     });
 };
 
+interface AtualizarEstoqueTecidoBody {
+    pesoAtualKg: number;
+    situacao: "disponivel" | "reservado" | "em_uso" | "descartado";
+}
+
 export const useAtualizarEstoqueTecido = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async ({ id, ...dados }: any) => {
+        mutationFn: async ({ id, ...dados }: { id: string; } & AtualizarEstoqueTecidoBody) => {
             const { data } = await apiClient.put<EstoqueTecido>(`/estoque-rolos/${id}`, dados);
             return data;
         },
@@ -138,10 +153,10 @@ export const useMovimentacoesEstoque = (filtros?: {
             if (filtros?.dataFim) params.append('dataFim', filtros.dataFim);
 
             const queryString = params.toString();
-            const { data } = await apiClient.get<MovimentacaoEstoque[]>(
+            const { data } = await apiClient.get<MovimentacaoEstoque[] | MovimentacaoEstoqueListResponse>(
                 `/movimentacoes-estoque${queryString ? `?${queryString}` : ''}`
             );
-            return data;
+            return Array.isArray(data) ? data : data.data;
         },
     });
 };
@@ -159,17 +174,22 @@ export const useMovimentacaoEstoque = (id: string) => {
     });
 };
 
-export const useCriarMovimentacaoEstoque = () => {
+interface MovimentacaoHistoricoParams {
+    usuarioId: string;
+}
+
+export const useCriarMovimentacaoEstoque = ({ usuarioId }: MovimentacaoHistoricoParams) => {
     const queryClient = useQueryClient();
 
     return useMutation({
+        mutationKey: ['movimentacao-estoque', 'criar'],
         mutationFn: async (dados: {
             EstoqueTecidoId: string;
             tipoMovimentacao: 'entrada' | 'saida' | 'ajuste' | 'devolucao';
             pesoMovimentado: number;
         }) => {
             const { data } = await apiClient.post<MovimentacaoEstoque>(
-                '/movimentacoes-estoque',
+                `/movimentacoes-estoque/${usuarioId}`,
                 dados
             );
             return data;

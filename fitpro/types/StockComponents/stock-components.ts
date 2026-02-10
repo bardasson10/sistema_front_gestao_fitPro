@@ -1,4 +1,4 @@
-import { Cor, EstoqueTecido, Tecido } from "../production";
+import { Cor, EstoqueTecido, MovimentacaoEstoque, Tecido } from "../production";
 
 export interface StockProps {
   rolos: EstoqueTecido[];
@@ -11,7 +11,7 @@ export interface StockProps {
 
 export interface StockResume {
   id: string;
-  tipo: string;
+  codigoReferencia: string;
   cor: string;
   nomeCor: string;
   rolos: number;
@@ -23,5 +23,12 @@ export interface StockResumeProps {
   tecidos: Tecido[];
   cores: Cor[];
   isLoading: boolean;
+}
 
+export interface StockMovimentacao {
+  movimentacoes: MovimentacaoEstoque[];
+  rolos: EstoqueTecido[];
+  tecidos: Tecido[];
+  cores: Cor[];
+  isLoading: boolean;
 }
