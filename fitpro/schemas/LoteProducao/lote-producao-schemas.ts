@@ -1,7 +1,5 @@
 import * as z from "zod";
 
-
-
 export const loteProducaoGradeSchema = z.object({ 
   id: z.string(),
   produto: z.string().min(1, "Selecione um produto"),
@@ -14,39 +12,48 @@ export const loteProducaoGradeSchema = z.object({
   total: z.number().min(0),
 });
 
-
 export const loteProducaoTecidoSchema = z.object({
   id: z.string(),
   roloId: z.string().min(1, "Selecione um rolo"),
-  tecidoTipo: z.string().min(1, "Tipo obrigatório"),
-  codigoReferencia: z.string().min(1, "Código de referência obrigatório"),
-  rendimentoMetroKg: z.number().min(0.01, "Rendimento inválido"),
-  valorPorKg: z.number().min(0.01, "Valor inválido"),
-  gramatura: z.number().min(0.01, "Gramatura inválida"),
-  corId: z.string().min(1, "Selecione uma cor"),
-  cor: z.string().min(1, "Cor obrigatória"),
-  larguraMetros: z.number().min(0.01, "Largura inválida"),
+  tecidoTipo: z.string(),
+  codigoReferencia: z.string(),
+  rendimentoMetroKg: z.number(),
+  valorPorKg: z.number(),
+  gramatura: z.number(),
+  corId: z.string(),
+  cor: z.string(),
+  larguraMetros: z.number(),
+  rolos: z.object({
+    itens: z.array(z.object({
+      id: z.string().uuid(),
+      tecidoId: z.string(),
+      codigoBarraRolo: z.string().min(1, "O código de barras é obrigatório"),
+      pesoInicialKg: z.number().min(0.01, "O peso inicial deve ser maior que zero"),
+      pesoAtualKg: z.number().min(0, "O peso atual não pode ser negativo"),
+      situacao: z.string().min(1, "A situação é obrigatória"),
+    })),
+  }).optional(),
+  pesoTotal: z.number().min(0, "O peso total não pode ser negativo").optional(),
 });
-
 
 export const loteProducaoDirecionamentoSchema = z.object({
   id: z.string(),
   loteProducaoId: z.string(),
   tipoServico: z.string(),
-  faccaoId: z.string().optional(),
-  dataSaida: z.date(),
-  dataPrevisaoRetorno: z.date().optional(),
+  faccaoId: z.string(),
+  dataSaida: z.string(),
+  dataPrevisaoRetorno: z.string(),
   status: z.enum(['enviado', 'em_producao', 'atrasado', 'concluido', '']),
-  createdAt: z.string().optional(),
-  updatedAt: z.string().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
 });
 
 export const colaboradorSchema2 = z.object({
   id: z.string(),
-  nome: z.string().min(1, "O nome é obrigatório"),
-  funcao: z.enum(['cortador' ,'costureira interna' , 'expedicao' , 'responsavel' , 'auxiliar','']),
+  nome: z.string(),
+  perfil: z.string(),
   status: z.enum(["ativo", "inativo", '']),
-  createdAt: z.string(),
+  funcaoSetor: z.string(), 
 });
 
 export const rolosProducaoSchema = z.object({
@@ -56,17 +63,17 @@ export const rolosProducaoSchema = z.object({
   pesoInicialKg: z.number().min(0.01, "O peso inicial deve ser maior que zero"),
   pesoAtualKg: z.number().min(0, "O peso atual não pode ser negativo"),
   situacao: z.string().min(1, "A situação é obrigatória"),
+  pesoTotal: z.number().min(0, "O peso total não pode ser negativo").optional(),
 });
 
 export const loteProducaoSchema = z.object({
   codigo: z.string().min(1, "O código é obrigatório"),
   status: z.enum(['planejado', 'criado', 'cortado', 'em_producao', 'concluido', 'cancelado', '']),
   createdAt: z.string(),
-  responsavelId: z.string().min(1, "O responsável é obrigatório"),
+  responsavelId: z.string(),
   responsavel: colaboradorSchema2,
   grade: z.array(loteProducaoGradeSchema),
-  tecidosUtilizados: z.array(loteProducaoTecidoSchema),
-  rolos: z.array(rolosProducaoSchema),
+  tecido: z.array(loteProducaoTecidoSchema),
   direcionamentos: z.array(loteProducaoDirecionamentoSchema),
 });
 

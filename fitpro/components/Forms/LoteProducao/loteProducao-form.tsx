@@ -21,12 +21,8 @@ export function LoteProducaoForm({ isEditing = true }: LoteProducaoFormProps) {
   const { control, watch } = useFormContext<LoteProducaoFormValues>();
   const [isViewRemoveMode, setIsViewRemoveMode] = useState<boolean>(false);
 
-  // Assistir aos tecidosUtilizados para obter peso e valor
-  const tecidosUtilizados = watch('tecidosUtilizados');
-  const rolos = watch('rolos');
-
-
-
+  // Assistir aos tecidos para obter peso e valor
+  const tecidos = watch('tecido');
 
 
   return (
@@ -70,7 +66,7 @@ export function LoteProducaoForm({ isEditing = true }: LoteProducaoFormProps) {
 
       <FormField
         control={control}
-        name="tecidosUtilizados"
+        name="tecido"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Tecidos Utilizados</FormLabel>
@@ -116,7 +112,7 @@ export function LoteProducaoForm({ isEditing = true }: LoteProducaoFormProps) {
                       </div>
                       <div>
                         <span className="text-xs text-muted-foreground">Peso Disponível (Rolo)</span>
-                        <p className="font-medium text-foreground">{parseNumber(rolos[index]?.pesoAtualKg)} kg</p>
+                        <p className="font-medium text-foreground">{parseNumber(tecido?.pesoTotal)} kg</p>
                       </div>
                       <div>
                         <span className="text-xs text-muted-foreground">Valor por Kg</span>
@@ -129,7 +125,7 @@ export function LoteProducaoForm({ isEditing = true }: LoteProducaoFormProps) {
                       <div className="flex justify-between items-center">
                         <span className="text-md font-semibold text-muted-foreground">Valor Total do Rolo</span>
                         <span className="text-sm font-bold text-foreground">
-                          R$ {parseNumber((rolos[index]?.pesoAtualKg || 0) * (tecidosUtilizados[index]?.valorPorKg || 0))}
+                          R$ {parseNumber((parseNumber(tecido?.pesoTotal) || 0) * (parseNumber(tecido.valorPorKg) || 0))}
                         </span>
                       </div>
                     </div>

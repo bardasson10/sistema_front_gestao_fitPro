@@ -60,6 +60,31 @@ export const LoteProducaoAddStep1 = () => {
           </FormItem>
         )}
       />
+      <FormField
+        control={control}
+        name="status"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Status</FormLabel>
+            <FormControl>
+              <Select onValueChange={field.onChange} value={field.value || ""}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione um status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="planejado">Planejado</SelectItem>
+                  <SelectItem value="criado">Criado</SelectItem>
+                  <SelectItem value="cortado">Cortado</SelectItem>
+                  <SelectItem value="em_producao">Em Produção</SelectItem>
+                  <SelectItem value="concluido">Concluído</SelectItem>
+                  <SelectItem value="cancelado">Cancelado</SelectItem>
+                </SelectContent>
+              </Select>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </div>
   );
 };

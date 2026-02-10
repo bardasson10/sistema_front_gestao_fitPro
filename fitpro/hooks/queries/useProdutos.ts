@@ -68,7 +68,7 @@ export const useCriarTipoProduto = () => {
       toast.success('Tipo de produto criado com sucesso!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao criar tipo de produto');
+      toast.error(error.response?.data?.error|| 'Erro ao criar tipo de produto');
     },
   });
 };
@@ -87,7 +87,7 @@ export const useAtualizarTipoProduto = () => {
       toast.success('Tipo de produto atualizado com sucesso!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao atualizar tipo de produto');
+      toast.error(error.response?.data?.error|| 'Erro ao atualizar tipo de produto');
     },
   });
 };
@@ -104,7 +104,7 @@ export const useDeletarTipoProduto = () => {
       toast.success('Tipo de produto deletado com sucesso!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao deletar tipo de produto');
+      toast.error(error.response?.data?.error|| 'Erro ao deletar tipo de produto');
     },
   });
 };
@@ -176,7 +176,7 @@ export const useCriarTamanho = () => {
       toast.success('Tamanho criado com sucesso!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao criar tamanho');
+      toast.error(error.response?.data?.error|| 'Erro ao criar tamanho');
     },
   });
 };
@@ -195,7 +195,7 @@ export const useAtualizarTamanho = () => {
       toast.success('Tamanho atualizado com sucesso!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao atualizar tamanho');
+      toast.error(error.response?.data?.error|| 'Erro ao atualizar tamanho');
     },
   });
 };
@@ -212,7 +212,7 @@ export const useDeletarTamanho = () => {
       toast.success('Tamanho deletado com sucesso!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao deletar tamanho');
+      toast.error(error.response?.data?.error|| 'Erro ao deletar tamanho');
     },
   });
 };
@@ -296,7 +296,7 @@ export const useCriarProduto = () => {
       toast.success('Produto criado com sucesso!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao criar produto');
+      toast.error(error.response?.data?.error|| 'Erro ao criar produto');
     },
   });
 };
@@ -315,7 +315,7 @@ export const useAtualizarProduto = () => {
       toast.success('Produto atualizado com sucesso!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao atualizar produto');
+      toast.error(error.response?.data?.error|| 'Erro ao atualizar produto');
     },
   });
 };
@@ -332,7 +332,7 @@ export const useDeletarProduto = () => {
       toast.success('Produto deletado com sucesso!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao deletar produto');
+      toast.error(error.response?.data?.error|| 'Erro ao deletar produto');
     },
   });
 };
@@ -367,7 +367,7 @@ export const useAssociarTamanhoTipo = () => {
       toast.success('Tamanho associado com sucesso!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao associar tamanho');
+      toast.error(error.response?.data?.error|| 'Erro ao associar tamanho');
     },
   });
 };
@@ -384,7 +384,7 @@ export const useDeletarAssociacaoTamanhoTipo = () => {
       toast.success('Associação removida com sucesso!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Erro ao remover associação');
+      toast.error(error.response?.data?.error|| 'Erro ao remover associação');
     },
   });
 };

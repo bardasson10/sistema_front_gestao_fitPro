@@ -103,7 +103,7 @@ export const useDeletarColaborador = () => {
             toast.success('Colaborador deletado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao deletar colaborador');
+            toast.error(error.response?.data?.error|| 'Erro ao deletar colaborador');
         },
     });
 };

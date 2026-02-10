@@ -1,9 +1,9 @@
 // Core types for the production management system
 export interface PaginatedResponse {
-    total: number;
-    page: number;
-    limit: number;
-    pages: number;
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
 }
 
 export interface Colaborador {
@@ -103,22 +103,36 @@ export interface Tamanho {
   ordem: number;
 }
 
+
+interface ItensRoloTecido {
+  id: string;
+  tecidoId: string;
+  codigoBarraRolo: string;
+  pesoInicialKg: number;
+  pesoAtualKg: number;
+  situacao: "disponivel" | "reservado" | "em_uso" | "descartado" | "";
+  createdAt: string;
+  updatedAt?: string;
+  pesoReservado: number;
+}
+export interface RolosTecidoLote {
+  itens: ItensRoloTecido[];
+}
+
 export interface LoteProducao {
   id: string;
   codigoLote: string;
   tecidoId: string;
   responsavelId: string;
-  responsavel?: Colaborador;
   status: 'planejado' | 'criado' | 'cortado' | 'em_producao' | 'concluido' | 'cancelado' | '';
-  tecido?: Tecido & {
-    rolos: EstoqueTecido[];
-  };
-  items?: ItemsLoteProducao[];
-  grade?: GradeProduto[];
-  direcionamentos?: Direcionamento[];
   observacao?: string;
   createdAt: string;
   updatedAt?: string;
+  tecido?: TecidoLote[];
+  responsavel?: ColaboradorLote;
+  items?: ItemsLoteProducao[];
+  grade?: GradeProduto[];
+  direcionamentos?: Direcionamento[];
 }
 
 export interface ItemsLoteProducao {
@@ -129,22 +143,30 @@ export interface ItemsLoteProducao {
   quantidadePlanejada: number;
   produto?: Produto;
   tamanho?: Tamanho;
+  rolos?: RolosTecidoLote[];
 }
 
 export interface ColaboradorLote {
   id: string;
   nome: string;
-  funcao: 'cortador' | 'costureira interna' | 'expedicao' | 'responsavel' | 'auxiliar' | '';
+  perfil: string;
   status: "ativo" | "inativo" | '';
-  createdAt: string;
+  funcaoSetor: string;
 }
 
 export interface TecidoLote {
-  roloId: string;
-  rolo?: EstoqueTecido;
-  tecidoTipo: string;
-  cor: string;
-  pesoKg: number;
+  id: string;
+  tipo: string;
+  corId: string;
+  nome: string;
+  codigoReferencia: string;
+  fornecedorId: string;
+  rendimentoMetroKg: number;
+  larguraMetros: number;
+  valorPorKg: number;
+  gramatura: number;
+  rolos?: RolosTecidoLote[];
+  pesoTotal: number;
 }
 
 export interface GradeProduto {
@@ -207,43 +229,43 @@ export interface ProductionContextType {
   addColaborador: (colaborador: Omit<Colaborador, 'id' | 'createdAt'>) => void;
   updateColaborador: (id: string, colaborador: Partial<Colaborador>) => void;
   removeColaborador: (id: string) => void;
-  
+
   // Fornecedores
   fornecedores: Fornecedor[];
   addFornecedor: (fornecedor: Omit<Fornecedor, 'id' | 'createdAt'>) => void;
   updateFornecedor: (id: string, fornecedor: Partial<Fornecedor>) => void;
   removeFornecedor: (id: string) => void;
-  
+
   // Facções
   faccoes: Faccao[];
   addFaccao: (faccao: Omit<Faccao, 'id' | 'createdAt'>) => void;
   updateFaccao: (id: string, faccao: Partial<Faccao>) => void;
   removeFaccao: (id: string) => void;
-  
+
   // Tecidos
   tecidos: Tecido[];
   addTecido: (tecido: Omit<Tecido, 'id' | 'createdAt'>) => void;
   updateTecido: (id: string, tecido: Partial<Tecido>) => void;
   removeTecido: (id: string) => void;
-  
+
   // Rolos de Tecido
   rolos: EstoqueTecido[];
   addRolo: (rolo: Omit<EstoqueTecido, 'id' | 'createdAt'>) => void;
   updateRolo: (id: string, rolo: Partial<EstoqueTecido>) => void;
   removeRolo: (id: string) => void;
-  
+
   // Movimentações
   movimentacoes: MovimentacaoEstoque[];
   addMovimentacao: (mov: Omit<MovimentacaoEstoque, 'id'>) => void;
   updateMovimentacao: (id: string, mov: Partial<MovimentacaoEstoque>) => void;
   removeMovimentacao: (id: string) => void;
-  
+
   // Lotes
   lotes: LoteProducao[];
   addLote: (lote: Omit<LoteProducao, 'id'>) => void;
   updateLote: (id: string, lote: Partial<LoteProducao>) => void;
   removeLote: (id: string) => void;
-  
+
   // Conferências
   conferencias: Conferencia[];
   addConferencia: (conferencia: Omit<Conferencia, 'id'>) => void;

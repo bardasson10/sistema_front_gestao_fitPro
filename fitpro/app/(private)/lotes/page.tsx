@@ -17,27 +17,28 @@ import { ArrowLeft, ArrowRight, Plus, Save, ScissorsIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
+import { string } from "zod";
+import { toast } from "sonner";
 
 
 const initialValues: LoteProducaoFormValues = {
   codigo: '',
-  status: '',
+  status: 'planejado',
   createdAt: '',
   responsavelId: '',
   responsavel: {} as ColaboradorLote,
   grade: [],
-  tecidosUtilizados: [],
-  rolos: [],
+  tecido: [],
   direcionamentos: [],
 };
 
 export default function Lotes() {
-  const { data: lotesData = [], isLoading } = useLotesProducao();
+  const { data: lotesData = { data: [], pagination: {} }, isLoading } = useLotesProducao();
   const { mutate: criar, isPending: isCreating } = useCriarLoteProducao();
   const { mutate: atualizar, isPending: isUpdating } = useAtualizarLoteProducao();
   const { data: produtos = [] } = useProdutos();
   const { data: tamanhos = [] } = useTamanhos();
-  
+
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = STEPS.length;
   const CurrentStepComponent = STEPS.find(step => step.id === currentStep)?.component;
@@ -48,12 +49,40 @@ export default function Lotes() {
   });
 
   const handleSaveLote = (values: LoteProducaoFormValues, id?: string) => {
+    console.log('handleSaveLote chamado com valores:', values);
+
+    // Validar dados obrigatórios
+    if (!values.codigo?.trim()) {
+      toast.error('Código do lote é obrigatório');
+      return;
+    }
+
+    if (!values.responsavelId) {
+      toast.error('Responsável é obrigatório');
+      return;
+    }
+
+    if (!values.status) {
+      toast.error('Status é obrigatório');
+      return;
+    }
+
+    if (!values.tecido || values.tecido.length === 0) {
+      toast.error('Tecido é obrigatório');
+      return;
+    }
+
+    if (!values.grade || values.grade.length === 0) {
+      toast.error('Grade de produtos é obrigatória');
+      return;
+    }
+
     // Converter grade de volta para items array
     const items = values.grade?.flatMap(grade => {
       const produtoId = grade.produtoId;
-      
+
       if (!produtoId) return [];
-      
+
       // Mapear cada tamanho para um item
       const tamanhoFields = [
         { field: 'gradePP', tamanhoProcurado: 'PP' },
@@ -62,11 +91,11 @@ export default function Lotes() {
         { field: 'gradeG', tamanhoProcurado: 'G' },
         { field: 'gradeGG', tamanhoProcurado: 'GG' },
       ];
-      
+
       return tamanhoFields.flatMap(({ field, tamanhoProcurado }) => {
         const quantidade = (grade as any)[field] || 0;
-        const tamanho = tamanhos.find(t => t.nome === tamanhoProcurado);
-        
+        const tamanho = tamanhos.find((t: { nome: string }) => t.nome === tamanhoProcurado);
+
         if (quantidade > 0 && tamanho) {
           return [{
             produtoId: produtoId,
@@ -78,18 +107,33 @@ export default function Lotes() {
       });
     }) || [];
 
+    if (items.length === 0) {
+      toast.error('Nenhuma grade foi preenchida');
+      return;
+    }
+
     const payload = {
       codigoLote: values.codigo,
-      tecidoId: values.tecidosUtilizados?.[0]?.roloId || '',
+      tecidoId: values.tecido[0].roloId,
       responsavelId: values.responsavelId,
-      status: values.status as any,
+      status: values.status as 'planejado' | 'em_producao' | 'concluido' | 'cancelado',
       observacao: '',
       items,
+      rolos: values.tecido[0].rolos?.itens && values.tecido[0].rolos.itens.length > 0
+        ? values.tecido[0].rolos.itens.map(rolo => ({
+          estoqueRoloId: rolo.id,
+          pesoReservado: parseNumber(String(rolo.pesoInicialKg || rolo.pesoAtualKg || 0)),
+        }))
+        : [],
     };
 
+    console.log('Payload pronto para envio:', payload);
+
     if (id) {
+      console.log('Atualizando lote com ID:', id);
       atualizar({ id, ...payload });
     } else {
+      console.log('Criando novo lote');
       criar(payload as any);
     }
   };
@@ -110,18 +154,18 @@ export default function Lotes() {
 
   const handleEditLote = (lote: LoteProducao) => {
     // Agrupar items por produto e tamanho para criar a grade
-    const gradeMap = new Map<string, { 
+    const gradeMap = new Map<string, {
       produtoId: string;
       produtoNome: string;
-      grades: { [key: string]: number } 
+      grades: { [key: string]: number }
     }>();
-    
+
     lote.items?.forEach(item => {
       const produtoId = item.produtoId || '';
       const produtoNome = item.produto?.nome || '';
       const tamanhoNome = item.tamanho?.nome || '';
       const quantidade = item.quantidadePlanejada || 0;
-      
+
       if (!gradeMap.has(produtoId)) {
         gradeMap.set(produtoId, {
           produtoId,
@@ -135,16 +179,16 @@ export default function Lotes() {
           }
         });
       }
-      
+
       // Mapear tamanho para o campo de grade
       const gradeObj = gradeMap.get(produtoId)!.grades;
       const gradeKey = `grade${tamanhoNome}`;
-      
+
       if (gradeKey in gradeObj) {
         (gradeObj as any)[gradeKey] += quantidade;
       }
     });
-    
+
     // Converter mapa para array de GradeProduto
     const gradeArray = Array.from(gradeMap.values()).map((item) => {
       const total = (item.grades.gradePP || 0) + (item.grades.gradeP || 0) + (item.grades.gradeM || 0) + (item.grades.gradeG || 0) + (item.grades.gradeGG || 0);
@@ -170,44 +214,55 @@ export default function Lotes() {
       responsavel: lote.responsavel ? {
         id: lote.responsavel.id,
         nome: lote.responsavel.nome,
-        funcao: (lote.responsavel as any).funcaoSetor as any || '',
-        status: lote.responsavel.status as any,
-        createdAt: lote.responsavel.createdAt,
-      } : ({} as ColaboradorLote),
+        perfil: lote.responsavel.perfil,
+        funcaoSetor: (lote.responsavel as any).funcaoSetor || '',
+        status: lote.responsavel.status || '',
+      } : {
+        id: '',
+        nome: '',
+        perfil: '',
+        funcaoSetor: '',
+        status: '',
+
+      },
       grade: gradeArray,
-      tecidosUtilizados: lote.tecido ? [{
-        id: lote.tecido.id,
+      tecido: lote.tecido ? (Array.isArray(lote.tecido) ? lote.tecido : [lote.tecido]).map(tecido => ({
+        id: tecido.id,
         roloId: lote.tecidoId,
-        codigoReferencia: lote.tecido.codigoReferencia || '',
-        rendimentoMetroKg: parseNumber(lote.tecido.rendimentoMetroKg) || 0,
-        valorPorKg: parseNumber(lote.tecido.valorPorKg) || 0,
-        gramatura: parseNumber(lote.tecido.gramatura) || 0,
-        corId: lote.tecido.corId || '',
-        tecidoTipo: lote.tecido.tipo || '',
-        cor: lote.tecido.nome || '',
-        larguraMetros: parseNumber(lote.tecido.larguraMetros) || 0,
-      }] : [],
-      rolos: lote.tecido ? lote.tecido.rolos.map(rolo => ({
-        id: rolo.id,
-        tecidoId: rolo.tecidoId,
-        codigoBarraRolo: rolo.codigoBarraRolo,
-        pesoInicialKg: rolo.pesoInicialKg,
-        pesoAtualKg: rolo.pesoAtualKg,
-        situacao: rolo.situacao,
+        codigoReferencia: tecido.codigoReferencia || '',
+        rendimentoMetroKg: parseNumber(tecido.rendimentoMetroKg) || 0,
+        valorPorKg: parseNumber(tecido.valorPorKg) || 0,
+        gramatura: parseNumber(tecido.gramatura) || 0,
+        corId: tecido.corId || '',
+        tecidoTipo: tecido.tipo || '',
+        cor: (tecido as any).cor?.nome || tecido.nome || '',
+        larguraMetros: parseNumber(tecido.larguraMetros) || 0,
+        rolos: (tecido as any).rolos ? {
+          itens: (tecido as any).rolos.itens?.map((r: any) => ({
+            id: r.id,
+            tecidoId: r.tecidoId,
+            codigoBarraRolo: r.codigoBarraRolo,
+            pesoInicialKg: parseNumber(r.pesoInicialKg),
+            pesoAtualKg: parseNumber(r.pesoAtualKg),
+            situacao: r.situacao
+          })) || [],
+          pesoTotal: parseNumber((tecido as any).rolos.pesoTotal) || 0,
+        } : undefined,
       })) : [],
       direcionamentos: lote.direcionamentos?.map(d => ({
         id: d.id,
         loteProducaoId: d.loteProducaoId,
         tipoServico: d.tipoServico,
-        faccaoId: d.faccaoId,
-        dataSaida: typeof d.dataSaida === 'string' ? new Date(d.dataSaida) : d.dataSaida,
-        dataPrevisaoRetorno: d.dataPrevisaoRetorno ? (typeof d.dataPrevisaoRetorno === 'string' ? new Date(d.dataPrevisaoRetorno) : d.dataPrevisaoRetorno) : undefined,
+        faccaoId: d.faccaoId || '',
+        dataSaida: d.dataSaida ? String(d.dataSaida) : '',
+        dataPrevisaoRetorno: d.dataPrevisaoRetorno ? String(d.dataPrevisaoRetorno) : '',
         status: d.status as any,
-        createdAt: d.createdAt,
-        updatedAt: d.updatedAt,
+        createdAt: d.createdAt || '',
+        updatedAt: d.updatedAt || '',
       })) || [],
     };
-    
+
+
     // Chamar handleEdit com o item formatado como TItem (precisa ter id)
     handleEdit({ ...formValues, id: lote.id } as any);
   };
@@ -222,11 +277,17 @@ export default function Lotes() {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
+  console.log(form.getValues());
+
+  const dataLote = lotesData?.data || [];
+
+
+
   return (
     <main>
       <div className="flex justify-between items-center mb-6">
         <div className="text-sm text-muted-foreground p-4 items-center">
-          {lotesData.length} lotes cadastrados
+          {dataLote?.length || 0} lotes cadastrados
         </div>
 
         {!editingItem && (
@@ -307,7 +368,7 @@ export default function Lotes() {
 
       <div className="hidden md:block">
         <LoteProducaoTable
-          lotesProducao={lotesData}
+          lotesProducao={dataLote}
           isLoading={isLoading}
           onView={handleEditLote}
         />

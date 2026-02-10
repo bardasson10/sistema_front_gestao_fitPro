@@ -51,7 +51,7 @@ export const useCriarFornecedor = () => {
             toast.success('Fornecedor criado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao criar fornecedor');
+            toast.error(error.response?.data?.error|| 'Erro ao criar fornecedor');
         },
     });
 };
@@ -128,7 +128,7 @@ export const useCriarCor = () => {
             toast.success('Cor criada com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao criar cor');
+            toast.error(error.response?.data?.error|| 'Erro ao criar cor');
         },
     });
 };
@@ -147,7 +147,7 @@ export const useAtualizarCor = () => {
             toast.success('Cor atualizada com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao atualizar cor');
+            toast.error(error.response?.data?.error|| 'Erro ao atualizar cor');
         },
     });
 };
@@ -164,7 +164,7 @@ export const useDeletarCor = () => {
             toast.success('Cor deletada com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao deletar cor');
+            toast.error(error.response?.data?.error|| 'Erro ao deletar cor');
         },
     });
 };
@@ -257,7 +257,7 @@ export const useDeletarTecido = () => {
             toast.success('Tecido deletado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao deletar tecido');
+            toast.error(error.response?.data?.error|| 'Erro ao deletar tecido');
         },
     });
 };

@@ -1,37 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/services/api/api-client';
 import { toast } from 'sonner';
-import { Faccao } from '@/types/production';
+import { Faccao, LoteProducao, PaginatedResponse } from '@/types/production';
 
 // ============ TIPOS ============
 
 // Re-export types from production to keep them in sync
 import { LoteProducao as LoteProd, ItemsLoteProducao, Direcionamento as DirProd, Produto, Tamanho } from '@/types/production';
 
-interface LoteProducao {
-    id: string;
-    codigoLote: string;
-    tecidoId: string;
-    responsavelId: string;
-    status: 'planejado' | 'criado' | 'cortado' | 'em_producao' | 'concluido' | 'cancelado';
-    observacao?: string;
-    tecido: any;
-    responsavel: any;
-    items: LoteItem[];
-    direcionamentos: Direcionamento[];
-    createdAt: string;
-    updatedAt?: string;
-}
 
-interface LoteItem {
-    id: string;
-    loteProducaoId: string;
-    produtoId: string;
-    tamanhoId: string;
-    quantidadePlanejada: number;
-    produto?: Produto;
-    tamanho?: Tamanho;
-}
 
 interface Direcionamento {
     id: string;
@@ -121,7 +98,7 @@ export const useCriarFaccao = () => {
             toast.success('Facção criada com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao criar facção');
+            toast.error(error.response?.data?.error|| 'Erro ao criar facção');
         },
     });
 };
@@ -140,7 +117,7 @@ export const useAtualizarFaccao = () => {
             toast.success('Facção atualizada com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao atualizar facção');
+            toast.error(error.response?.data?.error|| 'Erro ao atualizar facção');
         },
     });
 };
@@ -157,7 +134,7 @@ export const useDeletarFaccao = () => {
             toast.success('Facção deletada com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao deletar facção');
+            toast.error(error.response?.data?.error|| 'Erro ao deletar facção');
         },
     });
 };
@@ -173,10 +150,10 @@ export const useLotesProducao = (filtros?: { status?: string; responsavelId?: st
             if (filtros?.responsavelId) params.append('responsavelId', filtros.responsavelId);
 
             const queryString = params.toString();
-            const { data } = await apiClient.get<{ data: LoteProducao[]; pagination: any }>(
+            const { data } = await apiClient.get<{ data: LoteProducao[]; pagination: PaginatedResponse }>(
                 `/lotes-producao${queryString ? `?${queryString}` : ''}`
             );
-            return data.data;
+            return data as { data: LoteProducao[]; pagination: PaginatedResponse };
         },
     });
 };
@@ -206,7 +183,11 @@ export const useCriarLoteProducao = () => {
                 produtoId: string;
                 tamanhoId: string;
                 quantidadePlanejada: number;
-            }>;
+            }>,
+            rolos?: Array<{
+                estoqueRoloId: string
+                pesoReservado: number
+                }>;
         }) => {
             const { data } = await apiClient.post<LoteProducao>('/lotes-producao', dados);
             return data;
@@ -216,7 +197,7 @@ export const useCriarLoteProducao = () => {
             toast.success('Lote de produção criado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao criar lote de produção');
+            toast.error(error.response?.data?.error || 'Erro ao criar lote de produção');
         },
     });
 };
@@ -235,7 +216,7 @@ export const useAtualizarLoteProducao = () => {
             toast.success('Lote de produção atualizado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao atualizar lote de produção');
+            toast.error(error.response?.data?.error || 'Erro ao atualizar lote de produção');
         },
     });
 };
@@ -252,7 +233,7 @@ export const useDeletarLoteProducao = () => {
             toast.success('Lote de produção deletado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao deletar lote de produção');
+            toast.error(error.response?.data?.error|| 'Erro ao deletar lote de produção');
         },
     });
 };
@@ -316,7 +297,7 @@ export const useCriarDirecionamento = () => {
             toast.success('Direcionamento criado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao criar direcionamento');
+            toast.error(error.response?.data?.error|| 'Erro ao criar direcionamento');
         },
     });
 };
@@ -338,7 +319,7 @@ export const useAtualizarDirecionamento = () => {
             toast.success('Direcionamento atualizado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao atualizar direcionamento');
+            toast.error(error.response?.data?.error|| 'Erro ao atualizar direcionamento');
         },
     });
 };
@@ -355,7 +336,7 @@ export const useDeletarDirecionamento = () => {
             toast.success('Direcionamento deletado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao deletar direcionamento');
+            toast.error(error.response?.data?.error|| 'Erro ao deletar direcionamento');
         },
     });
 };
@@ -420,7 +401,7 @@ export const useCriarConferencia = () => {
             toast.success('Conferência criada com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao criar conferência');
+            toast.error(error.response?.data?.error|| 'Erro ao criar conferência');
         },
     });
 };
@@ -439,7 +420,7 @@ export const useAtualizarConferencia = () => {
             toast.success('Conferência atualizada com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao atualizar conferência');
+            toast.error(error.response?.data?.error|| 'Erro ao atualizar conferência');
         },
     });
 };
@@ -456,7 +437,7 @@ export const useDeletarConferencia = () => {
             toast.success('Conferência deletada com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao deletar conferência');
+            toast.error(error.response?.data?.error|| 'Erro ao deletar conferência');
         },
     });
 };

@@ -77,7 +77,7 @@ export const useCriarEstoqueTecido = () => {
             toast.success('Rolo adicionado ao estoque com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao adicionar rolo ao estoque');
+            toast.error(error.response?.data?.error|| 'Erro ao adicionar rolo ao estoque');
         },
     });
 };
@@ -101,7 +101,7 @@ export const useAtualizarEstoqueTecido = () => {
             toast.success('Rolo atualizado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao atualizar rolo');
+            toast.error(error.response?.data?.error|| 'Erro ao atualizar rolo');
         },
     });
 };
@@ -118,7 +118,7 @@ export const useDeletarEstoqueTecido = () => {
             toast.success('Rolo deletado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.message || 'Erro ao deletar rolo');
+            toast.error(error.response?.data?.error|| 'Erro ao deletar rolo');
         },
     });
 };
