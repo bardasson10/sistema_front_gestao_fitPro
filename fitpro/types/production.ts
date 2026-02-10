@@ -18,6 +18,8 @@ export interface Colaborador {
   pagination?: PaginatedResponse;
 }
 
+
+
 export interface Fornecedor {
   id: string;
   nome: string;
@@ -83,16 +85,58 @@ export interface MovimentacaoEstoque {
   }
 }
 
+export interface Produto {
+  id: string;
+  tipoProdutoId: string;
+  nome: string;
+  sku: string;
+  fabricante: string;
+  custoMedioPeca: number;
+  precoMedioVenda: number;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface Tamanho {
+  id: string;
+  nome: string;
+  ordem: number;
+}
+
 export interface LoteProducao {
   id: string;
-  codigo: string;
-  dataCreacao: Date;
+  codigoLote: string;
+  tecidoId: string;
   responsavelId: string;
   responsavel?: Colaborador;
-  status: 'criado' | 'cortado' | 'em_producao' | 'finalizado' | '';
-  tecidosUtilizados: TecidoLote[];
-  grade: GradeProduto[];
-  direcionamentos: Direcionamento[];
+  status: 'planejado' | 'criado' | 'cortado' | 'em_producao' | 'concluido' | 'cancelado' | '';
+  tecido?: Tecido & {
+    rolos: EstoqueTecido[];
+  };
+  items?: ItemsLoteProducao[];
+  grade?: GradeProduto[];
+  direcionamentos?: Direcionamento[];
+  observacao?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface ItemsLoteProducao {
+  id: string;
+  loteProducaoId: string;
+  produtoId: string;
+  tamanhoId: string;
+  quantidadePlanejada: number;
+  produto?: Produto;
+  tamanho?: Tamanho;
+}
+
+export interface ColaboradorLote {
+  id: string;
+  nome: string;
+  funcao: 'cortador' | 'costureira interna' | 'expedicao' | 'responsavel' | 'auxiliar' | '';
+  status: "ativo" | "inativo" | '';
+  createdAt: string;
 }
 
 export interface TecidoLote {
@@ -105,7 +149,8 @@ export interface TecidoLote {
 
 export interface GradeProduto {
   id: string;
-  produto: 'legging' | 'short' | 'top' | 'calca' | 'conjunto' | 'body' | 'macaquinho' | '';
+  produtoId: string;
+  produto: string;
   gradePP: number;
   gradeP: number;
   gradeM: number;
@@ -116,14 +161,15 @@ export interface GradeProduto {
 
 export interface Direcionamento {
   id: string;
-  loteId: string;
-  tipoProducao: 'interna' | 'faccao' | '';
+  loteProducaoId: string;
   faccaoId?: string;
   faccao?: Faccao;
-  dataSaida: Date; // data de saída para produção
-  dataEntregaConferencia?: Date; // data real de entrega na conferência
-  produtos: ProdutoDirecionado[];
-  status: 'em_producao' | 'atrasado' | 'concluido' | '';
+  tipoServico: string;
+  dataSaida: string; // data de saída para produção
+  dataPrevisaoRetorno?: string; // data prevista de retorno
+  status: 'enviado' | 'em_producao' | 'atrasado' | 'concluido' | '';
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ProdutoDirecionado {
@@ -143,7 +189,7 @@ export interface Conferencia {
   divergencia: boolean;
   avaliacaoQualidade: 'aprovado' | 'reprovado' | 'parcial' | '';
   observacoes?: string;
-  dataConferencia: Date;
+  dataConferencia: string;
   liberadoPagamento: boolean;
 }
 

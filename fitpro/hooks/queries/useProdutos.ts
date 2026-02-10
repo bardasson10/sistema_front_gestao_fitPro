@@ -115,8 +115,39 @@ export const useTamanhos = () => {
   return useQuery({
     queryKey: ['tamanhos'],
     queryFn: async () => {
-      const { data } = await apiClient.get<Tamanho[]>('/tamanhos');
-      return data;
+      try {
+        console.log('🚀 Iniciando fetch de /tamanhos...');
+        const { data } = await apiClient.get<any>('/tamanhos');
+        
+        console.log('📏 Resposta raw:', data);
+        console.log('📏 Tipo da resposta:', typeof data);
+        console.log('📏 É array?', Array.isArray(data));
+        
+        // Suportar diferentes formatos de resposta
+        if (Array.isArray(data)) {
+          console.log('✅ Formato array. Tamanhos:', data.length);
+          return data;
+        }
+        
+        if (data?.data && Array.isArray(data.data)) {
+          console.log('✅ Formato com .data. Tamanhos:', data.data.length);
+          return data.data;
+        }
+        
+        if (data?.tamanhos && Array.isArray(data.tamanhos)) {
+          console.log('✅ Formato com .tamanhos. Tamanhos:', data.tamanhos.length);
+          return data.tamanhos;
+        }
+        
+        console.warn('⚠️ Nenhum formato reconhecido. Retornando vazio.');
+        console.warn('Estrutura:', JSON.stringify(data, null, 2));
+        return [];
+      } catch (error: any) {
+        console.error('❌ Erro ao buscar tamanhos:', error);
+        console.error('Status:', error?.response?.status);
+        console.error('Dados do erro:', error?.response?.data);
+        throw error;
+      }
     },
   });
 };
@@ -192,9 +223,43 @@ export const useProdutos = (tipoProdutoId?: string) => {
   return useQuery({
     queryKey: ['produtos', tipoProdutoId],
     queryFn: async () => {
-      const params = tipoProdutoId ? `?tipoProdutoId=${tipoProdutoId}` : '';
-      const { data } = await apiClient.get<Produto[]>(`/produtos${params}`);
-      return data;
+      try {
+        console.log('🚀 Iniciando fetch de /produtos...');
+        const params = tipoProdutoId ? `?tipoProdutoId=${tipoProdutoId}` : '';
+        const url = `/produtos${params}`;
+        console.log('📍 URL:', url);
+        
+        const { data } = await apiClient.get<any>(url);
+        
+        console.log('📦 Resposta raw:', data);
+        console.log('📦 Tipo da resposta:', typeof data);
+        console.log('📦 É array?', Array.isArray(data));
+        
+        // Suportar diferentes formatos de resposta
+        if (Array.isArray(data)) {
+          console.log('✅ Formato array. Produtos:', data.length);
+          return data;
+        }
+        
+        if (data?.data && Array.isArray(data.data)) {
+          console.log('✅ Formato com .data. Produtos:', data.data.length);
+          return data.data;
+        }
+        
+        if (data?.produtos && Array.isArray(data.produtos)) {
+          console.log('✅ Formato com .produtos. Produtos:', data.produtos.length);
+          return data.produtos;
+        }
+        
+        console.warn('⚠️ Nenhum formato reconhecido. Retornando vazio.');
+        console.warn('Estrutura:', JSON.stringify(data, null, 2));
+        return [];
+      } catch (error: any) {
+        console.error('❌ Erro ao buscar produtos:', error);
+        console.error('Status:', error?.response?.status);
+        console.error('Dados do erro:', error?.response?.data);
+        throw error;
+      }
     },
   });
 };

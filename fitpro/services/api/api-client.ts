@@ -4,6 +4,9 @@ import { toast } from 'sonner';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
 
+console.log('🔧 API Base URL configurada:', API_BASE_URL);
+console.log('ℹ️ NEXT_PUBLIC_API_URL env var:', process.env.NEXT_PUBLIC_API_URL);
+
 class APIClient {
     private client: AxiosInstance;
 
@@ -18,13 +21,18 @@ class APIClient {
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
             }
+            console.log(`📤 [${config.method?.toUpperCase()}] ${config.baseURL}${config.url}`);
             return config;
         });
 
         // Interceptor para tratamento de erros
         this.client.interceptors.response.use(
-            (response) => response,
+            (response) => {
+              console.log(`📥 [${response.status}] ${response.config.url} - Dados:`, response.data);
+              return response;
+            },
             (error) => {
+                console.error(`❌ [${error.response?.status}] ${error.config?.url} - Erro:`, error.response?.data);
                 if (error.response?.status === 401) {
                     // Token expirado ou inválido
                     toast.error(error.response.data?.error);

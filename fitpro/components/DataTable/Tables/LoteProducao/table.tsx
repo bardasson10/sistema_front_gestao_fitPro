@@ -25,13 +25,18 @@ export const LoteProducaoTable: React.FC<LoteProducaoTableProps> = ({
 
   return (
     <div className="w-full">
-      <SemDadosComponent<LoteProducao> nomeDado="lote de produção" data={lotesProducao} />
-      <DataTable
+      {
+        !isLoading && lotesProducao.length === 0
+      ?
+        (<SemDadosComponent<LoteProducao> nomeDado="lote de produção" data={lotesProducao} />)
+      :
+      (<DataTable
         columns={columns}
         data={lotesProducao}
         isLoading={isLoading}
         getRowId={(row) => row.id}
-      />
+      />)
+      }
       
     </div>
   );

@@ -3,11 +3,16 @@ import { useFormContext } from "react-hook-form";
 import { LoteProducaoFormValues } from "@/schemas/LoteProducao/lote-producao-schemas";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { useProduction } from "@/providers/PrivateContexts/ProductionProvider";
+import { useColaboradores } from "@/hooks/queries/useColaboradores";
 
 export const LoteProducaoAddStep1 = () => {
   const { control } = useFormContext<LoteProducaoFormValues>();
-  const { colaboradores } = useProduction();
+  const { data: colaboradoresResponse } = useColaboradores();
+  
+  // Extract array from paginated response
+  const colaboradores = Array.isArray(colaboradoresResponse) 
+    ? colaboradoresResponse 
+    : (colaboradoresResponse?.data || []);
   
   return (
     <div className="space-y-4 w-full flex flex-col">
@@ -33,15 +38,21 @@ export const LoteProducaoAddStep1 = () => {
             <FormLabel>Responsável</FormLabel>
             <FormControl>
               <Select onValueChange={field.onChange} value={field.value || ""}>
-                <SelectTrigger className="w-full" >
+                <SelectTrigger className="w-full" disabled={!Array.isArray(colaboradores) || colaboradores.length === 0}>
                   <SelectValue placeholder="Selecione um responsável" />
                 </SelectTrigger>
                 <SelectContent>
-                  {colaboradores.map(colaborador => (
-                    <SelectItem key={colaborador.id} value={colaborador.id}>
-                      {colaborador.nome}
-                    </SelectItem>
-                  ))}
+                  {!Array.isArray(colaboradores) || colaboradores.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground text-center">
+                      Nenhum colaborador disponível
+                    </div>
+                  ) : (
+                    colaboradores.map(colaborador => (
+                      <SelectItem key={colaborador.id} value={colaborador.id}>
+                        {colaborador.nome}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </FormControl>

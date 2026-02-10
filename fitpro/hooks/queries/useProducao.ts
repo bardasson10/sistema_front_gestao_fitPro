@@ -5,43 +5,44 @@ import { Faccao } from '@/types/production';
 
 // ============ TIPOS ============
 
-
+// Re-export types from production to keep them in sync
+import { LoteProducao as LoteProd, ItemsLoteProducao, Direcionamento as DirProd, Produto, Tamanho } from '@/types/production';
 
 interface LoteProducao {
     id: string;
     codigoLote: string;
     tecidoId: string;
     responsavelId: string;
-    status: 'planejado' | 'em_producao' | 'concluido' | 'cancelado';
+    status: 'planejado' | 'criado' | 'cortado' | 'em_producao' | 'concluido' | 'cancelado';
     observacao?: string;
     tecido: any;
     responsavel: any;
     items: LoteItem[];
     direcionamentos: Direcionamento[];
     createdAt: string;
+    updatedAt?: string;
 }
 
 interface LoteItem {
     id: string;
+    loteProducaoId: string;
     produtoId: string;
     tamanhoId: string;
     quantidadePlanejada: number;
-    produto: any;
-    tamanho: any;
+    produto?: Produto;
+    tamanho?: Tamanho;
 }
 
 interface Direcionamento {
     id: string;
     loteProducaoId: string;
-    faccaoId: string;
-    tipoServico: 'costura' | 'estampa' | 'tingimento' | 'acabamento' | 'corte' | 'outro';
+    faccaoId?: string;
+    tipoServico: string;
     dataSaida: string;
-    dataPrevisaoRetorno: string;
-    status: 'enviado' | 'em_processamento' | 'finalizado' | 'cancelado';
-    lote: LoteProducao;
-    faccao: Faccao;
-    conferencias: Conferencia[];
-    createdAt: string;
+    dataPrevisaoRetorno?: string;
+    status: 'enviado' | 'em_producao' | 'atrasado' | 'concluido' | '';
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 interface ConferenciaItem {
@@ -172,10 +173,10 @@ export const useLotesProducao = (filtros?: { status?: string; responsavelId?: st
             if (filtros?.responsavelId) params.append('responsavelId', filtros.responsavelId);
 
             const queryString = params.toString();
-            const { data } = await apiClient.get<LoteProducao[]>(
+            const { data } = await apiClient.get<{ data: LoteProducao[]; pagination: any }>(
                 `/lotes-producao${queryString ? `?${queryString}` : ''}`
             );
-            return data;
+            return data.data;
         },
     });
 };

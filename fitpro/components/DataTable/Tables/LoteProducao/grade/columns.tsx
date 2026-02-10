@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 
 
-const InputCell = ({ index, fieldName }: { index: number, fieldName: string }) => {
+const InputCell = ({ index, fieldName, isEditing }: { index: number, fieldName: string, isEditing?: boolean }) => {
   const { control } = useFormContext();
   return (
     <FormField
@@ -20,7 +20,8 @@ const InputCell = ({ index, fieldName }: { index: number, fieldName: string }) =
               {...field}
               type="number"
               min={0}
-              className="h-8 w-16 text-center mx-auto" 
+              disabled={!isEditing}
+              className="h-8 w-16 text-center mx-auto disabled:opacity-50" 
               onChange={(e) => field.onChange(Number(e.target.value))}
             />
           </FormControl>
@@ -46,7 +47,8 @@ const TotalCell = ({ index }: { index: number }) => {
 
 export const getGradeDetalhadaColumns = (
   viewOnRemove?: boolean,
-  onRemove?: (index: number) => void
+  onRemove?: (index: number) => void,
+  isEditing?: boolean
 ): ColumnDef<GradeProduto>[] => {
   const columns: ColumnDef<GradeProduto>[] = [
     {
@@ -57,27 +59,27 @@ export const getGradeDetalhadaColumns = (
     {
       accessorKey: 'gradePP',
       header: () => <div className="text-center w-16">PP</div>,
-      cell: ({ row }) => <InputCell index={row.index} fieldName="gradePP" />,
+      cell: ({ row }) => <InputCell index={row.index} fieldName="gradePP" isEditing={isEditing} />,
     },
     {
       accessorKey: 'gradeP',
       header: () => <div className="text-center w-16">P</div>,
-      cell: ({ row }) => <InputCell index={row.index} fieldName="gradeP" />,
+      cell: ({ row }) => <InputCell index={row.index} fieldName="gradeP" isEditing={isEditing} />,
     },
     {
       accessorKey: 'gradeM',
       header: () => <div className="text-center w-16">M</div>,
-      cell: ({ row }) => <InputCell index={row.index} fieldName="gradeM" />,
+      cell: ({ row }) => <InputCell index={row.index} fieldName="gradeM" isEditing={isEditing} />,
     },
     {
       accessorKey: 'gradeG',
       header: () => <div className="text-center w-16">G</div>,
-      cell: ({ row }) => <InputCell index={row.index} fieldName="gradeG" />,
+      cell: ({ row }) => <InputCell index={row.index} fieldName="gradeG" isEditing={isEditing} />,
     },
     {
       accessorKey: 'gradeGG',
       header: () => <div className="text-center w-16">GG</div>,
-      cell: ({ row }) => <InputCell index={row.index} fieldName="gradeGG" />,
+      cell: ({ row }) => <InputCell index={row.index} fieldName="gradeGG" isEditing={isEditing} />,
     },
     {
       id: 'total',

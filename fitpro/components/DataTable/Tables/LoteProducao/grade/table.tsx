@@ -1,7 +1,7 @@
 
 "use client";
 import React, { useState } from "react";
-import { GradeProduto } from "@/types/production";
+import { GradeProduto, Produto, Tamanho } from "@/types/production";
 import { DataTable } from "@/components/DataTable";
 import { getGradeDetalhadaColumns } from "./columns";
 import { SemDadosComponent } from "@/components/ErrorManagementComponent/AnyData";
@@ -15,13 +15,19 @@ import { Input } from "@/components/ui/input";
 
 interface LoteProducaoGradeTableProps extends LoteProducaoGradeProps {
   isViewComponent?: boolean;
+  produtos?: Produto[];
+  tamanhos?: Tamanho[];
+  isEditing?: boolean;
 }
-const PRODUTOS_DISPONIVEIS = ['legging', 'short', 'top', 'calca', 'conjunto', 'body', 'macaquinho'];
+
 export const LoteProducaoTableGrade: React.FC<LoteProducaoGradeTableProps> = ({
   grade,
   isLoading,
   isViewComponent,
   viewOnRemove,
+  produtos = [],
+  tamanhos = [],
+  isEditing = true,
 }) => {
   const { control } = useFormContext<LoteProducaoFormValues>();
 
@@ -38,6 +44,10 @@ export const LoteProducaoTableGrade: React.FC<LoteProducaoGradeTableProps> = ({
   const handleAddItem = () => {
     if (!novoItem.produto) return;
 
+    // Buscar o produto selecionado para pegar o nome
+    const produtoSelecionado = produtos.find(p => p.id === novoItem.produto);
+    if (!produtoSelecionado) return;
+
     const totalCalculado =
       Number(novoItem.gradePP) +
       Number(novoItem.gradeP) +
@@ -47,7 +57,8 @@ export const LoteProducaoTableGrade: React.FC<LoteProducaoGradeTableProps> = ({
 
     append({
       id: crypto.randomUUID(),
-      produto: novoItem.produto as any,
+      produtoId: novoItem.produto,
+      produto: produtoSelecionado.nome,
       gradePP: Number(novoItem.gradePP),
       gradeP: Number(novoItem.gradeP),
       gradeM: Number(novoItem.gradeM),
@@ -60,8 +71,8 @@ export const LoteProducaoTableGrade: React.FC<LoteProducaoGradeTableProps> = ({
   };
 
   const columns = React.useMemo(
-    () => getGradeDetalhadaColumns(viewOnRemove, remove),
-    [viewOnRemove, remove]
+    () => getGradeDetalhadaColumns(viewOnRemove, remove, isEditing),
+    [viewOnRemove, remove, isEditing]
   );
 
 
@@ -82,17 +93,25 @@ export const LoteProducaoTableGrade: React.FC<LoteProducaoGradeTableProps> = ({
             <Select
               value={novoItem.produto}
               onValueChange={(val) => setNovoItem({ ...novoItem, produto: val })}
+              disabled={!isEditing}
             >
-              <SelectTrigger className="bg-background h-9 w-full shadow-sm">
+              <SelectTrigger className="bg-background h-9 w-full shadow-sm" disabled={!isEditing || produtos.length === 0}>
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
               <SelectContent>
-                {PRODUTOS_DISPONIVEIS.map(p => (
-                  <SelectItem key={p} value={p} className="capitalize">
-                    {p}
-                  </SelectItem>
-                ))}
+                {produtos && produtos.length > 0 ? (
+                  produtos.map(p => (
+                    <SelectItem key={p.id} value={p.id} className="capitalize">
+                      {p.nome} ({p.sku})
+                    </SelectItem>
+                  ))
+                ) : null}
               </SelectContent>
+              {(!produtos || produtos.length === 0) && (
+                <div className="p-2 text-xs text-muted-foreground text-center mt-2">
+                  Nenhum produto disponível
+                </div>
+              )}
             </Select>
           </div>
 
@@ -104,7 +123,8 @@ export const LoteProducaoTableGrade: React.FC<LoteProducaoGradeTableProps> = ({
               <Input
                 type="number"
                 min={0}
-                className="bg-background h-9 w-14 text-center px-1 shadow-sm transition-all focus:w-16"
+                disabled={!isEditing}
+                className="bg-background h-9 w-14 text-center px-1 shadow-sm transition-all focus:w-16 disabled:opacity-50"
                 value={(novoItem as any)[key] === 0 ? '' : (novoItem as any)[key]}
                 onChange={(e) => setNovoItem({ ...novoItem, [key]: Number(e.target.value) })}
               />
@@ -114,7 +134,7 @@ export const LoteProducaoTableGrade: React.FC<LoteProducaoGradeTableProps> = ({
           <Button
             type="button"
             onClick={handleAddItem}
-            disabled={!novoItem.produto}
+            disabled={!novoItem.produto || !isEditing}
             className="h-9 px-4 shadow-sm flex items-end mt-5"
           >
             <Plus className="h-4 w-4 " />

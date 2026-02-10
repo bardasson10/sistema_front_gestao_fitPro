@@ -19,7 +19,7 @@ export default function DashboardPage() {
   const { lotes, rolos, faccoes, tecidos } = useProduction();
 
   // Calculate metrics
-  const lotesAbertos = lotes.filter((l) => l.status !== 'finalizado').length;
+  const lotesAbertos = lotes.filter((l) => l.status !== 'concluido').length;
   const lotesEmProducao = lotes.filter((l) => l.status === 'em_producao').length;
   const rolosDisponiveis = rolos.filter((r) => r.status === 'disponivel').length;
   const faccoesAtivas = faccoes.filter((f) => f.status === 'ativo').length;
@@ -142,8 +142,8 @@ export default function DashboardPage() {
                           label: 'Em Produção',
                           type: 'warning' as const,
                         },
-                        finalizado: {
-                          label: 'Finalizado',
+                        concluido: {
+                          label: 'Concluído',
                           type: 'success' as const,
                         },
                       };
@@ -264,13 +264,13 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {lotes.filter((l) => l.status !== 'finalizado').length === 0 ? (
+            {lotes.filter((l) => l.status !== 'concluido').length === 0 ? (
               <div className="text-center p-8 text-muted-foreground">
                 Nenhum lote em produção
               </div>
             ) : (
               lotes
-                .filter((l) => l.status !== 'finalizado')
+                .filter((l) => l.status !== 'concluido')
                 .map((lote) => (
                   <div
                     key={lote.id}

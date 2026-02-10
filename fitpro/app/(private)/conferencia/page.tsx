@@ -103,7 +103,7 @@ export default function Conferencia() {
 
         updateLote(selectedDirecionamento.loteId, {
           direcionamentos: updatedDirecionamentos,
-          status: allConcluded ? 'finalizado' : 'em_producao',
+          status: allConcluded ? 'concluido' : 'em_producao',
         });
       }
 

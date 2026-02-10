@@ -8,67 +8,216 @@ import StepIndicator from "@/components/StepIndicator/step-indicador";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useFormModal } from "@/hooks/use-form-modal";
-import { useProduction } from "@/providers/PrivateContexts/ProductionProvider";
+import { useLotesProducao, useCriarLoteProducao, useAtualizarLoteProducao } from "@/hooks/queries/useProducao";
+import { useProdutos, useTamanhos } from "@/hooks/queries/useProdutos";
 import { LoteProducaoFormValues, loteProducaoSchema } from "@/schemas/LoteProducao/lote-producao-schemas";
-import { Colaborador } from "@/types/production";
+import { ColaboradorLote, LoteProducao } from "@/types/production";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, ArrowRight, Plus, Save, Scissors, ScissorsIcon } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus, Save, ScissorsIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-
+import { parseNumber } from "@/utils/Formatter/parse-number-format";
 
 
 const initialValues: LoteProducaoFormValues = {
   codigo: '',
   status: '',
-  dataCreacao: new Date(),
+  createdAt: '',
   responsavelId: '',
-  responsavel: {} as Colaborador,
+  responsavel: {} as ColaboradorLote,
   grade: [],
   tecidosUtilizados: [],
+  rolos: [],
   direcionamentos: [],
-
 };
 
 export default function Lotes() {
-  const { lotes, updateLote, addLote, isLoading } = useProduction();
-  const [currentStep, setCurrentStep] = useState(1)
-  const totalSteps = STEPS.length
-  const CurrentStepComponent = STEPS.find(step => step.id === currentStep)?.component
+  const { data: lotesData = [], isLoading } = useLotesProducao();
+  const { mutate: criar, isPending: isCreating } = useCriarLoteProducao();
+  const { mutate: atualizar, isPending: isUpdating } = useAtualizarLoteProducao();
+  const { data: produtos = [] } = useProdutos();
+  const { data: tamanhos = [] } = useTamanhos();
+  
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = STEPS.length;
+  const CurrentStepComponent = STEPS.find(step => step.id === currentStep)?.component;
 
   const form = useForm<LoteProducaoFormValues>({
     resolver: zodResolver(loteProducaoSchema),
     defaultValues: initialValues,
   });
 
+  const handleSaveLote = (values: LoteProducaoFormValues, id?: string) => {
+    // Converter grade de volta para items array
+    const items = values.grade?.flatMap(grade => {
+      const produtoId = grade.produtoId;
+      
+      if (!produtoId) return [];
+      
+      // Mapear cada tamanho para um item
+      const tamanhoFields = [
+        { field: 'gradePP', tamanhoProcurado: 'PP' },
+        { field: 'gradeP', tamanhoProcurado: 'P' },
+        { field: 'gradeM', tamanhoProcurado: 'M' },
+        { field: 'gradeG', tamanhoProcurado: 'G' },
+        { field: 'gradeGG', tamanhoProcurado: 'GG' },
+      ];
+      
+      return tamanhoFields.flatMap(({ field, tamanhoProcurado }) => {
+        const quantidade = (grade as any)[field] || 0;
+        const tamanho = tamanhos.find(t => t.nome === tamanhoProcurado);
+        
+        if (quantidade > 0 && tamanho) {
+          return [{
+            produtoId: produtoId,
+            tamanhoId: tamanho.id,
+            quantidadePlanejada: quantidade,
+          }];
+        }
+        return [];
+      });
+    }) || [];
+
+    const payload = {
+      codigoLote: values.codigo,
+      tecidoId: values.tecidosUtilizados?.[0]?.roloId || '',
+      responsavelId: values.responsavelId,
+      status: values.status as any,
+      observacao: '',
+      items,
+    };
+
+    if (id) {
+      atualizar({ id, ...payload });
+    } else {
+      criar(payload as any);
+    }
+  };
+
   const {
     isOpen,
     editingItem,
-    handleRemove,
-    removingItemId,
     handleOpen,
     handleEdit,
     handleClose,
     onSubmit,
     isSubmitting,
-    isRemoveOpen,
-    setIsRemoveOpen,
   } = useFormModal({
     form,
     initialValues,
-    onSave: (values, id?: string) => {
-      if (id) {
-        updateLote(id, values);
-      } else {
-        addLote(values);
-      }
-      handleClose();
-    }
+    onSave: (values, id) => handleSaveLote(values, id),
   });
 
-  const nextStep = async () => {
+  const handleEditLote = (lote: LoteProducao) => {
+    // Agrupar items por produto e tamanho para criar a grade
+    const gradeMap = new Map<string, { 
+      produtoId: string;
+      produtoNome: string;
+      grades: { [key: string]: number } 
+    }>();
+    
+    lote.items?.forEach(item => {
+      const produtoId = item.produtoId || '';
+      const produtoNome = item.produto?.nome || '';
+      const tamanhoNome = item.tamanho?.nome || '';
+      const quantidade = item.quantidadePlanejada || 0;
+      
+      if (!gradeMap.has(produtoId)) {
+        gradeMap.set(produtoId, {
+          produtoId,
+          produtoNome,
+          grades: {
+            gradePP: 0,
+            gradeP: 0,
+            gradeM: 0,
+            gradeG: 0,
+            gradeGG: 0,
+          }
+        });
+      }
+      
+      // Mapear tamanho para o campo de grade
+      const gradeObj = gradeMap.get(produtoId)!.grades;
+      const gradeKey = `grade${tamanhoNome}`;
+      
+      if (gradeKey in gradeObj) {
+        (gradeObj as any)[gradeKey] += quantidade;
+      }
+    });
+    
+    // Converter mapa para array de GradeProduto
+    const gradeArray = Array.from(gradeMap.values()).map((item) => {
+      const total = (item.grades.gradePP || 0) + (item.grades.gradeP || 0) + (item.grades.gradeM || 0) + (item.grades.gradeG || 0) + (item.grades.gradeGG || 0);
+      return {
+        id: crypto.randomUUID(),
+        produtoId: item.produtoId,
+        produto: item.produtoNome,
+        gradePP: item.grades.gradePP || 0,
+        gradeP: item.grades.gradeP || 0,
+        gradeM: item.grades.gradeM || 0,
+        gradeG: item.grades.gradeG || 0,
+        gradeGG: item.grades.gradeGG || 0,
+        total,
+      };
+    });
+
+    // Mapear dados da API para o formulário
+    const formValues: LoteProducaoFormValues = {
+      codigo: lote.codigoLote,
+      status: lote.status || '',
+      createdAt: lote.createdAt,
+      responsavelId: lote.responsavelId,
+      responsavel: lote.responsavel ? {
+        id: lote.responsavel.id,
+        nome: lote.responsavel.nome,
+        funcao: (lote.responsavel as any).funcaoSetor as any || '',
+        status: lote.responsavel.status as any,
+        createdAt: lote.responsavel.createdAt,
+      } : ({} as ColaboradorLote),
+      grade: gradeArray,
+      tecidosUtilizados: lote.tecido ? [{
+        id: lote.tecido.id,
+        roloId: lote.tecidoId,
+        codigoReferencia: lote.tecido.codigoReferencia || '',
+        rendimentoMetroKg: parseNumber(lote.tecido.rendimentoMetroKg) || 0,
+        valorPorKg: parseNumber(lote.tecido.valorPorKg) || 0,
+        gramatura: parseNumber(lote.tecido.gramatura) || 0,
+        corId: lote.tecido.corId || '',
+        tecidoTipo: lote.tecido.tipo || '',
+        cor: lote.tecido.nome || '',
+        larguraMetros: parseNumber(lote.tecido.larguraMetros) || 0,
+      }] : [],
+      rolos: lote.tecido ? lote.tecido.rolos.map(rolo => ({
+        id: rolo.id,
+        tecidoId: rolo.tecidoId,
+        codigoBarraRolo: rolo.codigoBarraRolo,
+        pesoInicialKg: rolo.pesoInicialKg,
+        pesoAtualKg: rolo.pesoAtualKg,
+        situacao: rolo.situacao,
+      })) : [],
+      direcionamentos: lote.direcionamentos?.map(d => ({
+        id: d.id,
+        loteProducaoId: d.loteProducaoId,
+        tipoServico: d.tipoServico,
+        faccaoId: d.faccaoId,
+        dataSaida: typeof d.dataSaida === 'string' ? new Date(d.dataSaida) : d.dataSaida,
+        dataPrevisaoRetorno: d.dataPrevisaoRetorno ? (typeof d.dataPrevisaoRetorno === 'string' ? new Date(d.dataPrevisaoRetorno) : d.dataPrevisaoRetorno) : undefined,
+        status: d.status as any,
+        createdAt: d.createdAt,
+        updatedAt: d.updatedAt,
+      })) || [],
+    };
+    
+    // Chamar handleEdit com o item formatado como TItem (precisa ter id)
+    handleEdit({ ...formValues, id: lote.id } as any);
+  };
+
+
+
+  const nextStep = () => {
     setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
   };
+
   const prevStep = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
@@ -77,88 +226,90 @@ export default function Lotes() {
     <main>
       <div className="flex justify-between items-center mb-6">
         <div className="text-sm text-muted-foreground p-4 items-center">
-          {lotes.length} lotes cadastrados
+          {lotesData.length} lotes cadastrados
         </div>
 
-        {!editingItem && (<FormModal
-          key={"modal-Add"}
-          open={isOpen}
-          onSubmit={onSubmit}
-          onClose={() => { handleClose(); setCurrentStep(1); }}
-          Icon={<ScissorsIcon className="mr-2 h-6 w-6" />}
-          title={"Novo Lote "}
-          loading={isSubmitting}
-          trigger={
-            <Button onClick={handleOpen}>
-              <Plus className="mr-2 h-4 w-4" /> Novo Lote
-            </Button>
-          }
-        >
-          <Form {...form}>
-            <div className="flex flex-col h-full min-h-100"> 
+        {!editingItem && (
+          <FormModal
+            key={"modal-Add"}
+            open={isOpen}
+            onSubmit={onSubmit}
+            onClose={() => { handleClose(); setCurrentStep(1); }}
+            Icon={<ScissorsIcon className="mr-2 h-6 w-6" />}
+            title={"Novo Lote "}
+            loading={isSubmitting}
+            trigger={
+              <Button onClick={handleOpen}>
+                <Plus className="mr-2 h-4 w-4" /> Novo Lote
+              </Button>
+            }
+          >
+            <Form {...form}>
+              <div className="flex flex-col h-full min-h-100">
+                <div className="mb-6">
+                  <StepIndicator
+                    currentStep={currentStep}
+                    titles={STEPS.map(t => t.title)}
+                    totalSteps={totalSteps}
+                  />
+                </div>
 
-              <div className="mb-6">
-                <StepIndicator
-                  currentStep={currentStep}
-                  titles={STEPS.map(t => t.title)}
-                  totalSteps={totalSteps}
-                />
-              </div>
+                <div className="flex-1 py-4">
+                  {CurrentStepComponent && <CurrentStepComponent />}
+                </div>
 
-              <div className="flex-1 py-4">
-                {CurrentStepComponent && <CurrentStepComponent />}
-              </div>
-
-              <div className="flex justify-between items-center mt-6 border-t pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={prevStep}
-                  disabled={currentStep === 1}
-                  className={currentStep === 1 ? "invisible" : ""}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
-                </Button>
-
-                {currentStep === totalSteps ? (
+                <div className="flex justify-between items-center mt-6 border-t pt-4">
                   <Button
                     type="button"
-                    onClick={() => { onSubmit(); handleClose(); }}
-                    disabled={isSubmitting}
+                    variant="outline"
+                    onClick={prevStep}
+                    disabled={currentStep === 1}
+                    className={currentStep === 1 ? "invisible" : ""}
                   >
-                    <Save className="mr-2 h-4 w-4" /> Salvar Lote
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
                   </Button>
-                ) : (
-                  <Button type="button" onClick={nextStep}>
-                    Próximo <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                )}
+
+                  {currentStep === totalSteps ? (
+                    <Button
+                      type="button"
+                      onClick={onSubmit}
+                      disabled={isSubmitting}
+                    >
+                      <Save className="mr-2 h-4 w-4" /> Salvar Lote
+                    </Button>
+                  ) : (
+                    <Button type="button" onClick={nextStep}>
+                      Próximo <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
+            </Form>
+          </FormModal>
+        )}
 
-            </div>
-          </Form>
-        </FormModal>)}
-
-        {editingItem && (<FormModal
-          key={"modal-edit"}
-          open={isOpen}
-          onClose={handleClose}
-          Icon={<ScissorsIcon className="mr-2 h-6 w-6" />}
-          title={`Detalhes do Lote ${form.getValues('codigo')}`}
-          onSubmit={onSubmit}
-          loading={isSubmitting}
-        >
-          <Form {...form}>
-            <LoteProducaoForm />
-          </Form>
-        </FormModal>)}
+        {editingItem && (
+          <FormModal
+            key={"modal-edit"}
+            open={isOpen}
+            onClose={handleClose}
+            Icon={<ScissorsIcon className="mr-2 h-6 w-6" />}
+            title={`Editar Lote ${form.getValues('codigo')}`}
+            onSubmit={onSubmit}
+            loading={isSubmitting}
+          >
+            <Form {...form}>
+              <LoteProducaoForm isEditing={!!editingItem} />
+            </Form>
+          </FormModal>
+        )}
       </div>
 
       <div className="hidden md:block">
         <LoteProducaoTable
-          lotesProducao={lotes}
+          lotesProducao={lotesData}
           isLoading={isLoading}
-          onView={handleEdit}
+          onView={handleEditLote}
         />
       </div>
     </main>

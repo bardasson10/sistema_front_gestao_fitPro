@@ -8,23 +8,24 @@ export const getLoteProducaoColumns = (
   onView: (item: LoteProducao) => void,
 ): ColumnDef<LoteProducao>[] => [
   {
-    accessorKey: 'codigo',
+    accessorKey: 'codigoLote',
     header: 'Código',
-    cell: ({ row }) => <span className="font-bold">{row.original.codigo}</span>,
+    cell: ({ row }) => <span className="font-bold">{row.original.codigoLote}</span>,
   },
   {
-    accessorKey: 'dataCreacao',
+    accessorKey: 'createdAt',
     header: 'Data',
     cell: ({ row }) => {
-      const data = row.original.dataCreacao;
-      return <span>{data.toLocaleDateString('pt-BR')}</span>;
+      const data = row.original.createdAt;
+      const dataObj = typeof data === 'string' ? new Date(data) : data;
+      return <span>{dataObj.toLocaleDateString('pt-BR')}</span>;
     },
   },
   {
     id: 'tecidos',
     header: 'Tecidos',
     cell: ({ row }) => {
-      const totalRolos = row.original.tecidosUtilizados.length;
+      const totalRolos = row.original.tecidoId ? 1 : 0;
       return <span>{totalRolos} {totalRolos === 1 ? 'rolo' : 'rolos'}</span>;
     },
   },
@@ -32,7 +33,7 @@ export const getLoteProducaoColumns = (
     id: 'produtos',
     header: 'Produtos',
     cell: ({ row }) => {
-      const totalPecas = row.original.grade.reduce((acc, item) => acc + item.total, 0);
+      const totalPecas = row.original.items?.reduce((acc, item) => acc + (item.quantidadePlanejada || 0), 0) || 0;
       return <span>{totalPecas} peças</span>;
     },
   },
@@ -41,10 +42,12 @@ export const getLoteProducaoColumns = (
     header: 'Status',
     cell: ({ row }) => {
       const statusMap: Record<string, string> = {
+        planejado: 'Planejado',
         criado: 'Criado',
         cortado: 'Cortado',
         em_producao: 'Em Produção',
-        finalizado: 'Finalizado',
+        concluido: 'Concluído',
+        cancelado: 'Cancelado',
       };
       
       return (
