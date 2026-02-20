@@ -1,11 +1,10 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { GradeProduto } from "@/types/production"; // Ajuste seu import
+import { GradeProduto } from "@/types/production";
 import { useFormContext } from "react-hook-form";
 import { FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
-
 
 const InputCell = ({ index, fieldName, isEditing }: { index: number, fieldName: string, isEditing?: boolean }) => {
   const { control } = useFormContext();
@@ -56,31 +55,11 @@ export const getGradeDetalhadaColumns = (
       header: 'Produto',
       cell: ({ row }) => <span className="font-medium capitalize pl-2">{row.original.produto}</span>,
     },
-    {
-      accessorKey: 'gradePP',
-      header: () => <div className="text-center w-16">PP</div>,
-      cell: ({ row }) => <InputCell index={row.index} fieldName="gradePP" isEditing={isEditing} />,
-    },
-    {
-      accessorKey: 'gradeP',
-      header: () => <div className="text-center w-16">P</div>,
-      cell: ({ row }) => <InputCell index={row.index} fieldName="gradeP" isEditing={isEditing} />,
-    },
-    {
-      accessorKey: 'gradeM',
-      header: () => <div className="text-center w-16">M</div>,
-      cell: ({ row }) => <InputCell index={row.index} fieldName="gradeM" isEditing={isEditing} />,
-    },
-    {
-      accessorKey: 'gradeG',
-      header: () => <div className="text-center w-16">G</div>,
-      cell: ({ row }) => <InputCell index={row.index} fieldName="gradeG" isEditing={isEditing} />,
-    },
-    {
-      accessorKey: 'gradeGG',
-      header: () => <div className="text-center w-16">GG</div>,
-      cell: ({ row }) => <InputCell index={row.index} fieldName="gradeGG" isEditing={isEditing} />,
-    },
+    { accessorKey: 'gradePP', header: () => <div className="text-center w-16">PP</div>, cell: ({ row }) => <InputCell index={row.index} fieldName="gradePP" isEditing={isEditing} /> },
+    { accessorKey: 'gradeP', header: () => <div className="text-center w-16">P</div>, cell: ({ row }) => <InputCell index={row.index} fieldName="gradeP" isEditing={isEditing} /> },
+    { accessorKey: 'gradeM', header: () => <div className="text-center w-16">M</div>, cell: ({ row }) => <InputCell index={row.index} fieldName="gradeM" isEditing={isEditing} /> },
+    { accessorKey: 'gradeG', header: () => <div className="text-center w-16">G</div>, cell: ({ row }) => <InputCell index={row.index} fieldName="gradeG" isEditing={isEditing} /> },
+    { accessorKey: 'gradeGG', header: () => <div className="text-center w-16">GG</div>, cell: ({ row }) => <InputCell index={row.index} fieldName="gradeGG" isEditing={isEditing} /> },
     {
       id: 'total',
       header: () => <div className="text-center font-bold">Total</div>,
@@ -95,9 +74,8 @@ export const getGradeDetalhadaColumns = (
       cell: ({ row }) => (
         <div className="flex justify-end">
           <Button
-            variant="ghost"
-            size="icon"
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            variant="ghost" size="icon"
+            className="text-destructive hover:bg-destructive/10"
             onClick={() => onRemove && onRemove(row.index)}
           >
             <Trash2 className="h-4 w-4" />
@@ -106,6 +84,5 @@ export const getGradeDetalhadaColumns = (
       ),
     });
   }
-
   return columns;
 };

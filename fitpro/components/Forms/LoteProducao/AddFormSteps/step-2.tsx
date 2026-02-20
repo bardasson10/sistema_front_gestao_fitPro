@@ -15,7 +15,7 @@ export const LoteProducaoAddStep2 = () => {
     <div className="space-y-4 ">
       <FormField
         control={control}
-        name="tecidosUtilizados"
+        name="tecido"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Selecione os Rolos de Tecido Disponíveis</FormLabel>
@@ -26,7 +26,7 @@ export const LoteProducaoAddStep2 = () => {
                 ) : (
                   rolos.map((rolo) => {
                     const tecido = tecidos.find(t => t.id === rolo.tecidoId);
-                    const isSelected = field.value?.some(t => t.roloId === rolo.id) || false;
+                    const isSelected = Array.isArray(field.value) ? field.value.some(t => t.roloId === rolo.id) : false;
                     
                     return (
                       <div key={rolo.id} className="flex items-center space-x-3 p-2 hover:bg-accent rounded transition">
@@ -34,9 +34,10 @@ export const LoteProducaoAddStep2 = () => {
                           id={rolo.id} 
                           checked={isSelected}
                           onCheckedChange={(checked) => {
+                            const currentValue = Array.isArray(field.value) ? field.value : [];
                             if (checked) {
                               field.onChange([
-                                ...(field.value || []),
+                                ...currentValue,
                                 {
                                   id: rolo.id,
                                   roloId: rolo.id,
@@ -53,7 +54,7 @@ export const LoteProducaoAddStep2 = () => {
                               ]);
                             } else {
                               field.onChange(
-                                field.value?.filter(t => t.roloId !== rolo.id) || []
+                                currentValue.filter(t => t.roloId !== rolo.id)
                               );
                             }
                           }}

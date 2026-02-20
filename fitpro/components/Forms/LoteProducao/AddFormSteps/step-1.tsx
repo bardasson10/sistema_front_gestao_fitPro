@@ -4,6 +4,7 @@ import { LoteProducaoFormValues } from "@/schemas/LoteProducao/lote-producao-sch
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { useColaboradores } from "@/hooks/queries/useColaboradores";
+import { Textarea } from "@/components/ui/textarea";
 
 export const LoteProducaoAddStep1 = () => {
   const { control } = useFormContext<LoteProducaoFormValues>();
@@ -85,6 +86,21 @@ export const LoteProducaoAddStep1 = () => {
           </FormItem>
         )}
       />
+
+      <FormField
+        control={control}
+        name="observacao"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Observação</FormLabel>
+            <FormControl>
+              <Textarea {...field} placeholder="Digite uma observação" />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
     </div>
   );
 };

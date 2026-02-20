@@ -19,6 +19,7 @@ interface Tamanho {
   createdAt: string;
 }
 
+
 interface Produto {
   id: string;
   tipoProdutoId: string;
@@ -28,8 +29,13 @@ interface Produto {
   custoMedioPeca: number;
   precoMedioVenda: number;
   tipo: TipoProduto;
-  lotes: any[];
   createdAt: string;
+  tamanhos: {
+    id: string;
+    tipoProdutoId: string;
+    tamanhoId: string;
+    tamanho: Tamanho[];
+  }
 }
 
 // ============ TIPOS DE PRODUTO ============
@@ -112,43 +118,16 @@ export const useDeletarTipoProduto = () => {
 // ============ TAMANHOS ============
 
 export const useTamanhos = () => {
-  return useQuery({
+  return useQuery<Tamanho[]>({
     queryKey: ['tamanhos'],
     queryFn: async () => {
-      try {
-        console.log('🚀 Iniciando fetch de /tamanhos...');
-        const { data } = await apiClient.get<any>('/tamanhos');
-        
-        console.log('📏 Resposta raw:', data);
-        console.log('📏 Tipo da resposta:', typeof data);
-        console.log('📏 É array?', Array.isArray(data));
-        
-        // Suportar diferentes formatos de resposta
-        if (Array.isArray(data)) {
-          console.log('✅ Formato array. Tamanhos:', data.length);
-          return data;
-        }
-        
-        if (data?.data && Array.isArray(data.data)) {
-          console.log('✅ Formato com .data. Tamanhos:', data.data.length);
-          return data.data;
-        }
-        
-        if (data?.tamanhos && Array.isArray(data.tamanhos)) {
-          console.log('✅ Formato com .tamanhos. Tamanhos:', data.tamanhos.length);
-          return data.tamanhos;
-        }
-        
-        console.warn('⚠️ Nenhum formato reconhecido. Retornando vazio.');
-        console.warn('Estrutura:', JSON.stringify(data, null, 2));
-        return [];
-      } catch (error: any) {
-        console.error('❌ Erro ao buscar tamanhos:', error);
-        console.error('Status:', error?.response?.status);
-        console.error('Dados do erro:', error?.response?.data);
-        throw error;
-      }
+      const { data } = await apiClient.get<any>(`/tamanhos`);
+      // Retornar data.data se vier paginado, ou direto se vier array
+      if (Array.isArray(data)) return data;
+      if (data?.data && Array.isArray(data.data)) return data.data;
+      return [];
     },
+    enabled: true,
   });
 };
 
@@ -156,7 +135,7 @@ export const useTamanho = (id: string) => {
   return useQuery({
     queryKey: ['tamanhos', id],
     queryFn: async () => {
-      const { data } = await apiClient.get<Tamanho>(`/tamanhos/${id}`);
+      const { data } = await apiClient.get<Tamanho[]>(`/tamanhos/${id}`);
       return data;
     },
     enabled: !!id,

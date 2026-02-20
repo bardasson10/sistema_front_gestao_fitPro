@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Save } from "lucide-react";
 import { LoteProducaoTableGrade } from "@/components/DataTable/Tables/LoteProducao/grade/table";
 import { useState } from "react";
+import { useProdutos, useTamanhos } from "@/hooks/queries/useProdutos";
 
 
 
@@ -20,6 +21,8 @@ interface LoteProducaoFormProps {
 export function LoteProducaoForm({ isEditing = true }: LoteProducaoFormProps) {
   const { control, watch } = useFormContext<LoteProducaoFormValues>();
   const [isViewRemoveMode, setIsViewRemoveMode] = useState<boolean>(false);
+  const { data: produtos = [] } = useProdutos();
+  const { data: tamanhos = [] } = useTamanhos();
 
   // Assistir aos tecidos para obter peso e valor
   const tecidos = watch('tecido');
@@ -187,7 +190,8 @@ export function LoteProducaoForm({ isEditing = true }: LoteProducaoFormProps) {
           <FormItem>
             <FormControl>
               <LoteProducaoTableGrade
-                grade={field.value?.map((g, index) => ({ ...g, id: index.toString() })) || []}
+                produtos={produtos}
+                tamanhos={tamanhos}
                 isLoading={false}
                 viewOnRemove={isViewRemoveMode && isEditing}
                 isEditing={isEditing}

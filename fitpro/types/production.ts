@@ -85,6 +85,23 @@ export interface MovimentacaoEstoque {
   }
 }
 
+export interface Tamanho {
+  id: string;
+  nome: string;
+  ordem: number;
+  createdAt: string;
+}
+
+export interface GradeRow {
+  id: string;
+  produtoId: string;
+  produto: string; // Nome para exibição
+  // Index signature para as colunas dinâmicas (ex: gradePP, gradeP)
+  [key: `grade${string}`]: number | string | undefined;
+  total?: number;
+}
+
+
 export interface Produto {
   id: string;
   tipoProdutoId: string;
@@ -93,16 +110,15 @@ export interface Produto {
   fabricante: string;
   custoMedioPeca: number;
   precoMedioVenda: number;
+  tipo: TipoProduto;
   createdAt: string;
-  updatedAt?: string;
+  tamanhos: {
+    id: string;
+    tipoProdutoId: string;
+    tamanhoId: string;
+    tamanho: Tamanho[];
+  }
 }
-
-export interface Tamanho {
-  id: string;
-  nome: string;
-  ordem: number;
-}
-
 
 interface ItensRoloTecido {
   id: string;

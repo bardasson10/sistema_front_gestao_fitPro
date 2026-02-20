@@ -5,6 +5,7 @@ interface UseFormModalProps<T extends FieldValues, TItem extends { id: string } 
   form: UseFormReturn<T>;
   initialValues: DefaultValues<T>;
   onSave: (values: T, id?: string) => void;
+  onInvalid?: (errors: unknown) => void;
   transformItemToForm?: (item: TItem) => T;
 }
 
@@ -12,6 +13,7 @@ export function useFormModal<T extends FieldValues, TItem extends { id: string }
   form,
   initialValues,
   onSave,
+  onInvalid,
   transformItemToForm,
 }: UseFormModalProps<T, TItem>) {
   const [isOpen, setIsOpen] = useState(false);
@@ -64,7 +66,7 @@ export function useFormModal<T extends FieldValues, TItem extends { id: string }
     handleOpen,
     handleEdit,
     handleClose,
-    onSubmit: form.handleSubmit(onSubmit),
+    onSubmit: form.handleSubmit(onSubmit, onInvalid),
     isSubmitting: form.formState.isSubmitting,
   };
 }

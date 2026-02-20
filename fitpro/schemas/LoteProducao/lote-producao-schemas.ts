@@ -31,6 +31,7 @@ export const loteProducaoTecidoSchema = z.object({
       pesoInicialKg: z.number().min(0.01, "O peso inicial deve ser maior que zero"),
       pesoAtualKg: z.number().min(0, "O peso atual não pode ser negativo"),
       situacao: z.string().min(1, "A situação é obrigatória"),
+      pesoReservado: z.number().min(0, "O peso reservado não pode ser negativo").optional(),
     })),
   }).optional(),
   pesoTotal: z.number().min(0, "O peso total não pode ser negativo").optional(),
@@ -67,14 +68,38 @@ export const rolosProducaoSchema = z.object({
 });
 
 export const loteProducaoSchema = z.object({
-  codigo: z.string().min(1, "O código é obrigatório"),
-  status: z.enum(['planejado', 'criado', 'cortado', 'em_producao', 'concluido', 'cancelado', '']),
-  createdAt: z.string(),
-  responsavelId: z.string(),
-  responsavel: colaboradorSchema2,
-  grade: z.array(loteProducaoGradeSchema),
-  tecido: z.array(loteProducaoTecidoSchema),
-  direcionamentos: z.array(loteProducaoDirecionamentoSchema),
+  codigo: z.string().min(1, "Código é obrigatório"),
+  status: z.enum(['planejado', 'criado', 'cortado', 'em_producao', 'concluido', 'cancelado']),
+  observacao: z.string().optional(),
+  createdAt: z.string().optional(),
+  responsavelId: z.string().min(1, "Responsável é obrigatório"),
+  responsavel: z.any().optional(), // ← Remove validação rígida, aceita qualquer coisa
+  grade: z.array(z.object({
+    id: z.string().optional(),
+    produtoId: z.string(),
+    produto: z.string(),
+    gradePP: z.number().default(0),
+    gradeP: z.number().default(0),
+    gradeM: z.number().default(0),
+    gradeG: z.number().default(0),
+    gradeGG: z.number().default(0),
+    total: z.number().optional(),
+  })).optional().default([]),
+  tecido: z.array(z.object({
+    id: z.string().optional(),
+    roloId: z.string(),
+    codigoReferencia: z.string().optional(),
+    rendimentoMetroKg: z.union([z.number(), z.string()]).pipe(z.coerce.number()).optional(), // ← Coerce string to number
+    valorPorKg: z.union([z.number(), z.string()]).pipe(z.coerce.number()).optional(),
+    gramatura: z.union([z.number(), z.string()]).pipe(z.coerce.number()).optional(),
+    corId: z.string().optional(),
+    tecidoTipo: z.string().optional(),
+    cor: z.string().optional(),
+    larguraMetros: z.union([z.number(), z.string()]).pipe(z.coerce.number()).optional(),
+    pesoTotal: z.number().optional(),
+    rolos: z.any().optional(),
+  })).optional().default([]),
+  direcionamentos: z.array(z.any()).optional().default([]),
 });
 
 export type LoteProducaoFormValues = z.infer<typeof loteProducaoSchema>;

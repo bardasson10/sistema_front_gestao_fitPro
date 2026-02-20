@@ -1,7 +1,6 @@
 'use client';
 import { LoteProducaoTable } from "@/components/DataTable/Tables/LoteProducao/table";
 import { LoteProducaoForm } from "@/components/Forms/LoteProducao/loteProducao-form";
-
 import { FormModal } from "@/components/Modal/base-modal-form";
 import STEPS from "@/components/StepIndicator/LoteProducaoForm/steps";
 import StepIndicator from "@/components/StepIndicator/step-indicador";
@@ -16,16 +15,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, ArrowRight, Plus, Save, ScissorsIcon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { parseNumber } from "@/utils/Formatter/parse-number-format";
-import { string } from "zod";
+import { parseNumber } from "@/utils/Formatter/parse-number-format";;
 import { toast } from "sonner";
 
 
 const initialValues: LoteProducaoFormValues = {
-  codigo: '',
+  codigo: "",
   status: 'planejado',
-  createdAt: '',
-  responsavelId: '',
+  observacao: "",
+  createdAt: "",
+  responsavelId: "",
   responsavel: {} as ColaboradorLote,
   grade: [],
   tecido: [],
@@ -37,7 +36,6 @@ export default function Lotes() {
   const { mutate: criar, isPending: isCreating } = useCriarLoteProducao();
   const { mutate: atualizar, isPending: isUpdating } = useAtualizarLoteProducao();
   const { data: produtos = [] } = useProdutos();
-  const { data: tamanhos = [] } = useTamanhos();
 
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = STEPS.length;
@@ -46,6 +44,7 @@ export default function Lotes() {
   const form = useForm<LoteProducaoFormValues>({
     resolver: zodResolver(loteProducaoSchema),
     defaultValues: initialValues,
+    mode: 'onChange',
   });
 
   const handleSaveLote = (values: LoteProducaoFormValues, id?: string) => {
@@ -77,35 +76,33 @@ export default function Lotes() {
       return;
     }
 
-    // Converter grade de volta para items array
+    // Converter grade de volta para items array usando os tamanhos do produto
     const items = values.grade?.flatMap(grade => {
       const produtoId = grade.produtoId;
-
       if (!produtoId) return [];
 
-      // Mapear cada tamanho para um item
-      const tamanhoFields = [
-        { field: 'gradePP', tamanhoProcurado: 'PP' },
-        { field: 'gradeP', tamanhoProcurado: 'P' },
-        { field: 'gradeM', tamanhoProcurado: 'M' },
-        { field: 'gradeG', tamanhoProcurado: 'G' },
-        { field: 'gradeGG', tamanhoProcurado: 'GG' },
-      ];
+      // Encontrar o produto para pegar os tamanhos
+      const produto = produtos.find((p: any) => p.id === produtoId);
+      if (!produto || !produto.tipo?.tamanhos) return [];
 
-      return tamanhoFields.flatMap(({ field, tamanhoProcurado }) => {
-        const quantidade = (grade as any)[field] || 0;
-        const tamanho = tamanhos.find((t: { nome: string }) => t.nome === tamanhoProcurado);
+      // Para cada tamanho do produto, verificar se tem quantidade na grade
+      return produto.tipo.tamanhos.flatMap((tamanhoAssoc: any) => {
+        const nomeTamanho = tamanhoAssoc.tamanho.nome;
+        const fieldName = `grade${nomeTamanho}`;
+        const quantidade = (grade as any)[fieldName] || 0;
 
-        if (quantidade > 0 && tamanho) {
+        if (quantidade > 0) {
           return [{
             produtoId: produtoId,
-            tamanhoId: tamanho.id,
+            tamanhoId: tamanhoAssoc.tamanho.id,
             quantidadePlanejada: quantidade,
           }];
         }
         return [];
       });
     }) || [];
+
+    console.log('Grade items gerados:', { itens: items.length, produtos: produtos.length, grade: values.grade });
 
     if (items.length === 0) {
       toast.error('Nenhuma grade foi preenchida');
@@ -117,17 +114,17 @@ export default function Lotes() {
       tecidoId: values.tecido[0].roloId,
       responsavelId: values.responsavelId,
       status: values.status as 'planejado' | 'em_producao' | 'concluido' | 'cancelado',
-      observacao: '',
+      observacao: values.observacao,
       items,
       rolos: values.tecido[0].rolos?.itens && values.tecido[0].rolos.itens.length > 0
-        ? values.tecido[0].rolos.itens.map(rolo => ({
+        ? values.tecido[0].rolos.itens.map((rolo: { id: strin; pesoInicialKg: any; pesoAtualKg: any; }) => ({
           estoqueRoloId: rolo.id,
           pesoReservado: parseNumber(String(rolo.pesoInicialKg || rolo.pesoAtualKg || 0)),
         }))
         : [],
     };
 
-    console.log('Payload pronto para envio:', payload);
+    console.log('Payload pronto para envio: \n', payload);
 
     if (id) {
       console.log('Atualizando lote com ID:', id);
@@ -147,9 +144,12 @@ export default function Lotes() {
     onSubmit,
     isSubmitting,
   } = useFormModal({
-    form,
+    form: form as any,
     initialValues,
     onSave: (values, id) => handleSaveLote(values, id),
+    onInvalid: (errors) => {
+      console.log('LoteProducao submit blocked by validation:', errors);
+    },
   });
 
   const handleEditLote = (lote: LoteProducao) => {
@@ -209,8 +209,9 @@ export default function Lotes() {
     const formValues: LoteProducaoFormValues = {
       codigo: lote.codigoLote,
       status: lote.status || '',
-      createdAt: lote.createdAt,
-      responsavelId: lote.responsavelId,
+      observacao: lote.observacao || '',
+      createdAt: lote.createdAt || '',
+      responsavelId: lote.responsavelId || '',
       responsavel: lote.responsavel ? {
         id: lote.responsavel.id,
         nome: lote.responsavel.nome,
@@ -244,10 +245,11 @@ export default function Lotes() {
             codigoBarraRolo: r.codigoBarraRolo,
             pesoInicialKg: parseNumber(r.pesoInicialKg),
             pesoAtualKg: parseNumber(r.pesoAtualKg),
-            situacao: r.situacao
+            situacao: r.situacao,
+            pesoReservado: parseNumber(r.pesoReservado || 0),
           })) || [],
-          pesoTotal: parseNumber((tecido as any).rolos.pesoTotal) || 0,
         } : undefined,
+        pesoTotal: parseNumber(tecido.pesoTotal) || 0,
       })) : [],
       direcionamentos: lote.direcionamentos?.map(d => ({
         id: d.id,
@@ -277,7 +279,7 @@ export default function Lotes() {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
-  console.log(form.getValues());
+
 
   const dataLote = lotesData?.data || [];
 

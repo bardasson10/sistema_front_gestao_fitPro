@@ -9,6 +9,7 @@ import {
   SortingState,
   useReactTable,
   RowSelectionState,
+  VisibilityState,
 } from "@tanstack/react-table"
 
 import {
@@ -33,6 +34,8 @@ interface TabelaProps<TData, TValue> {
   setRowSelection?: React.Dispatch<React.SetStateAction<RowSelectionState>>
   getRowId?: (row: TData) => string
   tabelaRepeticoes?: boolean
+  columnVisibility?: VisibilityState
+
 }
 
 export function DataTable<TData, TValue>({
@@ -44,7 +47,8 @@ export function DataTable<TData, TValue>({
   rowSelection,
   setRowSelection,
   getRowId,
-  tabelaRepeticoes
+  tabelaRepeticoes,
+  columnVisibility
 }: TabelaProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -60,6 +64,7 @@ export function DataTable<TData, TValue>({
     state: {
       sorting: ordenacao,
       rowSelection: rowSelection || {},
+      columnVisibility: columnVisibility || {},
     },
   })
 
@@ -88,7 +93,8 @@ export function DataTable<TData, TValue>({
           {isLoading ? (
             Array.from({ length: skeletonRows }).map((_, rowIdx) => (
               <TableRow key={`skeleton-row-${rowIdx}`} >
-                {columns.map((_, colIdx) => (
+                {/* Ajuste para Skeleton respeitar colunas visíveis */}
+                {table.getVisibleFlatColumns().map((_, colIdx) => (
                   <TableCell key={`skeleton-cell-${colIdx}`} >
                     <Skeleton className="h-4 w-full" />
                   </TableCell>
@@ -122,7 +128,8 @@ export function DataTable<TData, TValue>({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
+              {/* Colspan dinâmico baseado em colunas visíveis */}
+              <TableCell colSpan={table.getVisibleFlatColumns().length} className="h-24 text-center">
                 Nenhum resultado.
               </TableCell>
             </TableRow>
