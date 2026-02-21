@@ -9,8 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Save } from "lucide-react";
 import { LoteProducaoTableGrade } from "@/components/DataTable/Tables/LoteProducao/grade/table";
 import { useState } from "react";
-import { useProdutos, useTamanhos } from "@/hooks/queries/useProdutos";
-
 
 
 
@@ -21,8 +19,6 @@ interface LoteProducaoFormProps {
 export function LoteProducaoForm({ isEditing = true }: LoteProducaoFormProps) {
   const { control, watch } = useFormContext<LoteProducaoFormValues>();
   const [isViewRemoveMode, setIsViewRemoveMode] = useState<boolean>(false);
-  const { data: produtos = [] } = useProdutos();
-  const { data: tamanhos = [] } = useTamanhos();
 
   // Assistir aos tecidos para obter peso e valor
   const tecidos = watch('tecido');
@@ -75,67 +71,65 @@ export function LoteProducaoForm({ isEditing = true }: LoteProducaoFormProps) {
             <FormLabel>Tecidos Utilizados</FormLabel>
             <FormControl>
               <div className="flex w-full flex-col space-y-3 rounded-md border border-input bg-background p-4">
-                {field.value?.map((tecido, index) => (
-                  <div key={index} className="space-y-2 pb-3 border-b last:border-b-0 last:pb-0">
-                    {/* Tipo e Cor */}
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <span className="text-sm font-semibold text-foreground">
-                          {tecido.tecidoTipo}
-                        </span>
-                        <span className="text-sm text-muted-foreground ml-2">
-                          ({tecido.cor})
-                        </span>
-                      </div>
+                <div key={field.value.id} className="space-y-2 pb-3 border-b last:border-b-0 last:pb-0">
+                  {/* Tipo e Cor */}
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className="text-sm font-semibold text-foreground">
+                        {field.value.nome}
+                      </span>
+                      <span className="text-sm text-muted-foreground ml-2">
+                        ({field.value.cor.nome})
+                      </span>
                     </div>
-
-
-                    {/* Rendimento, Largura e Gramatura */}
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <span className="text-xs text-muted-foreground">Rendimento</span>
-                        <p className="font-medium text-foreground">{parseNumber(tecido.rendimentoMetroKg)} m/kg</p>
-                      </div>
-                      <div>
-                        <span className="text-xs text-muted-foreground">Largura</span>
-                        <p className="font-medium text-foreground">{parseNumber(tecido.larguraMetros)} m</p>
-                      </div>
-                      <div>
-                        <span className="text-xs text-muted-foreground">Gramatura</span>
-                        <p className="font-medium text-foreground">{parseNumber(tecido.gramatura)} g/m²</p>
-                      </div>
-                    </div>
-
-                    {/* Valor por Kg e Peso Disponível */}
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                  
-                      <div>
-                        <span className="text-xs text-muted-foreground">Código de Referência</span>
-                        <p className="font-medium text-foreground">{tecido.codigoReferencia}</p>
-                      </div>
-                      <div>
-                        <span className="text-xs text-muted-foreground">Peso Disponível (Rolo)</span>
-                        <p className="font-medium text-foreground">{parseNumber(tecido?.pesoTotal)} kg</p>
-                      </div>
-                      <div>
-                        <span className="text-xs text-muted-foreground">Valor por Kg</span>
-                        <p className="font-medium text-foreground">R$ {parseNumber(tecido.valorPorKg)}</p>
-                      </div>
-                    </div>
-
-                    {/* Valor Total do Rolo */}
-                    <div className="bg-muted/50 rounded  px-2 py-2 mt-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-md font-semibold text-muted-foreground">Valor Total do Rolo</span>
-                        <span className="text-sm font-bold text-foreground">
-                          R$ {parseNumber((parseNumber(tecido?.pesoTotal) || 0) * (parseNumber(tecido.valorPorKg) || 0))}
-                        </span>
-                      </div>
-                    </div>
-
-
                   </div>
-                ))}
+
+
+                  {/* Rendimento, Largura e Gramatura */}
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span className="text-xs text-muted-foreground">Rendimento</span>
+                      <p className="font-medium text-foreground">{parseNumber(field.value.rendimentoMetroKg)} m/kg</p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-muted-foreground">Largura</span>
+                      <p className="font-medium text-foreground">{parseNumber(field.value.larguraMetros)} m</p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-muted-foreground">Gramatura</span>
+                      <p className="font-medium text-foreground">{parseNumber(field.value.gramatura)} g/m²</p>
+                    </div>
+                  </div>
+
+                  {/* Valor por Kg e Peso Disponível */}
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+
+                    <div>
+                      <span className="text-xs text-muted-foreground">Código de Referência</span>
+                      <p className="font-medium text-foreground">{field.value.codigoReferencia}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-muted-foreground">Peso Disponível (Rolo)</span>
+                      <p className="font-medium text-foreground">{parseNumber(field.value.pesoTotal)} kg</p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-muted-foreground">Valor por Kg</span>
+                      <p className="font-medium text-foreground">R$ {parseNumber(field.value.valorPorKg)}</p>
+                    </div>
+                  </div>
+
+                  {/* Valor Total do Rolo */}
+                  <div className="bg-muted/50 rounded  px-2 py-2 mt-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-md font-semibold text-muted-foreground">Valor Total do Rolo</span>
+                      <span className="text-sm font-bold text-foreground">
+                        R$ {parseNumber((parseNumber(field.value.pesoTotal) || 0) * (parseNumber(field.value.valorPorKg) || 0))}
+                      </span>
+                    </div>
+                  </div>
+
+
+                </div>
               </div>
             </FormControl>
             <FormMessage />
@@ -148,8 +142,8 @@ export function LoteProducaoForm({ isEditing = true }: LoteProducaoFormProps) {
       <div className="flex justify-between items-center">
         <span className="text-accent-foreground font-light text-sm">Grade de Produção</span>
         <div className="flex items-center gap-2.5">
-          <Button 
-            className="variant-outline w-fit" 
+          <Button
+            className="variant-outline w-fit"
             size="default"
             disabled={!isEditing}
             onClick={() => setIsViewRemoveMode(false)}
@@ -185,20 +179,12 @@ export function LoteProducaoForm({ isEditing = true }: LoteProducaoFormProps) {
 
       <FormField
         control={control}
-        name="grade"
+        name="items"
         render={({ field }) => (
-          <FormItem>
-            <FormControl>
-              <LoteProducaoTableGrade
-                produtos={produtos}
-                tamanhos={tamanhos}
-                isLoading={false}
-                viewOnRemove={isViewRemoveMode && isEditing}
-                isEditing={isEditing}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
+          <LoteProducaoTableGrade
+            itensLote={field.value}
+            isEditing={isEditing}
+          />
         )}
       />
 

@@ -19,7 +19,7 @@ export const LoteProducaoAddStep1 = () => {
     <div className="space-y-4 w-full flex flex-col">
       <FormField
         control={control}
-        name="codigo"
+        name="codigoLote"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Codigo do Lote</FormLabel>
@@ -94,7 +94,7 @@ export const LoteProducaoAddStep1 = () => {
           <FormItem>
             <FormLabel>Observação</FormLabel>
             <FormControl>
-              <Textarea {...field} placeholder="Digite uma observação" />
+              <Textarea {...field} value={field.value || ""} placeholder="Digite uma observação" />
             </FormControl>
             <FormMessage />
           </FormItem>

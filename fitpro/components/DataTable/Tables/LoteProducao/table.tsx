@@ -3,11 +3,11 @@
 "use client";
 
 import React from "react";
-import { LoteProducao} from "@/types/production";
 import { DataTable } from "@/components/DataTable";
 import { getLoteProducaoColumns } from "./columns";
 import { SemDadosComponent } from "@/components/ErrorManagementComponent/AnyData";
 import { LoteProducaoProps } from "@/types/LoteProduComponents/loteProducao-components";
+import { LoteProducao } from "@/hooks/queries/useProducao";
 
 interface LoteProducaoTableProps extends LoteProducaoProps {
 

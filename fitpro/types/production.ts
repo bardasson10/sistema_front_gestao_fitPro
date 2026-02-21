@@ -120,7 +120,7 @@ export interface Produto {
   }
 }
 
-interface ItensRoloTecido {
+export interface ItensRoloTecido {
   id: string;
   tecidoId: string;
   codigoBarraRolo: string;

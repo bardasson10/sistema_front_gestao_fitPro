@@ -1,4 +1,5 @@
-import { Colaborador, GradeProduto, LoteProducao } from "../production";
+import { LoteProducao } from "@/hooks/queries/useProducao";
+import { Colaborador, GradeProduto } from "../production";
 
 
 export interface LoteProducaoProps {

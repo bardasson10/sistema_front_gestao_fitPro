@@ -1,105 +1,194 @@
 import * as z from "zod";
 
-export const loteProducaoGradeSchema = z.object({ 
-  id: z.string(),
+export const loteProducaoGradeSchema = z.object({
+  id: z.string().optional(),
   produto: z.string().min(1, "Selecione um produto"),
   produtoId: z.string().min(1, "ID do produto obrigatório"),
-  gradePP: z.number().min(0),
-  gradeP: z.number().min(0),
-  gradeM: z.number().min(0),
-  gradeG: z.number().min(0),
-  gradeGG: z.number().min(0),
-  total: z.number().min(0),
+  gradePP: z.number().default(0),
+  gradeP: z.number().default(0),
+  gradeM: z.number().default(0),
+  gradeG: z.number().default(0),
+  gradeGG: z.number().default(0),
+  total: z.number().default(0),
 });
 
-export const loteProducaoTecidoSchema = z.object({
+// --- Responsável ---
+export const colaboradorSchema = z.object({
   id: z.string(),
-  roloId: z.string().min(1, "Selecione um rolo"),
-  tecidoTipo: z.string(),
-  codigoReferencia: z.string(),
-  rendimentoMetroKg: z.number(),
-  valorPorKg: z.number(),
-  gramatura: z.number(),
-  corId: z.string(),
-  cor: z.string(),
-  larguraMetros: z.number(),
-  rolos: z.object({
-    itens: z.array(z.object({
-      id: z.string().uuid(),
-      tecidoId: z.string(),
-      codigoBarraRolo: z.string().min(1, "O código de barras é obrigatório"),
-      pesoInicialKg: z.number().min(0.01, "O peso inicial deve ser maior que zero"),
-      pesoAtualKg: z.number().min(0, "O peso atual não pode ser negativo"),
-      situacao: z.string().min(1, "A situação é obrigatória"),
-      pesoReservado: z.number().min(0, "O peso reservado não pode ser negativo").optional(),
-    })),
-  }).optional(),
-  pesoTotal: z.number().min(0, "O peso total não pode ser negativo").optional(),
+  nome: z.string(),
+  perfil: z.string(),
+  status: z.string(),
+  funcaoSetor: z.string().optional(),
 });
 
-export const loteProducaoDirecionamentoSchema = z.object({
+// --- Tecido e seus aninhados ---
+export const fornecedorSchema = z.object({
   id: z.string(),
-  loteProducaoId: z.string(),
-  tipoServico: z.string(),
-  faccaoId: z.string(),
-  dataSaida: z.string(),
-  dataPrevisaoRetorno: z.string(),
-  status: z.enum(['enviado', 'em_producao', 'atrasado', 'concluido', '']),
+  nome: z.string(),
+  tipo: z.string(),
+  contato: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
 
-export const colaboradorSchema2 = z.object({
+export const corSchema = z.object({
   id: z.string(),
   nome: z.string(),
-  perfil: z.string(),
-  status: z.enum(["ativo", "inativo", '']),
-  funcaoSetor: z.string(), 
+  codigoHex: z.string(),
 });
 
-export const rolosProducaoSchema = z.object({
-  id: z.uuid(),
+export const roloItemSchema = z.object({
+  id: z.string(),
   tecidoId: z.string(),
-  codigoBarraRolo: z.string().min(1, "O código de barras é obrigatório"),
-  pesoInicialKg: z.number().min(0.01, "O peso inicial deve ser maior que zero"),
-  pesoAtualKg: z.number().min(0, "O peso atual não pode ser negativo"),
-  situacao: z.string().min(1, "A situação é obrigatória"),
-  pesoTotal: z.number().min(0, "O peso total não pode ser negativo").optional(),
+  codigoBarraRolo: z.string(),
+  pesoInicialKg: z.string(),
+  pesoAtualKg: z.string(),
+  situacao: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  pesoReservado: z.number(),
 });
 
-export const loteProducaoSchema = z.object({
-  codigo: z.string().min(1, "Código é obrigatório"),
-  status: z.enum(['planejado', 'criado', 'cortado', 'em_producao', 'concluido', 'cancelado']),
-  observacao: z.string().optional(),
-  createdAt: z.string().optional(),
-  responsavelId: z.string().min(1, "Responsável é obrigatório"),
-  responsavel: z.any().optional(), // ← Remove validação rígida, aceita qualquer coisa
-  grade: z.array(z.object({
-    id: z.string().optional(),
-    produtoId: z.string(),
-    produto: z.string(),
-    gradePP: z.number().default(0),
-    gradeP: z.number().default(0),
-    gradeM: z.number().default(0),
-    gradeG: z.number().default(0),
-    gradeGG: z.number().default(0),
-    total: z.number().optional(),
-  })).optional().default([]),
-  tecido: z.array(z.object({
-    id: z.string().optional(),
-    roloId: z.string(),
-    codigoReferencia: z.string().optional(),
-    rendimentoMetroKg: z.union([z.number(), z.string()]).pipe(z.coerce.number()).optional(), // ← Coerce string to number
-    valorPorKg: z.union([z.number(), z.string()]).pipe(z.coerce.number()).optional(),
-    gramatura: z.union([z.number(), z.string()]).pipe(z.coerce.number()).optional(),
-    corId: z.string().optional(),
-    tecidoTipo: z.string().optional(),
-    cor: z.string().optional(),
-    larguraMetros: z.union([z.number(), z.string()]).pipe(z.coerce.number()).optional(),
-    pesoTotal: z.number().optional(),
-    rolos: z.any().optional(),
-  })).optional().default([]),
-  direcionamentos: z.array(z.any()).optional().default([]),
+export const tecidoSchema = z.object({
+  id: z.string(),
+  fornecedorId: z.string(),
+  corId: z.string(),
+  nome: z.string(),
+  codigoReferencia: z.string(),
+  rendimentoMetroKg: z.string(),
+  larguraMetros: z.string(),
+  valorPorKg: z.string(),
+  gramatura: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  fornecedor: fornecedorSchema,
+  cor: corSchema,
+  rolos: z.object({
+    itens: z.array(roloItemSchema),
+  }),
+  pesoTotal: z.number(),
 });
+
+// --- Itens da Grade (Produtos) ---
+export const itemLoteSchema = z.object({
+  id: z.string(),
+  loteProducaoId: z.string(),
+  produtoId: z.string(),
+  tamanhoId: z.string(),
+  quantidadePlanejada: z.number(),
+  produto: z.object({
+    id: z.string(),
+    tipoProdutoId: z.string(),
+    nome: z.string(),
+    sku: z.string(),
+    fabricante: z.string(),
+    custoMedioPeca: z.string(),
+    precoMedioVenda: z.string(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+  }),
+  tamanho: z.object({
+    id: z.string(),
+    nome: z.string(),
+    ordem: z.number(),
+  }),
+});
+
+// --- Direcionamentos ---
+export const direcionamentoSchema = z.object({
+  id: z.string(),
+  loteProducaoId: z.string(),
+  faccaoId: z.string(),
+  tipoServico: z.string(),
+  status: z.string(),
+  dataSaida: z.string(),
+  dataPrevisaoRetorno: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+// --- Schema Principal do Lote (O objeto dentro de "data") ---
+export const loteProducaoSchema = z.object({
+  id: z.string(),
+  codigoLote: z.string().min(1, "Obrigatório"),
+  tecidoId: z.string(),
+  responsavelId: z.string(),
+  status: z.string(),
+  observacao: z.string().nullable().or(z.literal("")), 
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  tecido: tecidoSchema,
+  responsavel: colaboradorSchema,
+  items: z.array(itemLoteSchema),
+  direcionamentos: z.array(direcionamentoSchema),
+});
+
+export const loteProducaoFormSchema = loteProducaoSchema.extend({
+  rolosSelecionados: z.array(
+    z.object({
+      estoqueRoloId: z.string(),
+      pesoReservado: z.number(),
+    })
+  ).default([]),
+});
+
 
 export type LoteProducaoFormValues = z.infer<typeof loteProducaoSchema>;
+
+
+export const initialValuesLote: LoteProducaoFormValues = {
+  id: "", // ou uma string vazia se preferir
+  codigoLote: "",
+  status: 'planejado',
+  observacao: "",
+  createdAt: "",
+  updatedAt: "",
+  responsavelId: "",
+  tecidoId: "",
+  
+  // Objeto de responsável conforme o schema
+  responsavel: {
+    id: "",
+    nome: "",
+    perfil: "",
+    status: "ativo",
+    funcaoSetor: ""
+  },
+
+  // No seu JSON é um objeto, não um array []
+  tecido: {
+    id: "",
+    fornecedorId: "",
+    corId: "",
+    nome: "",
+    codigoReferencia: "",
+    rendimentoMetroKg: "0",
+    larguraMetros: "0",
+    valorPorKg: "0",
+    gramatura: "0",
+    createdAt: "",
+    updatedAt: "",
+    pesoTotal: 0,
+    fornecedor: {
+      id: "",
+      nome: "",
+      tipo: "",
+      createdAt: "",
+      updatedAt: ""
+    },
+    cor: {
+      id: "",
+      nome: "",
+      codigoHex: ""
+    },
+    rolos: {
+      itens: []
+    }
+  },
+
+
+  // No seu JSON a lista de tamanhos/produtos chama-se 'items'
+  items: [], 
+  
+  direcionamentos: []
+};

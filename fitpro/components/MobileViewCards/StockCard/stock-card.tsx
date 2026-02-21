@@ -2,6 +2,7 @@ import { SemDadosComponent } from "@/components/ErrorManagementComponent/AnyData
 import { BaseCard } from "@/components/MobileViewCards/base-card"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { EstoqueRolo } from "@/hooks/queries/useEstoque"
 import { EstoqueTecido } from "@/types/production"
 import { StockProps } from "@/types/StockComponents/stock-components"
 import { Pencil } from "lucide-react"
@@ -37,7 +38,7 @@ export const MobileViewStock = ({
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <SemDadosComponent<EstoqueTecido> nomeDado="tecido" data={rolos} />
+      <SemDadosComponent<EstoqueRolo> nomeDado="tecido" data={rolos} />
       {Array.isArray(rolos) && rolos.map((item) => {
         const tecidoDoRolo = tecidos.find(t => t.id === item.tecidoId);
         

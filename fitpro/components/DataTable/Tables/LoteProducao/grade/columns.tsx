@@ -1,26 +1,41 @@
+// columns.ts
+
 import { ColumnDef } from "@tanstack/react-table";
-import { GradeProduto } from "@/types/production";
 import { useFormContext } from "react-hook-form";
-import { FormControl, FormField, FormItem } from "@/components/ui/form";
+import { FormField, FormItem, FormControl } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
+import { GradeRow } from "@/utils/Mapper/tamanho-helper";
 
-const InputCell = ({ index, fieldName, isEditing }: { index: number, fieldName: string, isEditing?: boolean }) => {
+
+const InputCell = ({
+  index,
+  tamanhoNome,
+  tamanhoQtd,
+  isEditing
+}: {
+  index: number;
+  tamanhoNome: string;
+  tamanhoQtd: number;
+  isEditing?: boolean;
+}) => {
   const { control } = useFormContext();
+
   return (
     <FormField
       control={control}
-      name={`grade.${index}.${fieldName}`}
+      name={`grade.${index}.tamanhos.${ tamanhoNome }`}
+      defaultValue={tamanhoQtd}
       render={({ field }) => (
         <FormItem>
           <FormControl>
             <Input
-              {...field}
               type="number"
               min={0}
               disabled={!isEditing}
-              className="h-8 w-16 text-center mx-auto disabled:opacity-50" 
+              className="h-8 w-14 text-center"
+              value={field.value ?? 0}
               onChange={(e) => field.onChange(Number(e.target.value))}
             />
           </FormControl>
@@ -29,60 +44,65 @@ const InputCell = ({ index, fieldName, isEditing }: { index: number, fieldName: 
     />
   );
 };
-
-const TotalCell = ({ index }: { index: number }) => {
-  const { watch } = useFormContext();
-  const rowData = watch(`grade.${index}`);
-  const total = rowData
-    ? (Number(rowData.gradePP || 0) +
-      Number(rowData.gradeP || 0) +
-      Number(rowData.gradeM || 0) +
-      Number(rowData.gradeG || 0) +
-      Number(rowData.gradeGG || 0))
-    : 0;
-
-  return <div className="text-center font-bold text-primary">{total}</div>;
-};
-
-export const getGradeDetalhadaColumns = (
-  viewOnRemove?: boolean,
+export function getGradeDetalhadaColumns(
+  tamanhos: { nome: string, quantidade: number }[],
   onRemove?: (index: number) => void,
   isEditing?: boolean
-): ColumnDef<GradeProduto>[] => {
-  const columns: ColumnDef<GradeProduto>[] = [
+): ColumnDef<GradeRow>[] {
+  return [
     {
-      accessorKey: 'produto',
-      header: 'Produto',
-      cell: ({ row }) => <span className="font-medium capitalize pl-2">{row.original.produto}</span>,
+      accessorKey: "produtoNome",
+      header: "Produto"
     },
-    { accessorKey: 'gradePP', header: () => <div className="text-center w-16">PP</div>, cell: ({ row }) => <InputCell index={row.index} fieldName="gradePP" isEditing={isEditing} /> },
-    { accessorKey: 'gradeP', header: () => <div className="text-center w-16">P</div>, cell: ({ row }) => <InputCell index={row.index} fieldName="gradeP" isEditing={isEditing} /> },
-    { accessorKey: 'gradeM', header: () => <div className="text-center w-16">M</div>, cell: ({ row }) => <InputCell index={row.index} fieldName="gradeM" isEditing={isEditing} /> },
-    { accessorKey: 'gradeG', header: () => <div className="text-center w-16">G</div>, cell: ({ row }) => <InputCell index={row.index} fieldName="gradeG" isEditing={isEditing} /> },
-    { accessorKey: 'gradeGG', header: () => <div className="text-center w-16">GG</div>, cell: ({ row }) => <InputCell index={row.index} fieldName="gradeGG" isEditing={isEditing} /> },
-    {
-      id: 'total',
-      header: () => <div className="text-center font-bold">Total</div>,
-      cell: ({ row }) => <TotalCell index={row.index} />,
-    },
-  ];
 
-  if (viewOnRemove) {
-    columns.push({
-      id: 'actions',
-      header: '',
-      cell: ({ row }) => (
+    ...tamanhos.map((tamanho) => ({
+      id: tamanho.nome,
+      header: () => (
+        <div className="text-center w-16">{tamanho.nome}</div>
+      ),
+      cell: ({ row }: any) => (
+        <InputCell
+          index={row.index}
+          tamanhoNome={tamanho.nome}
+          tamanhoQtd={row.original.tamanhos[tamanho.nome] || 0}
+          isEditing={isEditing}
+        />
+      )
+    })),
+
+    {
+      id: "total",
+      header: () => <div className="text-center font-bold">Total</div>,
+      cell: ({ row }: any) => {
+        const tamanhosRow = row.original.tamanhos;
+
+        const total = Object.values(tamanhosRow).reduce(
+          (sum: number, val: any) => sum + Number(val || 0),
+          0
+        );
+
+        return (
+          <div className="text-center font-bold text-primary">
+            {total}
+          </div>
+        );
+      }
+    },
+
+    {
+      id: "actions",
+      header: "",
+      cell: ({ row }: any) => (
         <div className="flex justify-end">
           <Button
-            variant="ghost" size="icon"
-            className="text-destructive hover:bg-destructive/10"
-            onClick={() => onRemove && onRemove(row.index)}
+            variant="ghost"
+            size="icon"
+            onClick={() => onRemove?.(row.index)}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
-      ),
-    });
-  }
-  return columns;
-};
+      )
+    }
+  ];
+}

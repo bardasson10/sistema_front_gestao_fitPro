@@ -3,19 +3,21 @@ import { useFormContext } from "react-hook-form";
 import { LoteProducaoFormValues } from "@/schemas/LoteProducao/lote-producao-schemas";
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
 import { Checkbox } from "@/components/ui/checkbox";
+
 import { useEstoqueTecidos } from "@/hooks/queries/useEstoque";
-import { useTecidos } from "@/hooks/queries/useMateriais";
+
 
 export const LoteProducaoAddStep2 = () => {
   const { control } = useFormContext<LoteProducaoFormValues>();
-  const { data: rolos = [] } = useEstoqueTecidos();
-  const { data: tecidos = [] } = useTecidos();
+
+  const { data: rolosData } = useEstoqueTecidos();
+  const rolos = rolosData || [];
 
   return (
     <div className="space-y-4 ">
       <FormField
         control={control}
-        name="tecido"
+        name="tecido.rolos.itens"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Selecione os Rolos de Tecido Disponíveis</FormLabel>
@@ -24,37 +26,36 @@ export const LoteProducaoAddStep2 = () => {
                 {rolos.length === 0 ? (
                   <span className="text-sm text-muted-foreground">Nenhum rolo disponível</span>
                 ) : (
-                  rolos.map((rolo) => {
-                    const tecido = tecidos.find(t => t.id === rolo.tecidoId);
-                    const isSelected = Array.isArray(field.value) ? field.value.some(t => t.roloId === rolo.id) : false;
-                    
+                    rolos.map((rolo) => {
                     return (
                       <div key={rolo.id} className="flex items-center space-x-3 p-2 hover:bg-accent rounded transition">
-                        <Checkbox 
-                          id={rolo.id} 
-                          checked={isSelected}
+                        <Checkbox
+                          id={rolo.id}
+                          checked={Array.isArray(field.value) ? field.value.some((t) => t.id === rolo.id) : false}
                           onCheckedChange={(checked) => {
                             const currentValue = Array.isArray(field.value) ? field.value : [];
                             if (checked) {
+                              if (currentValue.some((t) => t.id === rolo.id)) {
+                                return;
+                              }
+
                               field.onChange([
                                 ...currentValue,
                                 {
                                   id: rolo.id,
-                                  roloId: rolo.id,
-                                  tecidoTipo: tecido?.tipo || '',
-                                  codigoReferencia: tecido?.codigoReferencia || '',
-                                  cor: tecido?.nome || '',
-                                  corId: tecido?.corId || '',
-                                  rendimentoMetroKg: tecido?.rendimentoMetroKg || 0,
-                                  valorPorKg: tecido?.valorPorKg || 0,
-                                  gramatura: tecido?.gramatura || 0,
-                                  larguraMetros: tecido?.larguraMetros || 0,
-                                  pesoAtualKg: rolo.pesoAtualKg || 0,
+                                  tecidoId: rolo.tecidoId || rolo.tecido?.id || '',
+                                  codigoBarraRolo: rolo.codigoBarraRolo || '',
+                                  pesoInicialKg: String(rolo.pesoInicialKg ?? rolo.pesoAtualKg ?? 0),
+                                  pesoAtualKg: String(rolo.pesoAtualKg ?? 0),
+                                  situacao: rolo.situacao || 'disponivel',
+                                  createdAt: rolo.createdAt || '',
+                                  updatedAt: rolo.updatedAt || '',
+                                  pesoReservado: Number(rolo.pesoAtualKg ?? 0),
                                 }
                               ]);
                             } else {
                               field.onChange(
-                                currentValue.filter(t => t.roloId !== rolo.id)
+                                currentValue.filter(t => t.id !== rolo.id)
                               );
                             }
                           }}
@@ -64,7 +65,7 @@ export const LoteProducaoAddStep2 = () => {
                             {rolo.codigoBarraRolo}
                           </span>
                           <span className="text-xs text-muted-foreground ml-2">
-                            {tecido?.tipo} - {tecido?.nome}
+                            {rolo.codigoBarraRolo} - {rolo.tecido?.nome}
                           </span>
                         </div>
                         <span className="text-sm font-medium">

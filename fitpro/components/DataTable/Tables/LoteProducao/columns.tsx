@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { LoteProducao } from "@/types/production";
+import { LoteProducao } from "@/hooks/queries/useProducao";
 import { ColumnDef } from "@tanstack/react-table";
 import { Eye } from "lucide-react";
 
@@ -25,7 +25,7 @@ export const getLoteProducaoColumns = (
     id: 'tecidos',
     header: 'Tecidos',
     cell: ({ row }) => {
-      const totalRolos = row.original.tecidoId ? 1 : 0;
+      const totalRolos = row.original.tecido.rolos.itens.length;
       return <span>{totalRolos} {totalRolos === 1 ? 'rolo' : 'rolos'}</span>;
     },
   },

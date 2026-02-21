@@ -1,27 +1,119 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/services/api/api-client';
 import { toast } from 'sonner';
-import { Faccao, LoteProducao, PaginatedResponse } from '@/types/production';
-
-// ============ TIPOS ============
-
-// Re-export types from production to keep them in sync
-import { LoteProducao as LoteProd, ItemsLoteProducao, Direcionamento as DirProd, Produto, Tamanho } from '@/types/production';
+import { Faccao, PaginatedResponse } from '@/types/production';
 
 
+export interface Fornecedor {
+    id: string;
+    nome: string;
+    tipo: string;
+    contato: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface Cor {
+    id: string;
+    nome: string;
+    codigoHex: string;
+}
+
+export interface RoloItem {
+    id: string;
+    tecidoId: string;
+    codigoBarraRolo: string;
+    pesoInicialKg: string;
+    pesoAtualKg: string;
+    situacao: string;
+    createdAt: string;
+    updatedAt: string;
+    pesoReservado: number;
+}
+
+export interface Tecido {
+    id: string;
+    fornecedorId: string;
+    corId: string;
+    nome: string;
+    codigoReferencia: string;
+    rendimentoMetroKg: string;
+    larguraMetros: string;
+    valorPorKg: string;
+    gramatura: string;
+    createdAt: string;
+    updatedAt: string;
+    fornecedor: Fornecedor;
+    cor: Cor;
+    rolos: {
+        itens: RoloItem[];
+    };
+    pesoTotal: number;
+}
+
+export interface Responsavel {
+    id: string;
+    nome: string;
+    perfil: string;
+    status: string;
+    funcaoSetor: string;
+}
+
+export interface Produto {
+    id: string;
+    tipoProdutoId: string;
+    nome: string;
+    sku: string;
+    fabricante: string;
+    custoMedioPeca: string;
+    precoMedioVenda: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface Tamanho {
+    id: string;
+    nome: string;
+    ordem: number;
+}
+
+export interface ItemLote {
+    id: string;
+    loteProducaoId: string;
+    produtoId: string;
+    tamanhoId: string;
+    quantidadePlanejada: number;
+    produto: Produto;
+    tamanho: Tamanho;
+}
 
 interface Direcionamento {
     id: string;
     loteProducaoId: string;
-    faccaoId?: string;
+    faccaoId: string;
     tipoServico: string;
+    status: string;
     dataSaida: string;
-    dataPrevisaoRetorno?: string;
-    status: 'enviado' | 'em_producao' | 'atrasado' | 'concluido' | '';
-    createdAt?: string;
-    updatedAt?: string;
+    dataPrevisaoRetorno: string;
+    createdAt: string;
+    updatedAt: string;
 }
 
+
+export interface LoteProducao {
+    id: string;
+    codigoLote: string;
+    tecidoId: string;
+    responsavelId: string;
+    status: string;
+    observacao: string;
+    createdAt: string;
+    updatedAt: string;
+    tecido: Tecido;
+    responsavel: Responsavel;
+    items: ItemLote[];
+    direcionamentos: Direcionamento[];
+}
 interface ConferenciaItem {
     id: string;
     tamanhoId: string;
@@ -98,7 +190,7 @@ export const useCriarFaccao = () => {
             toast.success('Facção criada com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error|| 'Erro ao criar facção');
+            toast.error(error.response?.data?.error || 'Erro ao criar facção');
         },
     });
 };
@@ -117,7 +209,7 @@ export const useAtualizarFaccao = () => {
             toast.success('Facção atualizada com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error|| 'Erro ao atualizar facção');
+            toast.error(error.response?.data?.error || 'Erro ao atualizar facção');
         },
     });
 };
@@ -134,7 +226,7 @@ export const useDeletarFaccao = () => {
             toast.success('Facção deletada com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error|| 'Erro ao deletar facção');
+            toast.error(error.response?.data?.error || 'Erro ao deletar facção');
         },
     });
 };
@@ -175,19 +267,18 @@ export const useCriarLoteProducao = () => {
     return useMutation({
         mutationFn: async (dados: {
             codigoLote: string;
-            tecidoId: string;
             responsavelId: string;
-            status: 'planejado' | 'em_producao' | 'concluido' | 'cancelado';
+            status: string;
             observacao?: string;
             items: Array<{
                 produtoId: string;
                 tamanhoId: string;
                 quantidadePlanejada: number;
             }>,
-            rolos?: Array<{
+            rolos: Array<{
                 estoqueRoloId: string
                 pesoReservado: number
-                }>;
+            }>;
         }) => {
             const { data } = await apiClient.post<LoteProducao>('/lotes-producao', dados);
             return data;
@@ -233,7 +324,7 @@ export const useDeletarLoteProducao = () => {
             toast.success('Lote de produção deletado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error|| 'Erro ao deletar lote de produção');
+            toast.error(error.response?.data?.error || 'Erro ao deletar lote de produção');
         },
     });
 };
@@ -297,7 +388,7 @@ export const useCriarDirecionamento = () => {
             toast.success('Direcionamento criado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error|| 'Erro ao criar direcionamento');
+            toast.error(error.response?.data?.error || 'Erro ao criar direcionamento');
         },
     });
 };
@@ -319,7 +410,7 @@ export const useAtualizarDirecionamento = () => {
             toast.success('Direcionamento atualizado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error|| 'Erro ao atualizar direcionamento');
+            toast.error(error.response?.data?.error || 'Erro ao atualizar direcionamento');
         },
     });
 };
@@ -336,7 +427,7 @@ export const useDeletarDirecionamento = () => {
             toast.success('Direcionamento deletado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error|| 'Erro ao deletar direcionamento');
+            toast.error(error.response?.data?.error || 'Erro ao deletar direcionamento');
         },
     });
 };
@@ -401,7 +492,7 @@ export const useCriarConferencia = () => {
             toast.success('Conferência criada com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error|| 'Erro ao criar conferência');
+            toast.error(error.response?.data?.error || 'Erro ao criar conferência');
         },
     });
 };
@@ -420,7 +511,7 @@ export const useAtualizarConferencia = () => {
             toast.success('Conferência atualizada com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error|| 'Erro ao atualizar conferência');
+            toast.error(error.response?.data?.error || 'Erro ao atualizar conferência');
         },
     });
 };
@@ -437,7 +528,7 @@ export const useDeletarConferencia = () => {
             toast.success('Conferência deletada com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error|| 'Erro ao deletar conferência');
+            toast.error(error.response?.data?.error || 'Erro ao deletar conferência');
         },
     });
 };

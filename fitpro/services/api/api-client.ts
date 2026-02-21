@@ -2,17 +2,15 @@ import axios, { AxiosInstance } from 'axios';
 import { getAuthToken } from '@/utils/Cookies/auth';
 import { toast } from 'sonner';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
-
-console.log('🔧 API Base URL configurada:', API_BASE_URL);
-console.log('ℹ️ NEXT_PUBLIC_API_URL env var:', process.env.NEXT_PUBLIC_API_URL);
-
 class APIClient {
     private client: AxiosInstance;
 
     constructor() {
+        const baseURL =
+            process.env.NEXT_PUBLIC_API_BASE_URL;
+
         this.client = axios.create({
-            baseURL: API_BASE_URL,
+            baseURL,
         });
 
         // Interceptor para adicionar token em todas as requisições
@@ -28,8 +26,8 @@ class APIClient {
         // Interceptor para tratamento de erros
         this.client.interceptors.response.use(
             (response) => {
-              console.log(`📥 [${response.status}] ${response.config.url} - Dados:`, response.data);
-              return response;
+                console.log(`📥 [${response.status}] ${response.config.url} - Dados:`, response.data);
+                return response;
             },
             (error) => {
                 console.error(`❌ [${error.response?.status}] ${error.config?.url} - Erro:`, error.response?.data);

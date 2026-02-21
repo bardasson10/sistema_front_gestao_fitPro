@@ -1,11 +1,12 @@
+import { EstoqueRolo } from "@/hooks/queries/useEstoque";
 import { Cor, EstoqueTecido, MovimentacaoEstoque, Tecido } from "../production";
 
 export interface StockProps {
-  rolos: EstoqueTecido[];
+  rolos: EstoqueRolo[];
   tecidos: Tecido[];
   cores: Cor[];
   isLoading: boolean;
-  onEdit: (item: EstoqueTecido) => void;
+  onEdit: (item: EstoqueRolo) => void;
 
 }
 
@@ -19,7 +20,7 @@ export interface StockResume {
 }
 
 export interface StockResumeProps {
-  rolos: EstoqueTecido[];
+  rolos: EstoqueRolo[];
   tecidos: Tecido[];
   cores: Cor[];
   isLoading: boolean;
@@ -27,7 +28,7 @@ export interface StockResumeProps {
 
 export interface StockMovimentacao {
   movimentacoes: MovimentacaoEstoque[];
-  rolos: EstoqueTecido[];
+  rolos: EstoqueRolo[];
   tecidos: Tecido[];
   cores: Cor[];
   isLoading: boolean;

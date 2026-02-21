@@ -28,6 +28,68 @@ interface MovimentacaoEstoqueListResponse {
     pagination: PaginatedResponse;
 }
 
+
+interface Usuario {
+    id: string;
+    nome: string;
+    funcaoSetor: string;
+    perfil: string;
+}
+
+interface Movimentacao {
+    id: string;
+    estoqueRoloId: string;
+    usuarioId: string;
+    tipoMovimentacao: 'entrada' | 'saida';
+    pesoMovimentado: string; // Vem como string no JSON
+    createdAt: string;
+    usuario: Usuario;
+}
+
+interface Cor {
+    id: string;
+    nome: string;
+    codigoHex: string;
+}
+
+interface Fornecedor {
+    id: string;
+    nome: string;
+    tipo: string;
+    contato: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+interface Tecido {
+    id: string;
+    fornecedorId: string;
+    corId: string;
+    nome: string;
+    codigoReferencia: string;
+    rendimentoMetroKg: string;
+    larguraMetros: string;
+    valorPorKg: string;
+    gramatura: string;
+    createdAt: string;
+    updatedAt: string;
+    fornecedor?: Fornecedor;
+    cor?: Cor;
+}
+
+export interface EstoqueRolo {
+    id: string;
+    tecidoId: string;
+    codigoBarraRolo: string;
+    pesoInicialKg: string;
+    pesoAtualKg: string;
+    situacao: 'disponivel' | 'reservado' | 'esgotado' | string;
+    createdAt: string;
+    updatedAt: string;
+    tecido: Tecido;
+    movimentacoes: Movimentacao[];
+}
+
 // ============ ESTOQUE ROLOS ============
 
 export const useEstoqueTecidos = (filtros?: { tecidoId?: string; situacao?: string }) => {
@@ -39,10 +101,10 @@ export const useEstoqueTecidos = (filtros?: { tecidoId?: string; situacao?: stri
             if (filtros?.situacao) params.append('situacao', filtros.situacao);
 
             const queryString = params.toString();
-            const { data } = await apiClient.get<EstoqueTecido[] | EstoqueTecidoListResponse>(
+            const { data } = await apiClient.get< {data: EstoqueRolo[], pagination: PaginatedResponse} >(
                 `/estoque-rolos${queryString ? `?${queryString}` : ''}`
             );
-            return Array.isArray(data) ? data : data.data;
+            return data.data;
         },
     });
 };
@@ -77,7 +139,7 @@ export const useCriarEstoqueTecido = () => {
             toast.success('Rolo adicionado ao estoque com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error|| 'Erro ao adicionar rolo ao estoque');
+            toast.error(error.response?.data?.error || 'Erro ao adicionar rolo ao estoque');
         },
     });
 };
@@ -101,7 +163,7 @@ export const useAtualizarEstoqueTecido = () => {
             toast.success('Rolo atualizado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error|| 'Erro ao atualizar rolo');
+            toast.error(error.response?.data?.error || 'Erro ao atualizar rolo');
         },
     });
 };
@@ -118,7 +180,7 @@ export const useDeletarEstoqueTecido = () => {
             toast.success('Rolo deletado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error|| 'Erro ao deletar rolo');
+            toast.error(error.response?.data?.error || 'Erro ao deletar rolo');
         },
     });
 };
