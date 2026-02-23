@@ -411,8 +411,6 @@ export const useCriarDirecionamento = () => {
             | 'acabamento'
             | 'corte'
             | 'outro';
-            dataSaida?: string;
-            dataPrevisaoRetorno?: string;
         }) => {
             const { data } = await apiClient.post<{ data: DirecionamentoSchema[], pagination: PaginatedResponse }>('/direcionamentos', dados);
             return data;
@@ -498,6 +496,8 @@ export const useConferencias = (filtros?: {
             const { data } = await apiClient.get<Conferencia[]>(
                 `/conferencias${queryString ? `?${queryString}` : ''}`
             );
+
+            console.log('Dados das conferências:', data); // Log para verificar os dados retornados
             return data;
         },
     });
@@ -522,7 +522,7 @@ export const useCriarConferencia = () => {
             direcionamentoId: string;
             responsavelId: string;
             dataConferencia: string;
-            statusQualidade: 'conforme' | 'nao_conforme' | 'com_defeito';
+            statusQualidade: 'conforme' | 'nao_conforme' | 'com_defeito' | 'validando';
             liberadoPagamento: boolean;
             observacao?: string;
             items: Array<{

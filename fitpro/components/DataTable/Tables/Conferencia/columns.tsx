@@ -1,28 +1,48 @@
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { Conferencia } from "@/types/production";
 import { dataFormatter } from "@/utils/Formatter/data-brasil-format";
 import { ColumnDef } from "@tanstack/react-table";
-import { AlertCircle, CheckCircle, Pencil, Trash2, XCircle } from "lucide-react";
+import { AlertCircle, CheckCircle, Trash2, XCircle } from "lucide-react";
+
+interface ConferenciaTableItem {
+	id: string;
+	direcionamentoId: string;
+	loteId: string;
+	loteCodigo: string;
+	faccaoNome?: string;
+	dataConferencia: string;
+	statusQualidade: "conforme" | "nao_conforme" | "com_defeito";
+	liberadoPagamento: boolean;
+	observacao?: string;
+	responsavel: { nome: string };
+	items: Array<{
+		tamanho?: { nome: string };
+		qtdRecebida: number;
+		qtdDefeito: number;
+	}>;
+}
 
 interface ConferenciaColumnDeps {
-	lotesMap: Record<string, string>;
-	faccoesMap: Record<string, string>;
-	onEdit: (item: Conferencia) => void;
+	onEdit: (item: ConferenciaTableItem) => void;
 	onRemove: (id: string) => void;
 }
 
 export const getConferenciaColumns = ({
-	lotesMap,
-	faccoesMap,
 	onEdit,
 	onRemove,
-}: ConferenciaColumnDeps): ColumnDef<Conferencia>[] => [
+}: ConferenciaColumnDeps): ColumnDef<ConferenciaTableItem>[] => [
 	{
-		accessorKey: "loteId",
+		accessorKey: "loteCodigo",
 		header: "Lote",
 		cell: ({ row }) => (
-			<span className="font-mono font-semibold">{lotesMap[row.original.loteId] || "-"}</span>
+			<span className="font-mono font-semibold">{row.original.loteCodigo || "-"}</span>
+		),
+	},
+	{
+		accessorKey: "faccaoNome",
+		header: "Facção",
+		cell: ({ row }) => (
+			<span>{row.original.faccaoNome || "-"}</span>
 		),
 	},
 	{
@@ -31,36 +51,27 @@ export const getConferenciaColumns = ({
 		cell: ({ row }) => <span>{dataFormatter(new Date(row.original.dataConferencia))}</span>,
 	},
 	{
-		accessorKey: "tipoProducao",
-		header: "Origem",
-		cell: ({ row }) => {
-			if (row.original.tipoProducao === "faccao") {
-				return <span>{faccoesMap[row.original.faccaoId || ""] || "Facção"}</span>;
-			}
-			return <span>Interna</span>;
-		},
-	},
-	{
-		accessorKey: "divergencia",
-		header: "Divergência",
+		accessorKey: "responsavel",
+		header: "Responsável",
 		cell: ({ row }) => (
-			<StatusBadge status={row.original.divergencia ? "danger" : "success"}>
-				{row.original.divergencia ? "Sim" : "Não"}
-			</StatusBadge>
+			<span>{row.original.responsavel?.nome || "-"}</span>
 		),
 	},
 	{
-		accessorKey: "avaliacaoQualidade",
+		accessorKey: "statusQualidade",
 		header: "Qualidade",
 		cell: ({ row }) => {
-			const qualityMap = {
-				aprovado: { label: "Aprovado", type: "success" as const, Icon: CheckCircle },
-				parcial: { label: "Parcial", type: "warning" as const, Icon: AlertCircle },
-				reprovado: { label: "Reprovado", type: "danger" as const, Icon: XCircle },
-				"": { label: "-", type: "neutral" as const, Icon: AlertCircle },
+			const qualityMap: Record<string, { label: string; type: "success" | "danger" | "warning" | "neutral"; Icon: any }> = {
+				conforme: { label: "Conforme", type: "success", Icon: CheckCircle },
+				nao_conforme: { label: "Não Conforme", type: "danger", Icon: XCircle },
+				com_defeito: { label: "Com Defeito", type: "warning", Icon: AlertCircle },
 			};
 
-			const quality = qualityMap[row.original.avaliacaoQualidade];
+			const quality = qualityMap[row.original.statusQualidade] || {
+				label: "-",
+				type: "neutral" as const,
+				Icon: AlertCircle,
+			};
 			return (
 				<div className="flex items-center gap-1">
 					<quality.Icon className="h-4 w-4" />
@@ -73,17 +84,21 @@ export const getConferenciaColumns = ({
 		accessorKey: "liberadoPagamento",
 		header: "Pagamento",
 		cell: ({ row }) => (
-			<StatusBadge status={row.original.liberadoPagamento ? "success" : "neutral"}>
+			<StatusBadge status={row.original.liberadoPagamento ? "success" : "warning"}>
 				{row.original.liberadoPagamento ? "Liberado" : "Pendente"}
 			</StatusBadge>
 		),
 	},
 	{
 		id: "actions",
+		header: "Ações",
 		cell: ({ row }) => (
 			<div className="flex items-center gap-2">
-				<Button variant="ghost" size="icon" onClick={() => onEdit(row.original)}>
-					<Pencil className="h-4 w-4" />
+				<Button 
+					onClick={() => onEdit(row.original)}
+					className="bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-3"
+				>
+					Conferir
 				</Button>
 				<Button variant="destructive" size="icon" onClick={() => onRemove(row.original.id)}>
 					<Trash2 className="h-4 w-4" />

@@ -3,39 +3,52 @@
 import React from "react";
 import { DataTable } from "@/components/DataTable";
 import { SemDadosComponent } from "@/components/ErrorManagementComponent/AnyData";
-import { Conferencia } from "@/types/production";
 import { getConferenciaColumns } from "./columns";
 
+interface ConferenciaTableItem {
+	id: string;
+	direcionamentoId: string;
+	loteId: string;
+	loteCodigo: string;
+	faccaoNome?: string;
+	dataConferencia: string;
+	statusQualidade: "conforme" | "nao_conforme" | "com_defeito";
+	liberadoPagamento: boolean;
+	observacao?: string;
+	responsavel: { nome: string };
+	items: Array<{
+		tamanho?: { nome: string };
+		qtdRecebida: number;
+		qtdDefeito: number;
+	}>;
+}
+
 interface ConferenciaTableProps {
-	conferencias: Conferencia[];
-	lotesMap: Record<string, string>;
-	faccoesMap: Record<string, string>;
+	data: ConferenciaTableItem[];
 	isLoading: boolean;
-	onEdit: (item: Conferencia) => void;
+	onEdit: (item: ConferenciaTableItem) => void;
 	onRemove: (id: string) => void;
 }
 
 export const ConferenciaTable: React.FC<ConferenciaTableProps> = ({
-	conferencias,
-	lotesMap,
-	faccoesMap,
+	data,
 	isLoading,
 	onEdit,
 	onRemove,
 }) => {
 	const columns = React.useMemo(
-		() => getConferenciaColumns({ lotesMap, faccoesMap, onEdit, onRemove }),
-		[lotesMap, faccoesMap, onEdit, onRemove],
+		() => getConferenciaColumns({ onEdit, onRemove }),
+		[onEdit, onRemove],
 	);
 
 	return (
 		<div className="w-full">
-			{conferencias.length === 0 ? (
-				<SemDadosComponent<Conferencia> nomeDado="conferência" data={conferencias} />
+			{data.length === 0 ? (
+				<SemDadosComponent<ConferenciaTableItem> nomeDado="conferência" data={data} />
 			) : (
 				<DataTable
 					columns={columns}
-					data={conferencias}
+					data={data}
 					isLoading={isLoading}
 					getRowId={(row) => row.id}
 				/>
@@ -43,3 +56,4 @@ export const ConferenciaTable: React.FC<ConferenciaTableProps> = ({
 		</div>
 	);
 };
+

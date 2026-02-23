@@ -18,67 +18,115 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ProdutoDirecionado } from '@/types/production';
-import { CheckCircle, AlertCircle, XCircle } from 'lucide-react';
-
-const produtoLabels: Record<string, string> = {
-  legging: 'Legging',
-  short: 'Short',
-  top: 'Top',
-  calca: 'Calça',
-  conjunto: 'Conjunto',
-  body: 'Body',
-  macaquinho: 'Macaquinho',
-};
-
+import { Checkbox } from '@/components/ui/checkbox';
 interface ConferenciaFormProps {
-  produtosEsperados: ProdutoDirecionado[];
+  items?: Array<{
+    tamanho?: { id: string; nome: string };
+    quantidadePlanejada?: number;
+    qtdRecebida?: number;
+    qtdDefeito?: number;
+  }>;
 }
 
-export function ConferenciaForm({ produtosEsperados }: ConferenciaFormProps) {
-  const { control, watch } = useFormContext<ConferenciaFormValues>();
-
-  const produtosRecebidos = watch('produtosRecebidos');
-
-  if (!produtosEsperados?.length) return null;
+export function ConferenciaForm({ items = [] }: ConferenciaFormProps) {
+  const { control, watch, formState: { errors } } = useFormContext<ConferenciaFormValues>();
+  const formItems = watch('items');
 
   return (
     <div className="space-y-4">
-      {/* Produtos */}
+      {/* Items - Quantidades por Tamanho */}
       <FormItem>
-        <FormLabel>Conferência de Produtos</FormLabel>
-        <div className="border rounded-lg overflow-hidden">
+        <FormLabel>Comparação de Quantidades por Tamanho</FormLabel>
+        <div className="border rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
-                <th className="text-left p-2">Produto</th>
-                <th className="text-center p-2">Esperado</th>
-                <th className="text-center p-2">Recebido</th>
-                <th className="text-center p-2">Dif.</th>
+                <th className="text-left p-3">Tamanho</th>
+                <th className="text-center p-3">
+                  <span className="block text-xs font-medium">Enviadas</span>
+                  <span className="text-xs text-muted-foreground">(Planejado)</span>
+                </th>
+                <th className="text-center p-3">
+                  <span className="block text-xs font-medium">Recebidas</span>
+                  <span className="text-xs text-muted-foreground">(Conferência)</span>
+                </th>
+                <th className="text-center p-3">
+                  <span className="block text-xs font-medium">Defeituosas</span>
+                  <span className="text-xs text-muted-foreground">(Não OK)</span>
+                </th>
+                <th className="text-center p-3">
+                  <span className="block text-xs font-medium">Diferença</span>
+                  <span className="text-xs text-muted-foreground">(Status)</span>
+                </th>
               </tr>
             </thead>
             <tbody>
-              {produtosEsperados.map((item, index) => {
-                const recebido = produtosRecebidos?.find(
-                  (p) => p.produto === item.produto
-                );
-                const diff = (recebido?.quantidade || 0) - item.quantidade;
+              {items.map((item, index) => {
+                const qtdPlanejada = item.quantidadePlanejada || 0;
+                const qtdRecebida = formItems?.[index]?.qtdRecebida || 0;
+                const qtdDefeito = formItems?.[index]?.qtdDefeito || 0;
+                const total = qtdRecebida + qtdDefeito;
+                const diferenca = qtdPlanejada - total;
+                
+                let statusColor = 'bg-green-50 dark:bg-green-950';
+                let statusText = 'text-green-700 dark:text-green-300';
+                let statusLabel = 'OK';
+                
+                if (diferenca > 0) {
+                  statusColor = 'bg-red-50 dark:bg-red-950';
+                  statusText = 'text-red-700 dark:text-red-300';
+                  statusLabel = `-${diferenca}`;
+                } else if (diferenca < 0) {
+                  statusColor = 'bg-blue-50 dark:bg-blue-950';
+                  statusText = 'text-blue-700 dark:text-blue-300';
+                  statusLabel = `+${Math.abs(diferenca)}`;
+                }
+
                 return (
-                  <tr key={item.produto} className="border-t">
-                    <td className="p-2 font-medium">
-                      {produtoLabels[item.produto] || item.produto}
+                  <tr key={item.tamanho?.id} className="border-t hover:bg-muted/30 transition-colors">
+                    <td className="p-3 font-medium">{item.tamanho?.nome || '-'}</td>
+                    <td className="text-center p-3">
+                      <span className="font-bold text-base">{qtdPlanejada}</span>
                     </td>
-                    <td className="text-center p-2">{item.quantidade}</td>
-                    <td className="text-center p-2">
+                    <td className="text-center p-3">
                       <FormField
                         control={control}
-                        name={`produtosRecebidos.${index}.quantidade`}
+                        name={`items.${index}.qtdRecebida`}
                         render={({ field }) => (
                           <Input
                             {...field}
                             type="number"
                             min="0"
-                            className="w-20 h-8 mx-auto text-center"
+                            className="w-24 h-9 mx-auto text-center font-medium"
+                            value={field.value || 0}
+                            onChange={(e) =>
+                              field.onChange(parseInt(e.target.value) || 0)
+                            }
+                          />
+                        )}
+                      />
+                      <FormField
+                        control={control}
+                        name={`items.${index}.tamanhoId`}
+                        render={({ field }) => (
+                          <Input
+                            {...field}
+                            type="hidden"
+                            value={item.tamanho?.id || ''}
+                          />
+                        )}
+                      />
+                    </td>
+                    <td className="text-center p-3">
+                      <FormField
+                        control={control}
+                        name={`items.${index}.qtdDefeito`}
+                        render={({ field }) => (
+                          <Input
+                            {...field}
+                            type="number"
+                            min="0"
+                            className="w-24 h-9 mx-auto text-center font-medium"
                             value={field.value || 0}
                             onChange={(e) =>
                               field.onChange(parseInt(e.target.value) || 0)
@@ -87,16 +135,10 @@ export function ConferenciaForm({ produtosEsperados }: ConferenciaFormProps) {
                         )}
                       />
                     </td>
-                    <td
-                      className={`text-center p-2 font-medium ${
-                        diff < 0
-                          ? 'text-red-600 dark:text-red-400'
-                          : diff > 0
-                          ? 'text-yellow-600 dark:text-yellow-400'
-                          : ''
-                      }`}
-                    >
-                      {diff !== 0 ? (diff > 0 ? '+' : '') + diff : '-'}
+                    <td className={`text-center p-3 ${statusColor}`}>
+                      <span className={`font-bold text-sm ${statusText}`}>
+                        {statusLabel}
+                      </span>
                     </td>
                   </tr>
                 );
@@ -104,42 +146,50 @@ export function ConferenciaForm({ produtosEsperados }: ConferenciaFormProps) {
             </tbody>
           </table>
         </div>
+        {errors.items && (
+          <p className="text-sm font-medium text-destructive mt-2">
+            {errors.items.message as string}
+          </p>
+        )}
       </FormItem>
 
-      {/* Avaliação de Qualidade */}
+      {/* Status de Qualidade */}
       <FormField
         control={control}
-        name="avaliacaoQualidade"
+        name="statusQualidade"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Avaliação de Qualidade</FormLabel>
+            <FormLabel>Status de Qualidade</FormLabel>
             <Select value={field.value} onValueChange={field.onChange}>
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione a avaliação" />
+                  <SelectValue placeholder="Selecione o status" />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="aprovado">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span>Aprovado</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="parcial">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-yellow-600" />
-                    <span>Parcialmente Aprovado</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="reprovado">
-                  <div className="flex items-center gap-2">
-                    <XCircle className="h-4 w-4 text-red-600" />
-                    <span>Reprovado</span>
-                  </div>
-                </SelectItem>
+                <SelectItem value="conforme">Conforme</SelectItem>
+                <SelectItem value="nao_conforme">Não Conforme</SelectItem>
+                <SelectItem value="com_defeito">Com Defeito</SelectItem>
               </SelectContent>
             </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      {/* Liberado para Pagamento */}
+      <FormField
+        control={control}
+        name="liberadoPagamento"
+        render={({ field }) => (
+          <FormItem className="flex items-center gap-3 space-y-0">
+            <FormControl>
+              <Checkbox
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            </FormControl>
+            <FormLabel className="mt-0!">Liberar para Pagamento</FormLabel>
             <FormMessage />
           </FormItem>
         )}
@@ -148,15 +198,15 @@ export function ConferenciaForm({ produtosEsperados }: ConferenciaFormProps) {
       {/* Observações */}
       <FormField
         control={control}
-        name="observacoes"
+        name="observacao"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Observações</FormLabel>
             <FormControl>
               <Textarea
-                {...field}
                 placeholder="Observações sobre a conferência..."
-                rows={3}
+                className="resize-none"
+                {...field}
               />
             </FormControl>
             <FormMessage />
