@@ -6,61 +6,93 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { ChartColumnIncreasing } from "lucide-react"
+import { Cable, CirclePile, House, LayoutDashboard, NotebookPen, PackageOpen, PackageSearch, Shirt, SquareChartGantt, User } from "lucide-react"
 import { NavMain } from "./components/nav-main"
 import { NavUser } from "./components/nav-user"
 
 const data = {
-  navMain: {
-    groupTitle: "Dados",
-    items: [
-      {
-        title: "Dashboard",
-        url: "/",
-        icon: ChartColumnIncreasing,
-      },
-      {
-        title: "Colaboradores",
-        url: "/colaboradores",
-        icon: ChartColumnIncreasing,
-      },
-      {
-        title: "Fornecedores",
-        url: "/fornecedores",
-        icon: ChartColumnIncreasing,
-      },
-      {
-        title: "Facções",
-        url: "/faccoes",
-        icon: ChartColumnIncreasing,
-      },
-      {
-        title: "Tecidos",
-        url: "/tecidos",
-        icon: ChartColumnIncreasing,
-      },
-      {
-        title: "Estoque",
-        url: "/estoque",
-        icon: ChartColumnIncreasing,
-      },
-      {
-        title: "Lotes",
-        url: "/lotes",
-        icon: ChartColumnIncreasing,
-      },
-      {
-        title: "Produção",
-        url: "/producao",
-        icon: ChartColumnIncreasing,
-      },
-      {
-        title: "Conferência",
-        url: "/conferencia",
-        icon: ChartColumnIncreasing,
-      },
-    ],
-  }
+  navMain: [
+    {
+      groupTitle: "Gestão",
+      items: [
+        {
+          title: "Dashboard",
+          url: "/",
+          icon: LayoutDashboard,
+        },
+        {
+          title: "Colaboradores",
+          url: "/colaboradores",
+          icon: User,
+        },
+      ],
+    },
+    {
+      groupTitle: "Produtos",
+      items: [
+        {
+          title: "Produtos",
+          url: "/produtos",
+          icon: PackageOpen,
+        },
+        {
+          title: "Tipos de Produtos",
+          url: "/tipos-produtos",
+          icon: PackageOpen,
+        },
+      ],
+    },
+    {
+      groupTitle: "Materiais",
+      items: [
+        {
+          title: "Fornecedores",
+          url: "/fornecedores",
+          icon: Cable,
+        },
+        {
+          title: "Facções",
+          url: "/faccoes",
+          icon: House,
+        },
+        {
+          title: "Tecidos",
+          url: "/tecidos",
+          icon: Shirt,
+        },
+      ],
+    },
+    {
+      groupTitle: "Estoque",
+      items: [
+        {
+          title: "Estoque",
+          url: "/estoque",
+          icon: CirclePile,
+        },
+      ],
+    },
+    {
+      groupTitle: "Produção",
+      items: [
+        {
+          title: "Lotes",
+          url: "/lotes",
+          icon: PackageSearch,
+        },
+        {
+          title: "Produção",
+          url: "/producao",
+          icon: SquareChartGantt,
+        },
+        {
+          title: "Conferência",
+          url: "/conferencia",
+          icon: NotebookPen,
+        },
+      ],
+    },
+  ]
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

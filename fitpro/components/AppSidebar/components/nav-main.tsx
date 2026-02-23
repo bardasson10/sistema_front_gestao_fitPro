@@ -1,7 +1,6 @@
 "use client"
 
 import { type LucideIcon } from "lucide-react"
-import { group } from 'console';
 
 import {
   SidebarGroup,
@@ -23,23 +22,27 @@ export function NavMain({
       icon?: LucideIcon
       isActive?: boolean
     }[]
-  }
+  }[]
 }) {
   return (
-    <SidebarGroup>
-      <SidebarGroupLabel>{menu.groupTitle}</SidebarGroupLabel>
-      <SidebarMenu>
-        {menu.items.map((item) => (
-          <SidebarMenuItem key={item.title}>
-            <Link href={item.url} passHref>
-              <SidebarMenuButton tooltip={item.title} className="cursor-pointer">
-                {item.icon && <item.icon />}
-                <span>{item.title}</span>
-              </SidebarMenuButton>
-            </Link>
-          </SidebarMenuItem>
-        ))}
-      </SidebarMenu>
-    </SidebarGroup>
+    <>
+      {menu.map((group) => (
+        <SidebarGroup key={group.groupTitle}>
+          <SidebarGroupLabel>{group.groupTitle}</SidebarGroupLabel>
+          <SidebarMenu>
+            {group.items.map((item) => (
+              <SidebarMenuItem key={item.title}>
+                <Link href={item.url} passHref>
+                  <SidebarMenuButton tooltip={item.title} className="cursor-pointer">
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroup>
+      ))}
+    </>
   )
 }

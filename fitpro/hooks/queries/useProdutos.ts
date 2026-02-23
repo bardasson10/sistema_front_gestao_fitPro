@@ -14,6 +14,7 @@ interface TipoProduto {
 }
 
 export interface Tamanho {
+  id: string;
   nome: string;
   ordem: number;
   createdAt: string;
@@ -40,12 +41,27 @@ export interface Produto {
 }
 
 // ============ TIPOS DE PRODUTO ============
+export interface TamanhosTiposProdutoSchema {
+  id: string,
+  tamanhoId: string,
+  NomeTamanho: string,
+  OrdemTamanho: number,
+}
+export interface TiposProdutosSchema {
+  id: string;
+  nome: string;
+  createdAt: string;
+  tamanhos: TamanhosTiposProdutoSchema[]
+}
+
 
 export const useTiposProduto = () => {
   return useQuery({
     queryKey: ['tipos-produto'],
     queryFn: async () => {
-      const { data } = await apiClient.get<TipoProduto[]>('/tipos-produto');
+      const { data } = await apiClient.get<{ data: TiposProdutosSchema[]; pagination: PaginatedResponse }>(
+        '/tipos-produto'
+      );
       return data;
     },
   });
@@ -55,7 +71,7 @@ export const useTipoProduto = (id: string) => {
   return useQuery({
     queryKey: ['tipos-produto', id],
     queryFn: async () => {
-      const { data } = await apiClient.get<TipoProduto>(`/tipos-produto/${id}`);
+      const { data } = await apiClient.get<{ data: TiposProdutosSchema[]; pagination: PaginatedResponse }>(`/tipos-produto/${id}`);
       return data;
     },
     enabled: !!id,
@@ -67,10 +83,10 @@ export const useCriarTipoProduto = () => {
 
   return useMutation({
     mutationFn: async (nome: string) => {
-      const { data } = await apiClient.post<TipoProduto>('/tipos-produto', { nome });
+      const { data } = await apiClient.post<{ data: TiposProdutosSchema }>('/tipos-produto', { nome });
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['tipos-produto'] });
       toast.success('Tipo de produto criado com sucesso!');
     },
@@ -85,12 +101,12 @@ export const useAtualizarTipoProduto = () => {
 
   return useMutation({
     mutationFn: async ({ id, nome }: { id: string; nome: string }) => {
-      const { data } = await apiClient.put<TipoProduto>(`/tipos-produto/${id}`, { nome });
+      const { data } = await apiClient.put<{ data: TiposProdutosSchema }>(`/tipos-produto/${id}`, { nome });
       return data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['tipos-produto'] });
-      queryClient.invalidateQueries({ queryKey: ['tipos-produto', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['tipos-produto', data.data] });
       toast.success('Tipo de produto atualizado com sucesso!');
     },
     onError: (error: any) => {
@@ -208,7 +224,7 @@ export const useProdutos = (filtros?: { tipoProdutoId?: string }) => {
       const params = new URLSearchParams();
       if (filtros?.tipoProdutoId) params.append('tipoProdutoId', filtros.tipoProdutoId);
       const queryString = params.toString();
-      const { data } = await apiClient.get< { data: Produto[]; pagination: PaginatedResponse }>(`/produtos${queryString ? `?${queryString}` : ``}`);
+      const { data } = await apiClient.get<{ data: Produto[]; pagination: PaginatedResponse }>(`/produtos${queryString ? `?${queryString}` : ``}`);
       return data as { data: Produto[]; pagination: PaginatedResponse };
     },
   });
@@ -306,7 +322,7 @@ export const useAssociarTamanhoTipo = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (dados: { tipoProdutoId: string; tamanhoId: string }) => {
+    mutationFn: async (dados: { tipoProdutoId: string; tamanhos: { tamanhoId: string }[] }) => {
       const { data } = await apiClient.post('/tipos-produto-tamanho', dados);
       return data;
     },
