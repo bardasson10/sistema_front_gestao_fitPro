@@ -19,6 +19,7 @@ import { AutenticacaoService } from "@/services/autenticacao/autenticacao-servic
 import { saveAuthCookies } from "@/utils/Cookies/auth";
 import { toast } from "sonner";
 import { useState } from "react";
+import Link from 'next/link';
 
 const initialValues: AuthenticateUserSchemaFormValues = {
   email: '',
@@ -69,7 +70,7 @@ export default function LoginPage() {
             <CardTitle>Acesse a conta atraves do Login</CardTitle>
             <CardDescription>Insira suas credenciais para continuar.</CardDescription>
             <CardAction>
-              <Button variant="link">Crie sua conta</Button>
+             <Link href="/register" className="text-sm text-emerald-400 hover:underline">Crie sua conta</Link>
             </CardAction>
           </CardHeader>
           <CardContent>
