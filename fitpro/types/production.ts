@@ -68,6 +68,7 @@ export interface EstoqueTecido {
   pesoInicialKg: number;
   pesoAtualKg: number;
   situacao: "disponivel" | "reservado" | "em_uso" | "descartado" | "";
+  status?: "disponivel" | "reservado" | "em_uso" | "descartado" | "";
   createdAt: string;
   updatedAt?: string;
   movimentacoes: MovimentacaoEstoque[];

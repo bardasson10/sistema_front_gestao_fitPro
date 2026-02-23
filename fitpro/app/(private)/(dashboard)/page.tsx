@@ -27,7 +27,7 @@ export default function DashboardPage() {
   // Find delayed productions
   const producaoAtrasada = lotes
     .flatMap((l) =>
-      l.direcionamentos.filter((d) => {
+      (l.direcionamentos || []).filter((d) => {
         if (d.status === 'concluido') return false;
         const daysSinceSent =
           (new Date().getTime() - new Date(d.dataSaida).getTime()) /
@@ -44,11 +44,10 @@ export default function DashboardPage() {
       const rolosTecido = rolos.filter(
         (r) => r.tecidoId === tecido.id && r.status === 'disponivel'
       );
-      const pesoTotal = rolosTecido.reduce((acc, r) => acc + r.pesoKg, 0);
+      const pesoTotal = rolosTecido.reduce((acc, r) => acc + r.pesoAtualKg, 0);
       return {
         id: tecido.id,
         tipo: tecido.tipo,
-        cor: tecido.cor,
         rolos: rolosTecido.length,
         pesoKg: pesoTotal,
       };
@@ -158,11 +157,11 @@ export default function DashboardPage() {
                           </td>
                           <td className="p-3">
                             <span className="text-muted-foreground">
-                              {dataFormatter(new Date(lote.dataCreacao))}
+                              {dataFormatter(new Date(lote.createdAt))}
                             </span>
                           </td>
                           <td className="p-3">
-                            <span>{lote.grade.length} tipos</span>
+                            <span>{(lote.grade || []).length} tipos</span>
                           </td>
                           <td className="p-3">
                             <StatusBadge status={status.type}>
@@ -196,9 +195,6 @@ export default function DashboardPage() {
                       Tecido
                     </th>
                     <th className="text-left p-3 font-semibold text-muted-foreground">
-                      Cor
-                    </th>
-                    <th className="text-left p-3 font-semibold text-muted-foreground">
                       Rolos
                     </th>
                     <th className="text-left p-3 font-semibold text-muted-foreground">
@@ -221,26 +217,6 @@ export default function DashboardPage() {
                       <tr key={item.id} className="border-b hover:bg-muted/50">
                         <td className="p-3">
                           <span className="font-medium">{item.tipo}</span>
-                        </td>
-                        <td className="p-3">
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="h-4 w-4 rounded-full border"
-                              style={{
-                                backgroundColor:
-                                  item.cor.toLowerCase() === 'preto'
-                                    ? '#1a1a1a'
-                                    : item.cor.toLowerCase() === 'branco'
-                                    ? '#ffffff'
-                                    : item.cor.toLowerCase() === 'rosa'
-                                    ? '#f472b6'
-                                    : item.cor.toLowerCase() === 'marrom'
-                                    ? '#92400e'
-                                    : '#6b7280',
-                              }}
-                            />
-                            <span>{item.cor}</span>
-                          </div>
                         </td>
                         <td className="p-3">{item.rolos}</td>
                         <td className="p-3">{item.pesoKg.toFixed(1)} kg</td>
@@ -297,22 +273,22 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                         <span>
-                          {lote.grade.reduce((acc, g) => acc + g.total, 0)} peças
+                          {(lote.grade || []).reduce((acc, g) => acc + g.total, 0)} peças
                         </span>
                         <span>•</span>
-                        <span>{lote.grade.length} produtos</span>
-                        {lote.direcionamentos.length > 0 && (
+                        <span>{(lote.grade || []).length} produtos</span>
+                        {(lote.direcionamentos || []).length > 0 && (
                           <>
                             <span>•</span>
                             <span>
-                              {lote.direcionamentos.length} direcionamento(s)
+                              {(lote.direcionamentos || []).length} direcionamento(s)
                             </span>
                           </>
                         )}
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      {lote.direcionamentos.map((d) => (
+                      {(lote.direcionamentos || []).map((d) => (
                         <StatusBadge
                           key={d.id}
                           status={
