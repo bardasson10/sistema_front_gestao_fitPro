@@ -177,16 +177,16 @@ export function LoteProducaoForm({ isEditing = true }: LoteProducaoFormProps) {
         </div>
       </div>
 
-      <FormField
+      {/* <FormField
         control={control}
         name="items"
         render={({ field }) => (
           <LoteProducaoTableGrade
             itensLote={field.value}
-            isEditing={isEditing}
+            isFormEditable={isEditing}
           />
         )}
-      />
+      /> */}
 
     </div>
   );

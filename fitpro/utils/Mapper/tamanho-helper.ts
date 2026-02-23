@@ -10,10 +10,14 @@ export function mapToGrade(items: ItemLote[]): GradeRow[] {
   const grouped: Record<string, GradeRow> = {};
 
   items.forEach((item) => {
-    const produtoId = item.produto.id;
-    const produtoNome = item.produto.nome;
-    const tamanho = item.tamanho.nome;
-    const quantidade = item.quantidadePlanejada;
+    const produtoId = (item as any)?.produto?.id ?? (item as any)?.produtoId;
+    const produtoNome = (item as any)?.produto?.nome ?? produtoId;
+    const tamanho = (item as any)?.tamanho?.nome ?? (item as any)?.tamanhoId;
+    const quantidade = Number((item as any)?.quantidadePlanejada ?? 0);
+
+    if (!produtoId || !tamanho || quantidade <= 0) {
+      return;
+    }
 
     if (!grouped[produtoId]) {
       grouped[produtoId] = {
@@ -27,9 +31,5 @@ export function mapToGrade(items: ItemLote[]): GradeRow[] {
       (grouped[produtoId].tamanhos[tamanho] || 0) + quantidade;
   });
 
-  const valorMapeado  = Object.values(grouped);
-
-  console.log("Valor mapeado para grade:", valorMapeado);
-
-  return valorMapeado;
+  return Object.values(grouped);
 }

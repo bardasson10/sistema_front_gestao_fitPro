@@ -1,26 +1,33 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/services/api/api-client';
 import { toast } from 'sonner';
+import { id } from 'zod/v4/locales';
+import { PaginatedResponse } from '@/types/production';
 
 // ============ TIPOS ============
 
 interface TipoProduto {
   id: string;
   nome: string;
-  produtos: any[];
-  tamanhos: any[];
+  tamanhos: Tamanhos[];
   createdAt: string;
 }
 
-interface Tamanho {
-  id: string;
+export interface Tamanho {
   nome: string;
   ordem: number;
   createdAt: string;
 }
 
+export interface Tamanhos {
+  id: string;
+  tipoProdutoId: string;
+  tamanhoId: string;
+  tamanho: Tamanho;
+}
 
-interface Produto {
+
+export interface Produto {
   id: string;
   tipoProdutoId: string;
   nome: string;
@@ -30,12 +37,6 @@ interface Produto {
   precoMedioVenda: number;
   tipo: TipoProduto;
   createdAt: string;
-  tamanhos: {
-    id: string;
-    tipoProdutoId: string;
-    tamanhoId: string;
-    tamanho: Tamanho[];
-  }
 }
 
 // ============ TIPOS DE PRODUTO ============
@@ -74,7 +75,7 @@ export const useCriarTipoProduto = () => {
       toast.success('Tipo de produto criado com sucesso!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error|| 'Erro ao criar tipo de produto');
+      toast.error(error.response?.data?.error || 'Erro ao criar tipo de produto');
     },
   });
 };
@@ -93,7 +94,7 @@ export const useAtualizarTipoProduto = () => {
       toast.success('Tipo de produto atualizado com sucesso!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error|| 'Erro ao atualizar tipo de produto');
+      toast.error(error.response?.data?.error || 'Erro ao atualizar tipo de produto');
     },
   });
 };
@@ -110,7 +111,7 @@ export const useDeletarTipoProduto = () => {
       toast.success('Tipo de produto deletado com sucesso!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error|| 'Erro ao deletar tipo de produto');
+      toast.error(error.response?.data?.error || 'Erro ao deletar tipo de produto');
     },
   });
 };
@@ -155,11 +156,13 @@ export const useCriarTamanho = () => {
       toast.success('Tamanho criado com sucesso!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error|| 'Erro ao criar tamanho');
+      toast.error(error.response?.data?.error || 'Erro ao criar tamanho');
     },
   });
 };
 
+
+// ver depois
 export const useAtualizarTamanho = () => {
   const queryClient = useQueryClient();
 
@@ -170,11 +173,11 @@ export const useAtualizarTamanho = () => {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['tamanhos'] });
-      queryClient.invalidateQueries({ queryKey: ['tamanhos', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['tamanhos', id] });
       toast.success('Tamanho atualizado com sucesso!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error|| 'Erro ao atualizar tamanho');
+      toast.error(error.response?.data?.error || 'Erro ao atualizar tamanho');
     },
   });
 };
@@ -191,54 +194,22 @@ export const useDeletarTamanho = () => {
       toast.success('Tamanho deletado com sucesso!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error|| 'Erro ao deletar tamanho');
+      toast.error(error.response?.data?.error || 'Erro ao deletar tamanho');
     },
   });
 };
 
 // ============ PRODUTOS ============
 
-export const useProdutos = (tipoProdutoId?: string) => {
+export const useProdutos = (filtros?: { tipoProdutoId?: string }) => {
   return useQuery({
-    queryKey: ['produtos', tipoProdutoId],
+    queryKey: ['produtos', filtros],
     queryFn: async () => {
-      try {
-        console.log('🚀 Iniciando fetch de /produtos...');
-        const params = tipoProdutoId ? `?tipoProdutoId=${tipoProdutoId}` : '';
-        const url = `/produtos${params}`;
-        console.log('📍 URL:', url);
-        
-        const { data } = await apiClient.get<any>(url);
-        
-        console.log('📦 Resposta raw:', data);
-        console.log('📦 Tipo da resposta:', typeof data);
-        console.log('📦 É array?', Array.isArray(data));
-        
-        // Suportar diferentes formatos de resposta
-        if (Array.isArray(data)) {
-          console.log('✅ Formato array. Produtos:', data.length);
-          return data;
-        }
-        
-        if (data?.data && Array.isArray(data.data)) {
-          console.log('✅ Formato com .data. Produtos:', data.data.length);
-          return data.data;
-        }
-        
-        if (data?.produtos && Array.isArray(data.produtos)) {
-          console.log('✅ Formato com .produtos. Produtos:', data.produtos.length);
-          return data.produtos;
-        }
-        
-        console.warn('⚠️ Nenhum formato reconhecido. Retornando vazio.');
-        console.warn('Estrutura:', JSON.stringify(data, null, 2));
-        return [];
-      } catch (error: any) {
-        console.error('❌ Erro ao buscar produtos:', error);
-        console.error('Status:', error?.response?.status);
-        console.error('Dados do erro:', error?.response?.data);
-        throw error;
-      }
+      const params = new URLSearchParams();
+      if (filtros?.tipoProdutoId) params.append('tipoProdutoId', filtros.tipoProdutoId);
+      const queryString = params.toString();
+      const { data } = await apiClient.get< { data: Produto[]; pagination: PaginatedResponse }>(`/produtos${queryString ? `?${queryString}` : ``}`);
+      return data as { data: Produto[]; pagination: PaginatedResponse };
     },
   });
 };
@@ -275,7 +246,7 @@ export const useCriarProduto = () => {
       toast.success('Produto criado com sucesso!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error|| 'Erro ao criar produto');
+      toast.error(error.response?.data?.error || 'Erro ao criar produto');
     },
   });
 };
@@ -294,7 +265,7 @@ export const useAtualizarProduto = () => {
       toast.success('Produto atualizado com sucesso!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error|| 'Erro ao atualizar produto');
+      toast.error(error.response?.data?.error || 'Erro ao atualizar produto');
     },
   });
 };
@@ -311,7 +282,7 @@ export const useDeletarProduto = () => {
       toast.success('Produto deletado com sucesso!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error|| 'Erro ao deletar produto');
+      toast.error(error.response?.data?.error || 'Erro ao deletar produto');
     },
   });
 };
@@ -346,7 +317,7 @@ export const useAssociarTamanhoTipo = () => {
       toast.success('Tamanho associado com sucesso!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error|| 'Erro ao associar tamanho');
+      toast.error(error.response?.data?.error || 'Erro ao associar tamanho');
     },
   });
 };
@@ -363,7 +334,7 @@ export const useDeletarAssociacaoTamanhoTipo = () => {
       toast.success('Associação removida com sucesso!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error|| 'Erro ao remover associação');
+      toast.error(error.response?.data?.error || 'Erro ao remover associação');
     },
   });
 };

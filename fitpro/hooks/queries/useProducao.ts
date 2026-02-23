@@ -288,7 +288,41 @@ export const useCriarLoteProducao = () => {
             toast.success('Lote de produção criado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error || 'Erro ao criar lote de produção');
+            toast.error(error.response?.data?.error);
+        },
+    });
+};
+
+export const useAdicionarItensLoteProducao = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({
+            id,
+            items,
+        }: {
+            id: string;
+            items: Array<{
+                produtoId: string;
+                tamanhoId: string;
+                quantidadePlanejada: number;
+            }>;
+        }) => {
+            const { data } = await apiClient.post(
+                `/lotes-producao/${id}/items`,
+                { items }
+            );
+
+            return data;
+        },
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['lotes-producao'] });
+            queryClient.invalidateQueries({ queryKey: ['lotes-producao', variables.id] });
+
+            toast.success('Itens adicionados ao lote com sucesso!');
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.error);
         },
     });
 };

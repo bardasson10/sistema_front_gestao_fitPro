@@ -13,7 +13,7 @@ type Step = {
 const STEPS: Step[] = [
   { id: 1, title: "1", component: LoteProducaoAddStep1 },
   { id: 2, title: "2", component: LoteProducaoAddStep2 },
-  { id: 3, title: "3", component: LoteProducaoAddStep3 },
+  { id: 3, title: "", component: LoteProducaoAddStep3 },
 ];
 
 export default STEPS;

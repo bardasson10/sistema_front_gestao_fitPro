@@ -9,6 +9,7 @@ interface FormModalProps {
   Icon?: ReactNode
   children: ReactNode
   onSubmit: (e: any) => void | Promise<void>
+  onOpen?: () => void
   onClose: () => void
   open: boolean
   submitText?: string
@@ -17,12 +18,19 @@ interface FormModalProps {
 }
 
 export function FormModal({ 
-  trigger, title, Icon, children, onSubmit, onClose, open, submitText = "Salvar", loading, isViewSaveOrCancel 
+  trigger, title, Icon, children, onSubmit, onOpen, onClose, open, submitText = "Salvar", loading, isViewSaveOrCancel 
 }: FormModalProps) {
   return (
     <BaseModal
       open={open} 
-      onOpenChange={(val) => !val && onClose()} 
+      onOpenChange={(val) => {
+        if (val) {
+          onOpen?.();
+          return;
+        }
+
+        onClose();
+      }} 
       trigger={trigger} 
       title={title}
       Icon={Icon}

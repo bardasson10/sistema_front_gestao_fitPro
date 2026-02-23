@@ -71,8 +71,8 @@ export const tecidoSchema = z.object({
 
 // --- Itens da Grade (Produtos) ---
 export const itemLoteSchema = z.object({
-  id: z.string(),
-  loteProducaoId: z.string(),
+  id: z.string().optional(),
+  loteProducaoId: z.string().optional(),
   produtoId: z.string(),
   tamanhoId: z.string(),
   quantidadePlanejada: z.number(),
@@ -86,12 +86,12 @@ export const itemLoteSchema = z.object({
     precoMedioVenda: z.string(),
     createdAt: z.string(),
     updatedAt: z.string(),
-  }),
+  }).optional(),
   tamanho: z.object({
     id: z.string(),
     nome: z.string(),
     ordem: z.number(),
-  }),
+  }).optional(),
 });
 
 // --- Direcionamentos ---
