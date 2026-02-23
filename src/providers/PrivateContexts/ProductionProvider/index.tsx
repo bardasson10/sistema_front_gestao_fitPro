@@ -7,46 +7,37 @@ import {
   Fornecedor,
   Faccao,
   Tecido,
-  RoloTecido,
+  EstoqueTecido,
   LoteProducao,
   Conferencia,
   MovimentacaoEstoque,
 } from '@/types/production';
 
-import { 
-  sampleColaboradores, 
-  sampleFaccoes, 
-  sampleFornecedores, 
-  sampleLotes, 
-  sampleRolos, 
-  sampleTecidos 
-} from '@/app/Samples/production-sample';
-
 export function ProductionProvider({ children }: { children: ReactNode }) {
-  const [colaboradores, setColaboradores] = useState<Colaborador[]>(sampleColaboradores);
-  const [fornecedores, setFornecedores] = useState<Fornecedor[]>(sampleFornecedores);
-  const [faccoes, setFaccoes] = useState<Faccao[]>(sampleFaccoes);
-  const [tecidos, setTecidos] = useState<Tecido[]>(sampleTecidos);
-  const [rolos, setRolos] = useState<RoloTecido[]>(sampleRolos);
+  const [colaboradores, setColaboradores] = useState<Colaborador[]>([]);
+  const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
+  const [faccoes, setFaccoes] = useState<Faccao[]>([]);
+  const [tecidos, setTecidos] = useState<Tecido[]>([]);
+  const [rolos, setRolos] = useState<EstoqueTecido[]>([]);
   const [movimentacoes, setMovimentacoes] = useState<MovimentacaoEstoque[]>([]);
-  const [lotes, setLotes] = useState<LoteProducao[]>(sampleLotes);
+  const [lotes, setLotes] = useState<LoteProducao[]>([]);
   const [conferencias, setConferencias] = useState<Conferencia[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const generateId = () => crypto.randomUUID();
 
-  function createActions<T extends { id: string; criadoEm?: Date }>(
+  function createActions<T extends { id: string; createdAt?: string; criadoEm?: Date }>(
   setState: React.Dispatch<React.SetStateAction<T[]>>
 ) {
   return {
     
-    add: async (item: Omit<T, 'id' | 'criadoEm'>) => {
+    add: async (item: Omit<T, 'id' | 'createdAt' | 'criadoEm'>) => {
       setIsLoading(true);
       await new Promise(resolve => setTimeout(resolve, 500)); 
       
       setState(prev => [
         ...prev, 
-        { ...item, id: generateId(), criadoEm: new Date() } as T 
+        { ...item, id: generateId(), createdAt: new Date().toISOString() } as T 
       ]);
       setIsLoading(false);
     },

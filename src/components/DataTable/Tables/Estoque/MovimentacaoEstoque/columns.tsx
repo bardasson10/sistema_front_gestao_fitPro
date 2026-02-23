@@ -1,4 +1,4 @@
-import { MovimentacaoEstoque, EstoqueTecido } from "@/types/production";
+import { MovimentacaoEstoque } from "@/types/production";
 import { ColumnDef } from "@tanstack/react-table";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ArrowDownCircle, ArrowUpCircle, RefreshCw, CornerDownLeft } from "lucide-react";
@@ -13,7 +13,7 @@ export const tipoMovimentacaoMap = {
 };
 
 export const getStockMovementColumns = (
-    rolos: EstoqueTecido[],
+    rolos: { id: string; tecidoId: string; codigoBarraRolo: string }[],
     tecidos: { id: string; nome: string; codigoReferencia: string; corId: string }[],
     cores: { id: string; nome: string; codigoHex: string }[],
 ): ColumnDef<MovimentacaoEstoque>[] => [

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { EstoqueTecido } from "@/types/production";
+import { EstoqueRolo } from "@/hooks/queries/useEstoque";
 import { ColumnDef } from "@tanstack/react-table";
 import { Pencil } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -7,10 +7,10 @@ import { dataFormatter } from "@/utils/Formatter/data-brasil-format";
 
 
 export const getStockColumns = (
-  onEdit: (item: EstoqueTecido) => void,
+  onEdit: (item: EstoqueRolo) => void,
   tecidos: { id: string; tipo: string; corId: string }[],
   cores: { id: string; nome: string; codigoHex: string }[],
-): ColumnDef<EstoqueTecido>[] => [
+): ColumnDef<EstoqueRolo>[] => [
 
     {
       accessorKey: 'identificacao',
