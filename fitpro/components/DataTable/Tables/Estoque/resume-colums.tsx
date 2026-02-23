@@ -1,12 +1,13 @@
 import { EstoqueTecido } from "@/types/production";
 import { ColumnDef } from "@tanstack/table-core";
 import { StockResume } from "@/types/StockComponents/stock-components";
+import { EstoqueRolo } from "@/hooks/queries/useEstoque";
 
 
 
 
 export const getGroupedStockColumns = (
-  rolos: EstoqueTecido[],
+  rolos: EstoqueRolo[],
   tecidos: { id: string; codigoReferencia: string; corId: string }[],
   cores: { id: string; nome: string; codigoHex: string }[]
 ): StockResume[] => {

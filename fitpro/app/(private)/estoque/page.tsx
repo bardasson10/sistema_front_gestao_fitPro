@@ -131,11 +131,11 @@ export default function Estoque() {
         />
       </div>
       <Tabs defaultValue="rolos-individuais" className="w-full">
-        <div className="flex justify-between items-center mb-6">
-          <TabsList>
-            <TabsTrigger value="rolos-individuais">Rolos Individuais</TabsTrigger>
-            <TabsTrigger value="resumo-por-tecido">Resumo por Tecido</TabsTrigger>
-            <TabsTrigger value="movimentacao-do-estoque">Movimentações do Estoque</TabsTrigger>
+        <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:justify-between sm:items-center">
+          <TabsList className="w-full flex-col h-auto sm:w-auto sm:flex-row sm:h-10">
+            <TabsTrigger value="rolos-individuais" className="w-full justify-center sm:w-auto text-xs sm:text-sm">Rolos Individuais</TabsTrigger>
+            <TabsTrigger value="resumo-por-tecido" className="w-full justify-center sm:w-auto text-xs sm:text-sm">Resumo por Tecido</TabsTrigger>
+            <TabsTrigger value="movimentacao-do-estoque" className="w-full justify-center sm:w-auto text-xs sm:text-sm">Movimentações do Estoque</TabsTrigger>
           </TabsList>
           <FormModal
             open={isOpen}

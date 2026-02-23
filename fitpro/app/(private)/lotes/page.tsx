@@ -19,6 +19,7 @@ import { parseNumber } from "@/utils/Formatter/parse-number-format";;
 import { toast } from "sonner";
 import { useEstoqueTecidos } from "@/hooks/queries/useEstoque";
 import { useGradeEdicao } from "@/hooks/use-grade-edicao";
+import { MobileViewLoteProducao } from "@/components/MobileViewCards/LoteProducaoCard";
 
 
 
@@ -228,6 +229,14 @@ export default function Lotes() {
       <div className="hidden md:block">
         <LoteProducaoTable
           lotesProducao={dataLote}
+          isLoading={isLoading}
+          onView={handleEdit}
+        />
+      </div>
+
+      <div className="block md:hidden">
+        <MobileViewLoteProducao
+          lotesProducao={dataLote as LoteProducao[]}
           isLoading={isLoading}
           onView={handleEdit}
         />

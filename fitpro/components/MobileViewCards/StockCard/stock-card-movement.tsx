@@ -23,16 +23,16 @@ export const MobileViewStockMovement = ({
 
     if (isLoading) {
         return (
-            <div className="flex flex-col gap-4 p-4">
+            <div className="flex flex-col gap-3 py-3">
                 {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-32 w-full animate-pulse rounded-lg bg-muted" />
+                    <div key={i} className="h-40 w-full animate-pulse rounded-xl bg-muted" />
                 ))}
             </div>
         )
     }
 
     return (
-        <div className="flex flex-col gap-4 p-4">
+        <div className="flex flex-col gap-3 py-3">
             <SemDadosComponent<MovimentacaoEstoque> nomeDado="movimentação" data={movimentacoes} />
             {Array.isArray(movimentacoes) && movimentacoes.map((item) => (
                 (() => {

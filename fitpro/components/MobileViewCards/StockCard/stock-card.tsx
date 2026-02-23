@@ -19,9 +19,9 @@ export const MobileViewStock = ({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-4 p-4">
+      <div className="flex flex-col gap-3 py-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-32 w-full animate-pulse rounded-lg bg-muted" />
+          <div key={i} className="h-36 w-full animate-pulse rounded-xl bg-muted" />
         ))}
       </div>
     )
@@ -37,7 +37,7 @@ export const MobileViewStock = ({
   
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="flex flex-col gap-3 py-3">
       <SemDadosComponent<EstoqueRolo> nomeDado="tecido" data={rolos} />
       {Array.isArray(rolos) && rolos.map((item) => {
         const tecidoDoRolo = tecidos.find(t => t.id === item.tecidoId);

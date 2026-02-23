@@ -1,5 +1,5 @@
 import { EstoqueRolo } from "@/hooks/queries/useEstoque";
-import { Cor, EstoqueTecido, MovimentacaoEstoque, Tecido } from "../production";
+import { Cor, MovimentacaoEstoque, Tecido } from "../production";
 
 export interface StockProps {
   rolos: EstoqueRolo[];

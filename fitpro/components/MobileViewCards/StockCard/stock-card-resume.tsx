@@ -4,6 +4,7 @@ import { getGroupedStockColumns } from "@/components/DataTable/Tables/Estoque/re
 import { EstoqueTecido } from "@/types/production"
 import { StockResumeProps } from "@/types/StockComponents/stock-components"
 import React from "react"
+import { EstoqueRolo } from "@/hooks/queries/useEstoque"
 
 
 
@@ -16,9 +17,9 @@ export const MobileViewStockResume = ({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-4 p-4">
+      <div className="flex flex-col gap-3 py-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-32 w-full animate-pulse rounded-lg bg-muted" />
+          <div key={i} className="h-32 w-full animate-pulse rounded-xl bg-muted" />
         ))}
       </div>
     )
@@ -30,8 +31,8 @@ export const MobileViewStockResume = ({
   );
 
   return (
-    <div className="flex flex-col gap-4 p-4">
-      <SemDadosComponent<EstoqueTecido> nomeDado="tecido" data={rolos} />
+    <div className="flex flex-col gap-3 py-3">
+      <SemDadosComponent<EstoqueRolo> nomeDado="tecido" data={rolos} />
       {resumoData.map((item) => (
         <BaseCard
           key={item.id}
