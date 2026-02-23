@@ -35,6 +35,7 @@ export interface Faccao {
   responsavel: string;
   contato: string;
   prazoMedioDias: number; // dias
+  prazoMedio?: number;
   status: 'ativo' | 'inativo' | '';
   createdAt: string;
 }
@@ -138,6 +139,7 @@ export interface RolosTecidoLote {
 export interface LoteProducao {
   id: string;
   codigoLote: string;
+  codigo?: string;
   tecidoId: string;
   responsavelId: string;
   status: 'planejado' | 'criado' | 'cortado' | 'em_producao' | 'concluido' | 'cancelado' | '';
@@ -202,9 +204,12 @@ export interface Direcionamento {
   loteProducaoId: string;
   faccaoId?: string;
   faccao?: Faccao;
+  tipoProducao?: 'interna' | 'faccao' | '';
+  produtos?: ProdutoDirecionado[];
   tipoServico: string;
   dataSaida: string; // data de saída para produção
   dataPrevisaoRetorno?: string; // data prevista de retorno
+  dataEntregaConferencia?: string;
   status: 'enviado' | 'em_producao' | 'atrasado' | 'concluido' | '';
   createdAt?: string;
   updatedAt?: string;
@@ -227,7 +232,7 @@ export interface Conferencia {
   divergencia: boolean;
   avaliacaoQualidade: 'aprovado' | 'reprovado' | 'parcial' | '';
   observacoes?: string;
-  dataConferencia: string;
+  dataConferencia: string | Date;
   liberadoPagamento: boolean;
 }
 

@@ -3,18 +3,22 @@ import { Button } from "@/components/ui/button";
 import { SemDadosComponent } from "@/components/ErrorManagementComponent/AnyData";
 import { TiposProdutosSchema } from "@/hooks/queries/useProdutos";
 import { dataFormatter } from "@/utils/Formatter/data-brasil-format";
-import { Link2 } from "lucide-react";
+import { Link2, Pencil, Trash2 } from "lucide-react";
 
 interface MobileViewTiposProdutoProps {
   tiposProdutos: TiposProdutosSchema[];
   isLoading: boolean;
   onAssociate: (item: TiposProdutosSchema) => void;
+  onEdit: (item: TiposProdutosSchema) => void;
+  onRemove: (id: string) => void;
 }
 
 export const MobileViewTiposProduto = ({
   tiposProdutos,
   isLoading,
   onAssociate,
+  onEdit,
+  onRemove,
 }: MobileViewTiposProdutoProps) => {
   if (isLoading) {
     return (
@@ -60,6 +64,21 @@ export const MobileViewTiposProduto = ({
               >
                 <Link2 className="mr-2 h-4 w-4" />
                 Associar tamanhos
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => onEdit(item)}
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                Editar
+              </Button>
+              <Button
+                variant="destructive"
+                size="icon"
+                onClick={() => onRemove(item.id)}
+              >
+                <Trash2 className="h-4 w-4" />
               </Button>
             </div>
           }

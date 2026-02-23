@@ -6,45 +6,30 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { Cable, CirclePile, House, LayoutDashboard, NotebookPen, PackageOpen, PackageSearch, Shirt, SquareChartGantt, User } from "lucide-react"
+import { BookType, Cable, CirclePile, House, LayoutDashboard, NotebookPen, PackageOpen, PackageSearch, PaintBucket, Shirt, SquareChartGantt, User } from "lucide-react"
 import { NavMain } from "./components/nav-main"
 import { NavUser } from "./components/nav-user"
 
 const data = {
   navMain: [
     {
-      groupTitle: "Gestão",
+      groupTitle: "Analise",
       items: [
         {
           title: "Dashboard",
           url: "/",
           icon: LayoutDashboard,
         },
+      ],
+    },
+    {
+      groupTitle: "Gestão",
+      items: [
         {
           title: "Colaboradores",
           url: "/colaboradores",
           icon: User,
         },
-      ],
-    },
-    {
-      groupTitle: "Produtos",
-      items: [
-        {
-          title: "Produtos",
-          url: "/produtos",
-          icon: PackageOpen,
-        },
-        {
-          title: "Tipos de Produtos",
-          url: "/tipos-produtos",
-          icon: PackageOpen,
-        },
-      ],
-    },
-    {
-      groupTitle: "Materiais",
-      items: [
         {
           title: "Fornecedores",
           url: "/fornecedores",
@@ -54,6 +39,16 @@ const data = {
           title: "Facções",
           url: "/faccoes",
           icon: House,
+        },
+      ],
+    },
+    {
+      groupTitle: "Materiais",
+      items: [
+        {
+          title: "Cores",
+          url: "/cor",
+          icon: PaintBucket,
         },
         {
           title: "Tecidos",
@@ -65,6 +60,16 @@ const data = {
     {
       groupTitle: "Estoque",
       items: [
+        {
+          title: "Produtos",
+          url: "/produtos",
+          icon: PackageOpen,
+        },
+        {
+          title: "Tipos de Produtos",
+          url: "/tipos-produtos",
+          icon: BookType,
+        },
         {
           title: "Estoque",
           url: "/estoque",

@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Direcionamento } from '@/types/production';
+import { ProdutoDirecionado } from '@/types/production';
 import { CheckCircle, AlertCircle, XCircle } from 'lucide-react';
 
 const produtoLabels: Record<string, string> = {
@@ -32,15 +32,15 @@ const produtoLabels: Record<string, string> = {
 };
 
 interface ConferenciaFormProps {
-  direcionamento: Direcionamento | null;
+  produtosEsperados: ProdutoDirecionado[];
 }
 
-export function ConferenciaForm({ direcionamento }: ConferenciaFormProps) {
+export function ConferenciaForm({ produtosEsperados }: ConferenciaFormProps) {
   const { control, watch } = useFormContext<ConferenciaFormValues>();
 
   const produtosRecebidos = watch('produtosRecebidos');
 
-  if (!direcionamento) return null;
+  if (!produtosEsperados?.length) return null;
 
   return (
     <div className="space-y-4">
@@ -58,7 +58,7 @@ export function ConferenciaForm({ direcionamento }: ConferenciaFormProps) {
               </tr>
             </thead>
             <tbody>
-              {direcionamento.produtos.map((item, index) => {
+              {produtosEsperados.map((item, index) => {
                 const recebido = produtosRecebidos?.find(
                   (p) => p.produto === item.produto
                 );

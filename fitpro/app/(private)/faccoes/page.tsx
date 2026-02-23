@@ -25,7 +25,7 @@ const initialValues: FaccoesFormValues = {
   responsavel: '',
   contato: '',
   prazoMedioDias: 0,
-  status: '',
+  status: "ativo",
 };
 
 export default function Faccoes() {

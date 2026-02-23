@@ -9,8 +9,8 @@ import { PaginatedResponse } from '@/types/production';
 interface TipoProduto {
   id: string;
   nome: string;
-  tamanhos: Tamanhos[];
   createdAt: string;
+  tamanhos: Tamanhos[];
 }
 
 export interface Tamanho {
@@ -36,8 +36,8 @@ export interface Produto {
   fabricante: string;
   custoMedioPeca: number;
   precoMedioVenda: number;
-  tipo: TipoProduto;
   createdAt: string;
+  tipo: TipoProduto;
 }
 
 // ============ TIPOS DE PRODUTO ============

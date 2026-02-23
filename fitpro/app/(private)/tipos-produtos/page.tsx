@@ -9,9 +9,12 @@ import { TiposProdutoTable } from "@/components/DataTable/Tables/TiposProduto/ta
 import { AssociarTamanhoForm } from "@/components/Forms/TiposProduto/associar-tamanho-form";
 import { TipoProdutoForm } from "@/components/Forms/TiposProduto/tipo-produto-form";
 import { MobileViewTiposProduto } from "@/components/MobileViewCards/TiposProdutoCard";
+import { RemoveItemWarning } from "@/components/ErrorManagementComponent/WarnningRemoveItem";
 import {
   useAssociarTamanhoTipo,
   useCriarTipoProduto,
+  useAtualizarTipoProduto,
+  useDeletarTipoProduto,
   useTamanhos,
   Tamanho,
   useTiposProduto,
@@ -28,6 +31,10 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
+const initialValues: CriarTipoProdutoFormValues = {
+  nome: "",
+};
+
 export default function TiposProdutosPage() {
   const { data: tiposProdutoData, isLoading } = useTiposProduto();
   const tiposProdutos = tiposProdutoData?.data || [];
@@ -37,6 +44,8 @@ export default function TiposProdutosPage() {
 
   const { mutate: associarTamanho, isPending: isAssociando } = useAssociarTamanhoTipo();
   const { mutate: criarTipo, isPending: isCriandoTipo } = useCriarTipoProduto();
+  const { mutate: atualizarTipo, isPending: isAtualizandoTipo } = useAtualizarTipoProduto();
+  const { mutate: deletarTipo } = useDeletarTipoProduto();
 
   const [isAssociarOpen, setIsAssociarOpen] = useState(false);
   const [tipoSelecionado, setTipoSelecionado] = useState<TiposProdutosSchema | null>(null);
@@ -49,20 +58,33 @@ export default function TiposProdutosPage() {
 
   const criarTipoForm = useForm<CriarTipoProdutoFormValues>({
     resolver: zodResolver(criarTipoProdutoSchema),
-    defaultValues: { nome: "" },
+    defaultValues: initialValues,
   });
 
   const {
     isOpen: isCriarOpen,
     handleOpen: handleOpenCriar,
+    handleEdit: handleEditCriar,
     handleClose: handleCloseCriar,
+    handleRemove: handleRemoveTipo,
+    removingItemId,
+    isRemoveOpen,
+    setIsRemoveOpen,
+    editingItem,
     onSubmit: onSubmitCriar,
     isSubmitting: isCriarSubmitting,
   } = useFormModal({
     form: criarTipoForm,
-    initialValues: { nome: "" },
-    onSave: (values) => {
-      criarTipo(values.nome);
+    initialValues,
+    transformItemToForm: (item: TiposProdutosSchema) => ({
+      nome: item.nome,
+    }),
+    onSave: (values, id) => {
+      if (id) {
+        atualizarTipo({ id, nome: values.nome });
+      } else {
+        criarTipo(values.nome);
+      }
     },
   });
 
@@ -112,9 +134,9 @@ export default function TiposProdutosPage() {
         <FormModal
           open={isCriarOpen}
           onClose={handleCloseCriar}
-          title="Novo tipo de produto"
+          title={editingItem ? "Editar tipo de produto" : "Novo tipo de produto"}
           onSubmit={onSubmitCriar}
-          loading={isCriarSubmitting || isCriandoTipo}
+          loading={isCriarSubmitting || isCriandoTipo || isAtualizandoTipo}
           isViewSaveOrCancel={true}
           trigger={
             <Button onClick={handleOpenCriar}>
@@ -141,19 +163,34 @@ export default function TiposProdutosPage() {
         </Form>
       </FormModal>
 
+      <RemoveItemWarning
+        id={removingItemId || ""}
+        isOpen={isRemoveOpen}
+        onClose={() => setIsRemoveOpen(false)}
+        title="Deseja remover?"
+        onConfirm={(id) => {
+          deletarTipo(id);
+          setIsRemoveOpen(false);
+        }}
+      />
+
       <div className="hidden md:block">
         <TiposProdutoTable
           tiposProdutos={tiposProdutos}
-          isLoading={isLoading}
+          isLoading={isLoading || isCriandoTipo || isAtualizandoTipo}
           onAssociate={handleOpenAssociar}
+          onEdit={handleEditCriar}
+          onRemove={handleRemoveTipo}
         />
       </div>
 
       <div className="block md:hidden">
         <MobileViewTiposProduto
           tiposProdutos={tiposProdutos}
-          isLoading={isLoading}
+          isLoading={isLoading || isCriandoTipo || isAtualizandoTipo}
           onAssociate={handleOpenAssociar}
+          onEdit={handleEditCriar}
+          onRemove={handleRemoveTipo}
         />
       </div>
     </main>

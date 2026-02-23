@@ -10,16 +10,20 @@ interface TiposProdutoTableProps {
 	tiposProdutos: TiposProdutosSchema[];
 	isLoading: boolean;
 	onAssociate: (item: TiposProdutosSchema) => void;
+	onEdit: (item: TiposProdutosSchema) => void;
+	onRemove: (id: string) => void;
 }
 
 export const TiposProdutoTable: React.FC<TiposProdutoTableProps> = ({
 	tiposProdutos,
 	isLoading,
 	onAssociate,
+	onEdit,
+	onRemove,
 }) => {
 	const columns = React.useMemo(
-		() => getTiposProdutoColumns(onAssociate),
-		[onAssociate]
+		() => getTiposProdutoColumns(onAssociate, onEdit, onRemove),
+		[onAssociate, onEdit, onRemove]
 	);
 
 	const data = Array.isArray(tiposProdutos) ? tiposProdutos : [];

@@ -1,196 +1,250 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { LoteProducao } from '@/types/production';
+import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { direcionamentoSchema, DirecionamentoFormValues } from "@/schemas/direcionamento-schema";
+import { DirecionamentoForm } from "@/components/Forms/direcionamento-form";
+import { FormModal } from "@/components/Modal/base-modal-form";
+import { Form } from "@/components/ui/form";
+import { useFormModal } from "@/hooks/use-form-modal";
+import { toast } from "sonner";
+import { RemoveItemWarning } from "@/components/ErrorManagementComponent/WarnningRemoveItem";
 import {
-  direcionamentoSchema,
-  DirecionamentoFormValues,
-} from '@/schemas/direcionamento-schema';
-import { DirecionamentoForm } from '@/components/Forms/direcionamento-form';
-import { FormModal } from '@/components/Modal/base-modal-form';
-import { Form } from '@/components/ui/form';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { StatusBadge } from '@/components/ui/status-badge';
-import { ArrowRight, Factory, Home, CalendarDays } from 'lucide-react';
-import { useFormModal } from '@/hooks/use-form-modal';
-import { useProduction } from '@/providers/PrivateContexts/ProductionProvider';
-import { dataFormatter } from '@/utils/Formatter/data-brasil-format';
-import { toast } from 'sonner';
-
-
+  LoteProntoDirecionamentoItem,
+  LotesProntosDirecionamentoSection,
+} from "@/components/Conferencia/LotesProntosDirecionamentoSection";
+import { ProducaoDirecionamentoItem } from "@/components/DataTable/Tables/ProducaoDirecionamento/columns";
+import { ProducaoDirecionamentoTable } from "@/components/DataTable/Tables/ProducaoDirecionamento/table";
+import { MobileViewProducaoDirecionamento } from "@/components/MobileViewCards/ProducaoDirecionamentoCard";
+import {
+  useDirecionamentos,
+  useLotesProducao,
+  useCriarDirecionamento,
+  useAtualizarDirecionamento,
+  useDeletarDirecionamento,
+  useFaccoes,
+} from "@/hooks/queries/useProducao";
+import { DirecionamentoSchema } from "@/types/ProducaoDirecionamento/producao-direcionamento-type";
 const initialValues: DirecionamentoFormValues = {
-  tipoProducao: 'interna',
-  faccaoId: '',
+  tipoServico: "costura",
+  faccaoId: "",
   produtos: [],
 };
 
+type LoteProdutos = {
+  id: string;
+  codigoLote?: string;
+  items?: Array<{ produto?: { nome?: string }; quantidadePlanejada: number }>;
+};
+
 export default function Producao() {
-  const { lotes, updateLote, faccoes } = useProduction();
-  const [selectedLote, setSelectedLote] = useState<LoteProducao | null>(null);
+  const { data: lotesData, isLoading: isLoadingLotes } = useLotesProducao();
+  const lotes = lotesData?.data || [];
+  const { data: direcionamentosData, isLoading: isLoadingDirecionamentos } = useDirecionamentos();
+  const direcionamentos = direcionamentosData?.data || [];
+  const { data: faccoesData } = useFaccoes("ativo");
+  const faccoes = faccoesData || [];
+
+  const { mutate: criarDirecionamento, isPending: isCreating } = useCriarDirecionamento();
+  const { mutate: atualizarDirecionamento, isPending: isUpdating } = useAtualizarDirecionamento();
+  const { mutate: deletarDirecionamento, isPending: isDeleting } = useDeletarDirecionamento();
+
+  const [selectedLote, setSelectedLote] = useState<LoteProdutos | null>(null);
 
   const form = useForm<DirecionamentoFormValues>({
     resolver: zodResolver(direcionamentoSchema),
     defaultValues: initialValues,
   });
 
-  const handleSaveDirecionamento = useCallback((values: DirecionamentoFormValues) => {
-    console.log('handleSaveDirecionamento chamado', values);
-    
-    if (!selectedLote) {
-      console.log('Lote não selecionado');
-      toast.error('Lote não selecionado');
-      return;
+  const getStatusDirecionamento = (dataSaida: string, status: string, prazoMedio: number) => {
+    if (status === "concluido") {
+      return { label: "Concluído", type: "success" as const };
     }
 
-    const novoDirecionamento = {
-      id: Math.random().toString(36).substr(2, 9),
-      loteId: selectedLote.id,
-      tipoProducao: values.tipoProducao as 'interna' | 'faccao',
-      faccaoId: values.faccaoId,
-      dataSaida: new Date(),
-      produtos: values.produtos.filter((p) => p.quantidade > 0),
-      status: 'em_producao' as const,
-    };
+    const hoje = new Date();
+    const dataSaidaDate = new Date(dataSaida);
+    const diasDesdeEnvio = Math.floor(
+      (hoje.getTime() - dataSaidaDate.getTime()) / (1000 * 60 * 60 * 24),
+    );
 
-    console.log('Novo direcionamento:', novoDirecionamento);
-    console.log('Lote atual:', selectedLote);
-    console.log('Direcionamentos atuais:', selectedLote.direcionamentos);
+    if (diasDesdeEnvio > prazoMedio) {
+      return { label: "Atrasado", type: "danger" as const };
+    }
 
-    updateLote(selectedLote.id, {
-      status: 'em_producao',
-      direcionamentos: [...selectedLote.direcionamentos, novoDirecionamento],
+    const diasRestantes = prazoMedio - diasDesdeEnvio;
+    if (diasRestantes <= 2) {
+      return { label: `${diasRestantes}d restantes`, type: "warning" as const };
+    }
+
+    return { label: "Em Produção", type: "info" as const };
+  };
+
+  const direcionamentosMap = useMemo(() => {
+    return direcionamentos.reduce<Record<string, DirecionamentoSchema>>((acc, item) => {
+      acc[item.id] = item;
+      return acc;
+    }, {});
+  }, [direcionamentos]);
+
+  const producaoAtiva = useMemo<ProducaoDirecionamentoItem[]>(() => {
+    return direcionamentos
+      .filter((item) => item.status !== "concluido")
+      .map((item) => {
+        const faccao = faccoes.find((f) => f.id === item.faccaoId) || item.faccao;
+        const prazoMedio = faccao?.prazoMedioDias || 7;
+        const totalPecas = (item.lote?.items || []).reduce(
+          (acc, loteItem) => acc + (loteItem.quantidadePlanejada || 0),
+          0,
+        );
+        const status = getStatusDirecionamento(item.dataSaida, item.status, prazoMedio);
+
+        return {
+          id: item.id,
+          loteId: item.lote?.id || item.loteProducaoId,
+          loteCodigo: item.lote?.codigoLote || "-",
+          tipoServico: item.tipoServico,
+          faccaoNome: faccao?.nome,
+          faccaoId: item.faccaoId,
+          totalPecas,
+          dataSaida: item.dataSaida,
+          prazoMedio,
+          statusLabel: status.label,
+          statusType: status.type,
+          produtos: (item.lote?.items || []).map((loteItem) => ({
+            produto: loteItem.produto?.nome || "",
+            quantidade: loteItem.quantidadePlanejada,
+          })),
+        };
+      });
+  }, [direcionamentos, faccoes]);
+
+  const lotesProntosParaDirecionar = useMemo<LoteProntoDirecionamentoItem[]>(() => {
+    return lotes
+      .filter((item) => item.status === "planejado")
+      .map((item) => {
+      const totalPecas = (item.items || []).reduce(
+        (acc, loteItem) => acc + (loteItem.quantidadePlanejada || 0),
+        0,
+      );
+
+      return {
+        loteId: item.id,
+        loteCodigo: item.codigoLote || "-",
+        totalPecas,
+        totalProdutos: (item.items || []).length,
+        dataCriacao: item.createdAt,
+      };
+      });
+  }, [lotes]);
+
+  const getProdutosDisponiveis = (lote: LoteProdutos | null) => {
+    if (!lote) return [];
+    const produtosMap = new Map<string, { produto: string; total: number }>();
+
+    (lote.items || []).forEach((item) => {
+      const nomeProduto = item.produto?.nome || "Produto";
+      const current = produtosMap.get(nomeProduto) || { produto: nomeProduto, total: 0 };
+      produtosMap.set(nomeProduto, {
+        produto: nomeProduto,
+        total: current.total + (item.quantidadePlanejada || 0),
+      });
     });
 
-    console.log('Lote atualizado!');
-    toast.success('Direcionamento confirmado com sucesso!');
-  }, [selectedLote, updateLote]);
+    return Array.from(produtosMap.values());
+  };
 
-  const { isOpen, handleOpen, handleClose, onSubmit } = useFormModal({
+  const {
+    isOpen,
+    handleOpen,
+    handleEdit,
+    handleClose,
+    handleRemove,
+    removingItemId,
+    isRemoveOpen,
+    setIsRemoveOpen,
+    editingItem,
+    onSubmit,
+    isSubmitting,
+  } = useFormModal<DirecionamentoFormValues, ProducaoDirecionamentoItem>({
     form,
     initialValues,
-    onSave: handleSaveDirecionamento,
+    transformItemToForm: (item) => ({
+      faccaoId: item.faccaoId || "",
+      tipoServico: (item.tipoServico as DirecionamentoFormValues["tipoServico"]) || "costura",
+      produtos: getProdutosDisponiveis((direcionamentosMap[item.id]?.lote as LoteProdutos) || null).map((produto) => ({
+        produto: produto.produto,
+        quantidade: produto.total,
+      })),
+    }),
+    onInvalid: () => {
+      toast.error('Preencha os campos obrigatórios para criar o lote.');
+      console.log('Form validation failed:', form.formState.errors);
+    },
+    onSave: (values, id) => {
+      const produtosDirecionados = (values?.produtos || []).filter((p) => p.quantidade > 0);
+
+      if (!produtosDirecionados.length) {
+        toast.error("Selecione ao menos um produto para direcionar");
+        return;
+      }
+
+      if (id) {
+        const updatePayload: { id: string; faccaoId: string; tipoServico?: string } = {
+          id,
+          faccaoId: values.faccaoId,
+        };
+        updatePayload.tipoServico = values.tipoServico;
+
+        atualizarDirecionamento(updatePayload as any);
+
+        toast.success("Direcionamento atualizado com sucesso!");
+        return;
+      }
+
+      if (!selectedLote) {
+        toast.error("Lote não selecionado");
+        return;
+      }
+
+      const createPayload: {
+        loteProducaoId: string;
+        faccaoId?: string;
+        tipoServico: "costura" | "estampa" | "tingimento" | "acabamento" | "corte" | "outro";
+      } = {
+        loteProducaoId: selectedLote.id,
+        tipoServico: values.tipoServico,
+      };
+
+      createPayload.faccaoId = values.faccaoId;
+
+      criarDirecionamento(createPayload);
+
+      toast.success("Direcionamento confirmado com sucesso!");
+    },
   });
 
-  const lotesDisponiveis = lotes.filter(
-    (l) => l.status === 'cortado' || l.status === 'em_producao'
-  );
+  const handleOpenDirecionar = (item: LoteProntoDirecionamentoItem) => {
+    const loteSelecionado = (lotes.find((lote) => lote.id === item.loteId) as LoteProdutos) || null;
+    setSelectedLote(loteSelecionado);
 
-  const handleOpenDirecionar = (lote: LoteProducao) => {
-    setSelectedLote(lote);
     form.reset({
-      tipoProducao: 'interna',
-      faccaoId: '',
-      produtos: lote.grade.map((g) => ({
-        produto: g.produto,
+      tipoServico: "costura",
+      faccaoId: "",
+      produtos: getProdutosDisponiveis(loteSelecionado).map((produto) => ({
+        produto: produto.produto,
         quantidade: 0,
       })),
     });
+
     handleOpen();
   };
 
-  const getStatusDirecionamento = (
-    direcionamento: any,
-    faccao?: (typeof faccoes)[0]
-  ) => {
-    const hoje = new Date();
-    const dataSaida = new Date(direcionamento.dataSaida);
-
-    if (direcionamento.status === 'concluido')
-      return { label: 'Concluído', type: 'success' as const };
-
-    const prazoMedio = faccao?.prazoMedio || 7;
-    const diasDesdeEnvio = Math.floor(
-      (hoje.getTime() - dataSaida.getTime()) / (1000 * 60 * 60 * 24)
-    );
-
-    if (diasDesdeEnvio > prazoMedio)
-      return { label: 'Atrasado', type: 'danger' as const };
-
-    const diasRestantes = prazoMedio - diasDesdeEnvio;
-    if (diasRestantes <= 2)
-      return {
-        label: `${diasRestantes}d restantes`,
-        type: 'warning' as const,
-      };
-
-    return { label: 'Em Produção', type: 'info' as const };
+  const handleEditDirecionamento = (item: ProducaoDirecionamentoItem) => {
+    const lote = (direcionamentosMap[item.id]?.lote as LoteProdutos) || null;
+    setSelectedLote(lote);
+    handleEdit(item);
   };
-
-  const producaoAtiva = lotes.flatMap((lote) =>
-    lote.direcionamentos
-      .filter((d) => d.status !== 'concluido')
-      .map((d) => ({
-        ...d,
-        lote,
-        faccao: faccoes.find((f) => f.id === d.faccaoId),
-      }))
-  );
-
-  const columns = [
-    {
-      key: 'lote',
-      header: 'Lote',
-      render: (item: (typeof producaoAtiva)[0]) => (
-        <span className="font-mono font-semibold">{item.lote.codigo}</span>
-      ),
-    },
-    {
-      key: 'tipo',
-      header: 'Tipo',
-      render: (item: (typeof producaoAtiva)[0]) => (
-        <div className="flex items-center gap-2">
-          {item.tipoProducao === 'faccao' ? (
-            <>
-              <Factory className="h-4 w-4 text-muted-foreground" />
-              <span>{item.faccao?.nome || 'Facção'}</span>
-            </>
-          ) : (
-            <>
-              <Home className="h-4 w-4 text-muted-foreground" />
-              <span>Produção Interna</span>
-            </>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: 'produtos',
-      header: 'Produtos',
-      render: (item: (typeof producaoAtiva)[0]) => (
-        <span>{item.produtos.reduce((acc: number, p: any) => acc + p.quantidade, 0)} peças</span>
-      ),
-    },
-    {
-      key: 'dataSaida',
-      header: 'Saída',
-      render: (item: (typeof producaoAtiva)[0]) => (
-        <span>{dataFormatter(new Date(item.dataSaida))}</span>
-      ),
-    },
-    {
-      key: 'prazo',
-      header: 'Prazo Médio',
-      render: (item: (typeof producaoAtiva)[0]) => (
-        <div className="flex items-center gap-2">
-          <CalendarDays className="h-4 w-4 text-muted-foreground" />
-          <span>{item.faccao?.prazoMedio || 7} dias</span>
-        </div>
-      ),
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      render: (item: (typeof producaoAtiva)[0]) => {
-        const status = getStatusDirecionamento(item, item.faccao);
-        return (
-          <StatusBadge status={status.type}>{status.label}</StatusBadge>
-        );
-      },
-    },
-  ];
 
   return (
     <div className="space-y-6">
@@ -201,106 +255,61 @@ export default function Producao() {
         </p>
       </div>
 
-      {/* Lotes para direcionar */}
-      {lotesDisponiveis.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold">
-              Lotes Prontos para Direcionamento
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {lotesDisponiveis.map((lote) => (
-                <div
-                  key={lote.id}
-                  className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
-                >
-                  <div className="flex items-center gap-4">
-                    <span className="font-mono font-semibold">{lote.codigo}</span>
-                    <span className="text-muted-foreground">
-                      {lote.grade.reduce((acc, g) => acc + g.total, 0)} peças
-                    </span>
-                    <StatusBadge
-                      status={lote.status === 'cortado' ? 'info' : 'warning'}
-                    >
-                      {lote.status === 'cortado' ? 'Aguardando' : 'Parcial'}
-                    </StatusBadge>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => handleOpenDirecionar(lote)}
-                  >
-                    <ArrowRight className="h-4 w-4 mr-2" />
-                    Direcionar
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <LotesProntosDirecionamentoSection
+        itens={lotesProntosParaDirecionar}
+        onDirecionar={handleOpenDirecionar}
+      />
 
-      {/* Produções ativas */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold">
-            Produções em Andamento
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="border-b">
-                <tr>
-                  {columns.map((col) => (
-                    <th
-                      key={col.key}
-                      className="text-left p-3 font-semibold text-muted-foreground"
-                    >
-                      {col.header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {producaoAtiva.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={columns.length}
-                      className="text-center p-8 text-muted-foreground"
-                    >
-                      Nenhuma produção em andamento
-                    </td>
-                  </tr>
-                ) : (
-                  producaoAtiva.map((item) => (
-                    <tr key={item.id} className="border-b hover:bg-muted/50">
-                      {columns.map((col) => (
-                        <td key={col.key} className="p-3">
-                          {col.render(item)}
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-2">
+        <h2 className="text-xl font-semibold tracking-tight">Produções em Andamento</h2>
+      </div>
+
+      <div className="hidden md:block">
+        <ProducaoDirecionamentoTable
+          data={producaoAtiva}
+          isLoading={isSubmitting || isLoadingDirecionamentos}
+          onEdit={handleEditDirecionamento}
+          onRemove={handleRemove}
+        />
+      </div>
+
+      <div className="block md:hidden">
+        <MobileViewProducaoDirecionamento
+          data={producaoAtiva}
+          isLoading={isSubmitting || isLoadingDirecionamentos}
+          onEdit={handleEditDirecionamento}
+          onRemove={handleRemove}
+        />
+      </div>
+
+      <RemoveItemWarning
+        id={removingItemId || ""}
+        isOpen={isRemoveOpen}
+        onClose={() => setIsRemoveOpen(false)}
+        title="Deseja remover?"
+        onConfirm={(id) => {
+          deletarDirecionamento(id);
+          toast.success("Direcionamento removido com sucesso!");
+
+          setIsRemoveOpen(false);
+        }}
+      />
 
       {/* Modal para direcionar */}
       <FormModal
         open={isOpen}
         onClose={handleClose}
         isViewSaveOrCancel={true}
-        submitText='Confirmar Direcionamento'
+        submitText={editingItem ? "Salvar Alterações" : "Confirmar Direcionamento"}
         onSubmit={onSubmit}
-        title={`Direcionar Produção - ${selectedLote?.codigo}`}
+        title={`Direcionar Produção - ${selectedLote?.codigoLote || ""}`}
       >
         <Form {...form}>
-          <DirecionamentoForm selectedLote={selectedLote} />
+          <DirecionamentoForm
+            selectedLote={null}
+            produtosDisponiveis={getProdutosDisponiveis(selectedLote)}
+            faccoes={faccoes}
+          />
         </Form>
       </FormModal>
     </div>

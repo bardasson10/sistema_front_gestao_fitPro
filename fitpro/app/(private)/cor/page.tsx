@@ -9,42 +9,34 @@ import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { FormModal } from "@/components/Modal/base-modal-form";
 import { RemoveItemWarning } from "@/components/ErrorManagementComponent/WarnningRemoveItem";
-import { ProdutoTable } from "@/components/DataTable/Tables/Produto/table";
-import { MobileViewProduto } from "@/components/MobileViewCards/ProdutoCard";
-import { ProdutoForm } from "@/components/Forms/produto-form";
+import { CoresTable } from "@/components/DataTable/Tables/Cores/table";
+import { MobileViewCor } from "@/components/MobileViewCards/CorCard";
+import { CorForm } from "@/components/Forms/cor-form";
 import { useFormModal } from "@/hooks/use-form-modal";
 import {
-  Produto,
-  useAtualizarProduto,
-  useCriarProduto,
-  useDeletarProduto,
-  useProdutos,
-  useTiposProduto,
-} from "@/hooks/queries/useProdutos";
-import { ProdutoFormValues, produtoSchema } from "@/schemas/produto/produto-schema";
+  useCores,
+  useCriarCor,
+  useAtualizarCor,
+  useDeletarCor,
+} from "@/hooks/queries/useMateriais";
+import { CorFormValues, corSchema } from "@/schemas/cor-schema";
+import { Cor } from "@/types/production";
 
-const initialValues: ProdutoFormValues = {
-  tipoProdutoId: "",
+const initialValues: CorFormValues = {
   nome: "",
-  sku: "",
-  fabricante: "",
-  custoMedioPeca: 0,
-  precoMedioVenda: 0,
+  codigoHex: "",
 };
 
-export default function ProdutosPage() {
-  const { data: produtosData, isLoading } = useProdutos();
-  const produtos = produtosData?.data || [];
+export default function CorPage() {
+  const { data: coresData, isLoading } = useCores();
+  const cores = (coresData || []) as Cor[];
 
-  const { data: tiposProdutoData } = useTiposProduto();
-  const tiposProduto = tiposProdutoData?.data || [];
+  const { mutate: criar, isPending: isCreating } = useCriarCor();
+  const { mutate: atualizar, isPending: isUpdating } = useAtualizarCor();
+  const { mutate: deletar } = useDeletarCor();
 
-  const { mutate: criar, isPending: isCreating } = useCriarProduto();
-  const { mutate: atualizar, isPending: isUpdating } = useAtualizarProduto();
-  const { mutate: deletar } = useDeletarProduto();
-
-  const form = useForm<ProdutoFormValues>({
-    resolver: zodResolver(produtoSchema),
+  const form = useForm<CorFormValues>({
+    resolver: zodResolver(corSchema),
     defaultValues: initialValues,
   });
 
@@ -60,22 +52,18 @@ export default function ProdutosPage() {
     isSubmitting,
     isRemoveOpen,
     setIsRemoveOpen,
-  } = useFormModal<ProdutoFormValues, Produto>({
+  } = useFormModal<CorFormValues, Cor>({
     form,
     initialValues,
     transformItemToForm: (item) => ({
-      tipoProdutoId: item.tipoProdutoId,
       nome: item.nome,
-      sku: item.sku,
-      fabricante: item.fabricante,
-      custoMedioPeca: Number(item.custoMedioPeca) || 0,
-      precoMedioVenda: Number(item.precoMedioVenda) || 0,
+      codigoHex: item.codigoHex,
     }),
     onSave: (values, id) => {
       if (id) {
-        atualizar({ id, ...values });
+        atualizar({ id, nome: values.nome, codigoHex: values.codigoHex });
       } else {
-        criar(values);
+        criar({ nome: values.nome, codigoHex: values.codigoHex });
       }
     },
   });
@@ -83,23 +71,23 @@ export default function ProdutosPage() {
   return (
     <main className="space-y-6">
       <div className="flex justify-between items-center">
-        <div className="text-sm text-muted-foreground">{produtos.length} produtos cadastrados</div>
+        <div className="text-sm text-muted-foreground">{cores.length} cores cadastradas</div>
 
         <Button onClick={handleOpen}>
-          <Plus className="mr-2 h-4 w-4" /> Novo Produto
+          <Plus className="mr-2 h-4 w-4" /> Nova Cor
         </Button>
       </div>
 
       <FormModal
         open={isOpen}
         onClose={handleClose}
-        title={editingItem ? "Editar Produto" : "Novo Produto"}
+        title={editingItem ? "Editar Cor" : "Nova Cor"}
         onSubmit={onSubmit}
         loading={isSubmitting || isCreating || isUpdating}
         isViewSaveOrCancel={true}
       >
         <Form {...form}>
-          <ProdutoForm tiposProduto={tiposProduto} />
+          <CorForm />
         </Form>
       </FormModal>
 
@@ -115,9 +103,8 @@ export default function ProdutosPage() {
       />
 
       <div className="hidden md:block">
-        <ProdutoTable
-          produtos={produtos}
-          tiposProduto={tiposProduto}
+        <CoresTable
+          cores={cores}
           isLoading={isLoading || isCreating || isUpdating}
           onEdit={handleEdit}
           onRemove={handleRemove}
@@ -125,9 +112,8 @@ export default function ProdutosPage() {
       </div>
 
       <div className="block md:hidden">
-        <MobileViewProduto
-          produtos={produtos}
-          tiposProduto={tiposProduto}
+        <MobileViewCor
+          cores={cores}
           isLoading={isLoading || isCreating || isUpdating}
           onEdit={handleEdit}
           onRemove={handleRemove}

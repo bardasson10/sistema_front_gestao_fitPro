@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/services/api/api-client';
 import { toast } from 'sonner';
 import { Faccao, PaginatedResponse } from '@/types/production';
+import { DirecionamentoSchema } from '@/types/ProducaoDirecionamento/producao-direcionamento-type';
 
 
 export interface Fornecedor {
@@ -377,7 +378,7 @@ export const useDirecionamentos = (filtros?: {
             if (filtros?.faccaoId) params.append('faccaoId', filtros.faccaoId);
 
             const queryString = params.toString();
-            const { data } = await apiClient.get<Direcionamento[]>(
+            const { data } = await apiClient.get<{ data: DirecionamentoSchema[], pagination: PaginatedResponse }>(
                 `/direcionamentos${queryString ? `?${queryString}` : ''}`
             );
             return data;
@@ -389,7 +390,7 @@ export const useDirecionamento = (id: string) => {
     return useQuery({
         queryKey: ['direcionamentos', id],
         queryFn: async () => {
-            const { data } = await apiClient.get<Direcionamento>(`/direcionamentos/${id}`);
+            const { data } = await apiClient.get<{ data: DirecionamentoSchema[], pagination: PaginatedResponse }>(`/direcionamentos/${id}`);
             return data;
         },
         enabled: !!id,
@@ -402,7 +403,7 @@ export const useCriarDirecionamento = () => {
     return useMutation({
         mutationFn: async (dados: {
             loteProducaoId: string;
-            faccaoId: string;
+            faccaoId?: string;
             tipoServico:
             | 'costura'
             | 'estampa'
@@ -410,10 +411,10 @@ export const useCriarDirecionamento = () => {
             | 'acabamento'
             | 'corte'
             | 'outro';
-            dataSaida: string;
-            dataPrevisaoRetorno: string;
+            dataSaida?: string;
+            dataPrevisaoRetorno?: string;
         }) => {
-            const { data } = await apiClient.post<Direcionamento>('/direcionamentos', dados);
+            const { data } = await apiClient.post<{ data: DirecionamentoSchema[], pagination: PaginatedResponse }>('/direcionamentos', dados);
             return data;
         },
         onSuccess: () => {
@@ -431,14 +432,27 @@ export const useAtualizarDirecionamento = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async ({ id, ...dados }: any) => {
+        mutationFn: async ({ id, ...dados }: {
+            id: string;
+            faccaoId?: string;
+            tipoServico?:
+            | 'costura'
+            | 'estampa'
+            | 'tingimento'
+            | 'acabamento'
+            | 'corte'
+            | 'outro';
+            status?: string;
+            dataSaida?: string;
+            dataPrevisaoRetorno?: string;
+        }) => {
             const { data } = await apiClient.put<Direcionamento>(
                 `/direcionamentos/${id}`,
                 dados
             );
             return data;
         },
-        onSuccess: (data) => {
+        onSuccess: (data: Direcionamento) => {
             queryClient.invalidateQueries({ queryKey: ['direcionamentos'] });
             queryClient.invalidateQueries({ queryKey: ['direcionamentos', data.id] });
             toast.success('Direcionamento atualizado com sucesso!');

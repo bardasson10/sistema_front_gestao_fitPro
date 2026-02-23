@@ -18,8 +18,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 
-import { LoteProducao } from '@/types/production';
-import { Factory, Home } from 'lucide-react';
+import { Faccao, LoteProducao } from '@/types/production';
 import { useProduction } from '@/providers/PrivateContexts/ProductionProvider';
 
 const produtoLabels: Record<string, string> = {
@@ -32,46 +31,62 @@ const produtoLabels: Record<string, string> = {
   macaquinho: 'Macaquinho',
 };
 
-interface DirecionamentoFormProps {
-  selectedLote: LoteProducao | null;
+interface ProdutoDisponivel {
+  id?: string;
+  produto: string;
+  total: number;
 }
 
-export function DirecionamentoForm({ selectedLote }: DirecionamentoFormProps) {
-  const { control, watch, formState: { errors } } = useFormContext<DirecionamentoFormValues>();
-  const { faccoes } = useProduction();
+interface DirecionamentoFormProps {
+  selectedLote?: LoteProducao | null;
+  produtosDisponiveis?: ProdutoDisponivel[];
+  faccoes?: Faccao[];
+}
 
-  const tipoProducao = watch('tipoProducao');
+export function DirecionamentoForm({ selectedLote, produtosDisponiveis, faccoes }: DirecionamentoFormProps) {
+  const { control, watch, formState: { errors } } = useFormContext<DirecionamentoFormValues>();
+  const production = useProduction();
+  const faccoesDisponiveis = faccoes || production.faccoes;
+
   const produtos = watch('produtos');
 
-  if (!selectedLote) return null;
+  const produtosBase =
+    produtosDisponiveis ||
+    (selectedLote?.grade ?? []).map((item) => ({
+      id: item.id,
+      produto: item.produto,
+      total: item.total,
+    }));
+
+  if (!produtosBase?.length) return null;
 
   return (
     <div className="space-y-4">
       <FormField
         control={control}
-        name="tipoProducao"
+        name="tipoServico"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Tipo de Produção</FormLabel>
+            <FormLabel>Tipo de Serviço</FormLabel>
             <Select value={field.value} onValueChange={field.onChange}>
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
+                  <SelectValue placeholder="Selecione o serviço" />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="interna">
-                  <div className="flex items-center gap-2">
-                    <Home className="h-4 w-4" />
-                    <span>Produção Interna</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="faccao">
-                  <div className="flex items-center gap-2">
-                    <Factory className="h-4 w-4" />
-                    <span>Facção Externa</span>
-                  </div>
-                </SelectItem>
+                {[
+                  { value: "costura", label: "Costura" },
+                  { value: "estampa", label: "Estampa" },
+                  { value: "tingimento", label: "Tingimento" },
+                  { value: "acabamento", label: "Acabamento" },
+                  { value: "corte", label: "Corte" },
+                  { value: "outro", label: "Outro" },
+                ].map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <FormMessage />
@@ -79,40 +94,36 @@ export function DirecionamentoForm({ selectedLote }: DirecionamentoFormProps) {
         )}
       />
 
-      {tipoProducao === 'faccao' && (
-        <FormField
-          control={control}
-          name="faccaoId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Facção</FormLabel>
-              <Select value={field.value || ''} onValueChange={field.onChange}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a facção" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {faccoes
-                    .filter((f) => f.status === 'ativo')
-                    .map((faccao) => (
-                      <SelectItem key={faccao.id} value={faccao.id}>
-                        {faccao.nome} ({faccao.prazoMedio} dias)
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      )}
+      <FormField
+        control={control}
+        name="faccaoId"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Facção</FormLabel>
+            <Select value={field.value || ''} onValueChange={field.onChange}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a facção" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {faccoesDisponiveis
+                  .filter((f) => f.status === 'ativo')
+                  .map((faccao) => (
+                    <SelectItem key={faccao.id} value={faccao.id}>
+                      {faccao.nome} ({faccao.prazoMedioDias || faccao.prazoMedio || 7} dias)
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
-      {tipoProducao === 'faccao' && (
-        <p className="text-xs text-muted-foreground">
-          * O prazo será baseado no prazo médio da facção selecionada. A data de entrega será registrada na conferência.
-        </p>
-      )}
+      <p className="text-xs text-muted-foreground">
+        * O prazo sera baseado no prazo medio da faccao selecionada. A data de entrega sera registrada na conferencia.
+      </p>
 
       <FormItem>
         <FormLabel>Produtos a Enviar</FormLabel>
@@ -126,17 +137,28 @@ export function DirecionamentoForm({ selectedLote }: DirecionamentoFormProps) {
               </tr>
             </thead>
             <tbody>
-              {selectedLote.grade.map((gradeItem, index) => {
+              {(produtosBase ?? []).map((gradeItem, index) => {
                 const formItem = produtos?.find(
                   (p) => p.produto === gradeItem.produto
                 );
                 return (
-                  <tr key={gradeItem.id} className="border-t">
+                  <tr key={gradeItem.id || gradeItem.produto} className="border-t">
                     <td className="p-2 font-medium">
                       {produtoLabels[gradeItem.produto] || gradeItem.produto}
                     </td>
                     <td className="text-center p-2">{gradeItem.total}</td>
                     <td className="text-center p-2">
+                      <FormField
+                        control={control}
+                        name={`produtos.${index}.produto`}
+                        render={({ field }) => (
+                          <Input
+                            {...field}
+                            type="hidden"
+                            value={field.value || gradeItem.produto}
+                          />
+                        )}
+                      />
                       <FormField
                         control={control}
                         name={`produtos.${index}.quantidade`}

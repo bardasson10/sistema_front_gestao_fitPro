@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/services/api/api-client';
 import { toast } from 'sonner';
-import { Fornecedor, Tecido } from '@/types/production';
+import { Fornecedor, PaginatedResponse, Tecido } from '@/types/production';
 
 // ============ TIPOS ============
 
@@ -98,7 +98,7 @@ export const useCores = () => {
     return useQuery({
         queryKey: ['cores'],
         queryFn: async () => {
-            const response = await apiClient.get<{ data: Cor[], pagination: any }>('/cores');
+            const response = await apiClient.get<{ data: Cor[], pagination: PaginatedResponse }>('/cores');
             return response.data.data;
         },
     });
