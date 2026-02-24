@@ -275,11 +275,12 @@ export const useCriarLoteProducao = () => {
                 produtoId: string;
                 tamanhoId: string;
                 quantidadePlanejada: number;
-            }>,
-            rolos: Array<{
-                estoqueRoloId: string
-                pesoReservado: number
-            }>;
+                corId: string;
+                rolos: Array<{
+                    estoqueRoloId: string
+                    pesoReservado: number
+                }>;
+            }>
         }) => {
             const { data } = await apiClient.post<LoteProducao>('/lotes-producao', dados);
             return data;
@@ -307,6 +308,11 @@ export const useAdicionarItensLoteProducao = () => {
                 produtoId: string;
                 tamanhoId: string;
                 quantidadePlanejada: number;
+                corId: string;
+                rolos: Array<{
+                    estoqueRoloId: string
+                    pesoReservado: number
+                }>;
             }>;
         }) => {
             const { data } = await apiClient.post(
@@ -328,11 +334,29 @@ export const useAdicionarItensLoteProducao = () => {
     });
 };
 
+
+interface AtualizarLoteProducaoPayload {
+    codigoLote?: string;
+    responsavelId?: string;
+    status?: string;
+    observacao?: string;
+    items?: Array<{
+        produtoId: string;
+        tamanhoId: string;
+        quantidadePlanejada: number;
+        corId: string;
+        rolos: Array<{
+            estoqueRoloId: string
+            pesoReservado: number
+        }>;
+    }>;
+}
+
 export const useAtualizarLoteProducao = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async ({ id, ...dados }: any) => {
+        mutationFn: async ({ id, dados }: { id: string; dados: AtualizarLoteProducaoPayload }) => {
             const { data } = await apiClient.put<LoteProducao>(`/lotes-producao/${id}`, dados);
             return data;
         },

@@ -60,6 +60,11 @@ export default function Lotes() {
         produtoId: item.produtoId,
         tamanhoId: item.tamanhoId,
         quantidadePlanejada: item.quantidadePlanejada,
+        corId: "",
+        rolos: values.tecido.rolos.itens.map((rolo) => ({
+          estoqueRoloId: rolo.id,
+          pesoReservado: rolo.pesoReservado,
+        })),
       }));
 
     if (itemsPayload.length === 0) {
@@ -92,17 +97,18 @@ export default function Lotes() {
     onSave: (values, id) => {
       
       
-      const itemsPayload = values.items.map((item) => ({
-        produtoId: item.produtoId,
-        tamanhoId: item.tamanhoId,
-        quantidadePlanejada: item.quantidadePlanejada,
-      }));
-      
       const rolosPayload = values.tecido.rolos.itens.map((rolo) => ({
         estoqueRoloId: rolo.id,
         pesoReservado: rolo.pesoReservado,
       }));
       
+      const itemsPayload = values.items.map((item) => ({
+        produtoId: item.produtoId,
+        tamanhoId: item.tamanhoId,
+        quantidadePlanejada: item.quantidadePlanejada,
+        corId: "",
+        rolos: rolosPayload
+      }));
       
       const payload = {
         codigoLote: values.codigoLote,
@@ -110,20 +116,21 @@ export default function Lotes() {
         status: values.status,
         observacao: values.observacao || "",
       };
+
       if (id && editingItem) {
         
         atualizar({
           id,
-          ...payload,
-          rolos: rolosPayload,
-          items: itemsPayload
+          dados: {
+            ...payload,
+            items: itemsPayload
+          }
         });
         
       } else {
         
         criar({
           ...payload,
-          rolos: rolosPayload,
           items: itemsPayload,
         })
       }
