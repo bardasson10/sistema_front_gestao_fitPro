@@ -51,6 +51,7 @@ export const getStockColumns = (
           disponivel: { label: 'Disponível', type: 'success' as const },
           reservado: { label: 'Reservado', type: 'warning' as const },
           utilizado: { label: 'Utilizado', type: 'neutral' as const },
+          esgotado: { label: 'Esgotado', type: 'danger' as const },
         };
         const status = statusMap[row.original.situacao as keyof typeof statusMap];
         return <StatusBadge status={status.type}>{status.label}</StatusBadge>
