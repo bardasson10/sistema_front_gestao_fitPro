@@ -1,108 +1,156 @@
-// columns.ts
-
 import { ColumnDef } from "@tanstack/react-table";
-import { useFormContext } from "react-hook-form";
-import { FormField, FormItem, FormControl } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
-import { GradeRow } from "@/utils/Mapper/tamanho-helper";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
+export interface GradeEditableRow {
+  id: string;
+  produtoId: string;
+  produtoNome?: string;
+  roloId: string;
+  tamanhos: Record<string, number>;
+}
 
-const InputCell = ({
-  index,
-  tamanhoNome,
-  tamanhoQtd,
-  isEditing
-}: {
-  index: number;
-  tamanhoNome: string;
-  tamanhoQtd: number;
-  isEditing?: boolean;
-}) => {
-  const { control } = useFormContext();
+interface TamanhoOption {
+  id: string;
+  nome: string;
+}
 
-  return (
-    <FormField
-      control={control}
-      name={`grade.${index}.tamanhos.${ tamanhoNome }`}
-      defaultValue={tamanhoQtd}
-      render={({ field }) => (
-        <FormItem>
-          <FormControl>
-            <Input
-              type="number"
-              min={0}
-              disabled={!isEditing}
-              className="h-8 w-14 text-center"
-              value={field.value ?? 0}
-              onChange={(e) => field.onChange(Number(e.target.value))}
-            />
-          </FormControl>
-        </FormItem>
-      )}
-    />
-  );
-};
+interface ProdutoOption {
+  id: string;
+  nome: string;
+}
+
+interface RoloOption {
+  id: string;
+  codigoBarraRolo: string;
+}
+
 export function getGradeDetalhadaColumns(
-  tamanhos: { nome: string, quantidade: number }[],
+  tamanhos: TamanhoOption[],
+  produtos: ProdutoOption[],
+  rolos: RoloOption[],
+  onProdutoChange: (index: number, produtoId: string) => void,
+  onQuantidadeChange: (index: number, tamanhoId: string, quantidade: number) => void,
+  onRoloChange: (index: number, roloId: string) => void,
   onRemove?: (index: number) => void,
-  isEditing?: boolean
-): ColumnDef<GradeRow>[] {
+  isEditing?: boolean,
+): ColumnDef<GradeEditableRow>[] {
   return [
     {
-      accessorKey: "produtoNome",
-      header: "Produto"
+      id: "produto",
+      header: "Produto",
+      cell: ({ row }) => {
+        if (!isEditing) {
+          return <span>{row.original.produtoNome || "-"}</span>;
+        }
+
+        return (
+          <Select
+            value={row.original.produtoId || ""}
+            onValueChange={(value) => onProdutoChange(row.index, value)}
+            disabled={!isEditing}
+          >
+            <SelectTrigger className="w-55">
+              <SelectValue placeholder="Selecione o produto" />
+            </SelectTrigger>
+            <SelectContent>
+              {produtos.map((produto) => (
+                <SelectItem key={produto.id} value={produto.id}>
+                  {produto.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      },
     },
 
     ...tamanhos.map((tamanho) => ({
-      id: tamanho.nome,
+      id: tamanho.id,
       header: () => (
         <div className="text-center w-16">{tamanho.nome}</div>
       ),
-      cell: ({ row }: any) => (
-        <InputCell
-          index={row.index}
-          tamanhoNome={tamanho.nome}
-          tamanhoQtd={row.original.tamanhos[tamanho.nome] || 0}
-          isEditing={isEditing}
+      cell: ({ row }: { row: { index: number; original: GradeEditableRow } }) => (
+        <Input
+          type="number"
+          min={0}
+          disabled={!isEditing}
+          className="h-8 w-16 text-center"
+          value={row.original.tamanhos[tamanho.id] ?? 0}
+          onChange={(event) => {
+            const parsed = Number(event.target.value);
+            onQuantidadeChange(row.index, tamanho.id, Number.isNaN(parsed) ? 0 : Math.max(0, parsed));
+          }}
         />
-      )
+      ),
     })),
+
+    {
+      id: "rolo",
+      header: "Rolo",
+      cell: ({ row }) => (
+        !isEditing ? (
+          <span className="text-sm text-muted-foreground">-</span>
+        ) : (
+        <Select
+          value={row.original.roloId || ""}
+          onValueChange={(value) => onRoloChange(row.index, value)}
+          disabled={!isEditing}
+        >
+          <SelectTrigger className="w-55">
+            <SelectValue placeholder="Selecione o rolo" />
+          </SelectTrigger>
+          <SelectContent>
+            {rolos.map((rolo) => (
+              <SelectItem key={rolo.id} value={rolo.id}>
+                {rolo.codigoBarraRolo}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        )
+      ),
+    },
 
     {
       id: "total",
       header: () => <div className="text-center font-bold">Total</div>,
-      cell: ({ row }: any) => {
-        const tamanhosRow = row.original.tamanhos;
-
-        const total = Object.values(tamanhosRow).reduce(
-          (sum: number, val: any) => sum + Number(val || 0),
-          0
-        );
+      cell: ({ row }) => {
+        const total = tamanhos.reduce((sum, tamanho) => {
+          return sum + Number(row.original.tamanhos[tamanho.id] || 0);
+        }, 0);
 
         return (
           <div className="text-center font-bold text-primary">
             {total}
           </div>
         );
-      }
+      },
     },
 
     {
       id: "actions",
       header: "",
-      cell: ({ row }: any) => (
+      cell: ({ row }) => (
         <div className="flex justify-end">
           <Button
             variant="ghost"
             size="icon"
+            disabled={!isEditing}
             onClick={() => onRemove?.(row.index)}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
-      )
-    }
+      ),
+    },
   ];
 }

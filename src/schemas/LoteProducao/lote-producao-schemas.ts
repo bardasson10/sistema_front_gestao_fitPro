@@ -40,6 +40,8 @@ export const corSchema = z.object({
 export const roloItemSchema = z.object({
   id: z.string(),
   tecidoId: z.string(),
+  corId: z.string().optional(),
+  corNome: z.string().optional(),
   codigoBarraRolo: z.string(),
   pesoInicialKg: z.string(),
   pesoAtualKg: z.string(),
@@ -76,6 +78,15 @@ export const itemLoteSchema = z.object({
   produtoId: z.string(),
   tamanhoId: z.string(),
   quantidadePlanejada: z.number(),
+  corId: z.string().optional(),
+  rolos: z
+    .array(
+      z.object({
+        estoqueRoloId: z.string(),
+        pesoReservado: z.number(),
+      })
+    )
+    .optional(),
   produto: z.object({
     id: z.string(),
     tipoProdutoId: z.string(),

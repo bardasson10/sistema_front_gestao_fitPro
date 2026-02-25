@@ -191,7 +191,9 @@ export const useCriarFaccao = () => {
             toast.success('Facção criada com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error || 'Erro ao criar facção');
+            const mensagem = error.response?.data?.details?.[0]?.mensage ||
+                error.response?.data?.error
+            toast.error(mensagem);
         },
     });
 };
@@ -210,7 +212,9 @@ export const useAtualizarFaccao = () => {
             toast.success('Facção atualizada com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error || 'Erro ao atualizar facção');
+            const mensagem = error.response?.data?.details?.[0]?.mensage ||
+                error.response?.data?.error
+            toast.error(mensagem);
         },
     });
 };
@@ -227,7 +231,9 @@ export const useDeletarFaccao = () => {
             toast.success('Facção deletada com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error || 'Erro ao deletar facção');
+            const mensagem = error.response?.data?.details?.[0]?.mensage ||
+                error.response?.data?.error
+            toast.error(mensagem);;
         },
     });
 };
@@ -290,7 +296,9 @@ export const useCriarLoteProducao = () => {
             toast.success('Lote de produção criado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error);
+            const mensagem = error.response?.data?.details?.[0]?.mensage ||
+                error.response?.data?.error
+                toast.error(mensagem);
         },
     });
 };
@@ -329,7 +337,9 @@ export const useAdicionarItensLoteProducao = () => {
             toast.success('Itens adicionados ao lote com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error);
+            const mensagem = error.response?.data?.details?.[0]?.mensage ||
+                error.response?.data?.error
+            toast.error(mensagem);;
         },
     });
 };
@@ -366,7 +376,9 @@ export const useAtualizarLoteProducao = () => {
             toast.success('Lote de produção atualizado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error || 'Erro ao atualizar lote de produção');
+            const mensagem = error.response?.data?.details?.[0]?.mensage ||
+                error.response?.data?.error
+            toast.error(mensagem);
         },
     });
 };
@@ -383,7 +395,9 @@ export const useDeletarLoteProducao = () => {
             toast.success('Lote de produção deletado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error || 'Erro ao deletar lote de produção');
+            const mensagem = error.response?.data?.details?.[0]?.mensage ||
+                error.response?.data?.error
+            toast.error(mensagem);
         },
     });
 };
@@ -445,7 +459,9 @@ export const useCriarDirecionamento = () => {
             toast.success('Direcionamento criado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error || 'Erro ao criar direcionamento');
+            const mensagem = error.response?.data?.details?.[0]?.mensage ||
+                error.response?.data?.error
+            toast.error(mensagem);
         },
     });
 };
@@ -480,7 +496,9 @@ export const useAtualizarDirecionamento = () => {
             toast.success('Direcionamento atualizado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error || 'Erro ao atualizar direcionamento');
+            const mensagem = error.response?.data?.details?.[0]?.mensage ||
+                error.response?.data?.error
+            toast.error(mensagem);
         },
     });
 };
@@ -497,7 +515,9 @@ export const useDeletarDirecionamento = () => {
             toast.success('Direcionamento deletado com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error || 'Erro ao deletar direcionamento');
+            const mensagem = error.response?.data?.details?.[0]?.mensage ||
+                error.response?.data?.error
+            toast.error(mensagem);
         },
     });
 };
@@ -564,7 +584,9 @@ export const useCriarConferencia = () => {
             toast.success('Conferência criada com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error || 'Erro ao criar conferência');
+            const mensagem = error.response?.data?.details?.[0]?.mensage ||
+                error.response?.data?.error
+            toast.error(mensagem);
         },
     });
 };
@@ -583,7 +605,9 @@ export const useAtualizarConferencia = () => {
             toast.success('Conferência atualizada com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error || 'Erro ao atualizar conferência');
+            const mensagem = error.response?.data?.details?.[0]?.mensage ||
+                error.response?.data?.error
+            toast.error(mensagem);
         },
     });
 };
@@ -600,7 +624,9 @@ export const useDeletarConferencia = () => {
             toast.success('Conferência deletada com sucesso!');
         },
         onError: (error: any) => {
-            toast.error(error.response?.data?.error || 'Erro ao deletar conferência');
+            const mensagem = error.response?.data?.details?.[0]?.mensage ||
+                error.response?.data?.error
+            toast.error(mensagem);
         },
     });
 };

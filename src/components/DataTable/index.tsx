@@ -72,7 +72,8 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="rounded-lg border bg-card overflow-hidden">
-      <Table>
+      <div className="w-full overflow-x-auto">
+        <Table className="min-w-max">
         <TableHeader className="bg-table">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="hover:bg-transparent">
@@ -135,7 +136,8 @@ export function DataTable<TData, TValue>({
             </TableRow>
           )}
         </TableBody>
-      </Table>
+        </Table>
+      </div>
       {table.getPrePaginationRowModel().rows.length > 9 && !isLoading &&
         <TablePagination table={table} tabelaRepeticoes={tabelaRepeticoes} />
       }

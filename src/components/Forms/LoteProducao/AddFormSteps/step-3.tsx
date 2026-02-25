@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { LoteProducaoFormValues } from "@/schemas/LoteProducao/lote-producao-schemas";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { LoteProducaoTableGrade } from "@/components/DataTable/Tables/LoteProducao/grade/table";
 import { FormField } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -36,13 +36,6 @@ export const LoteProducaoAddStep3 = ({ isEditing = false, gradeEdicao, handleAdi
 
   return (
     <div className="space-y-6">
-      {/* Status informativo */}
-      <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex gap-2">
-        <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
-        <p className="text-sm text-green-800 italic">
-          Pronto para definir as grades de produção.
-        </p>
-      </div>
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -64,7 +57,7 @@ export const LoteProducaoAddStep3 = ({ isEditing = false, gradeEdicao, handleAdi
           control={control}
           name="items"
           render={({ field }) => (
-            <div>
+            <div className="space-y-3">
               <div className="flex gap-2">
                 {isEditing && (
                   <Button
@@ -89,12 +82,15 @@ export const LoteProducaoAddStep3 = ({ isEditing = false, gradeEdicao, handleAdi
                   Editar Grade
                 </Button>
               </div>
-              <LoteProducaoTableGrade
-                itensLote={field.value || []}
-                isFormEditable={podeEditar}
-                isGradeEditMode={isGradeEditMode}
-                handleAdicionarItens={handleAdicionarItens}
-              />
+
+              <div className="w-full max-h-96 overflow-auto rounded-md border border-input bg-background">
+                <LoteProducaoTableGrade
+                  itensLote={field.value || []}
+                  isFormEditable={podeEditar}
+                  isGradeEditMode={isGradeEditMode}
+                  handleAdicionarItens={handleAdicionarItens}
+                />
+              </div>
             </div>
           )}
         />

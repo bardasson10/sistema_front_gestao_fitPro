@@ -22,7 +22,7 @@ export function BaseModal({ trigger, Icon, title, description, children, open, o
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="sm:max-w-190 w-full">
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:max-w-300 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           {title && <DialogTitle className="flex items-center">{Icon}{title}</DialogTitle>}
           {description && <DialogDescription>{description}</DialogDescription>}
