@@ -33,7 +33,7 @@ export const getLoteProducaoColumns = (
     id: 'produtos',
     header: 'Produtos',
     cell: ({ row }) => {
-      const totalPecas = row.original.gradeLote?.reduce((acc, item) => acc + (item.quantidadePlanejada || 0), 0) || 0;
+      const totalPecas = row.original.materiais?.flatMap(m => m.cores?.flatMap(c => c.gradeLote || []) || [])?.reduce((acc, item) => acc + (item.quantidadePlanejada || 0), 0) || 0;
       return <span>{totalPecas} peças</span>;
     },
   },

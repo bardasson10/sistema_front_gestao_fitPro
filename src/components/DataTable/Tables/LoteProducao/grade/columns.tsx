@@ -43,20 +43,16 @@ export function getGradeDetalhadaColumns(
   onRemove?: (index: number) => void,
   isEditing?: boolean,
 ): ColumnDef<GradeEditableRow>[] {
+
   return [
     {
       id: "produto",
       header: "Produto",
-      cell: ({ row }) => {
-        if (!isEditing) {
-          return <span>{row.original.produtoNome || "-"}</span>;
-        }
-
-        return (
+      cell: ({ row }) =>
+        isEditing ? (
           <Select
             value={row.original.produtoId || ""}
             onValueChange={(value) => onProdutoChange(row.index, value)}
-            disabled={!isEditing}
           >
             <SelectTrigger className="w-55">
               <SelectValue placeholder="Selecione o produto" />
@@ -69,8 +65,9 @@ export function getGradeDetalhadaColumns(
               ))}
             </SelectContent>
           </Select>
-        );
-      },
+        ) : (
+          <span>{row.original.produtoNome || "-"}</span>
+        ),
     },
 
     ...tamanhos.map((tamanho) => ({
@@ -78,55 +75,38 @@ export function getGradeDetalhadaColumns(
       header: () => (
         <div className="text-center w-16">{tamanho.nome}</div>
       ),
-      cell: ({ row }: { row: { index: number; original: GradeEditableRow } }) => (
-        <Input
-          type="number"
-          min={0}
-          disabled={!isEditing}
-          className="h-8 w-16 text-center"
-          value={row.original.tamanhos[tamanho.id] ?? 0}
-          onChange={(event) => {
-            const parsed = Number(event.target.value);
-            onQuantidadeChange(row.index, tamanho.id, Number.isNaN(parsed) ? 0 : Math.max(0, parsed));
-          }}
-        />
-      ),
-    })),
-
-    {
-      id: "rolo",
-      header: "Rolo",
-      cell: ({ row }) => (
-        !isEditing ? (
-          <span className="text-sm text-muted-foreground">-</span>
+      cell: ({ row } : { row: any }) =>
+        isEditing ? (
+          <Input
+            type="number"
+            min={0}
+            className="h-8 w-16 text-center"
+            value={row.original.tamanhos[tamanho.id] ?? 0}
+            onChange={(event) => {
+              const parsed = Number(event.target.value);
+              onQuantidadeChange(
+                row.index,
+                tamanho.id,
+                Number.isNaN(parsed) ? 0 : Math.max(0, parsed)
+              );
+            }}
+          />
         ) : (
-        <Select
-          value={row.original.roloId || ""}
-          onValueChange={(value) => onRoloChange(row.index, value)}
-          disabled={!isEditing}
-        >
-          <SelectTrigger className="w-55">
-            <SelectValue placeholder="Selecione o rolo" />
-          </SelectTrigger>
-          <SelectContent>
-            {rolos.map((rolo) => (
-              <SelectItem key={rolo.id} value={rolo.id}>
-                {rolo.codigoBarraRolo}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        )
-      ),
-    },
+          <div className="text-center">
+            {row.original.tamanhos[tamanho.id] ?? 0}
+          </div>
+        ),
+    })),
 
     {
       id: "total",
       header: () => <div className="text-center font-bold">Total</div>,
       cell: ({ row }) => {
-        const total = tamanhos.reduce((sum, tamanho) => {
-          return sum + Number(row.original.tamanhos[tamanho.id] || 0);
-        }, 0);
+        const total = tamanhos.reduce(
+          (sum, tamanho) =>
+            sum + Number(row.original.tamanhos[tamanho.id] || 0),
+          0
+        );
 
         return (
           <div className="text-center font-bold text-primary">
@@ -139,18 +119,18 @@ export function getGradeDetalhadaColumns(
     {
       id: "actions",
       header: "",
-      cell: ({ row }) => (
-        <div className="flex justify-end">
-          <Button
-            variant="ghost"
-            size="icon"
-            disabled={!isEditing}
-            onClick={() => onRemove?.(row.index)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
+      cell: ({ row }) =>
+        isEditing && (
+          <div className="flex justify-end">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onRemove?.(row.index)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ),
     },
   ];
 }

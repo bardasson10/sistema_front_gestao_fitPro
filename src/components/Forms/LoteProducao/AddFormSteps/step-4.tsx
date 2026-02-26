@@ -8,12 +8,13 @@ import { Button } from "@/components/ui/button";
 import { useGradeEdicao } from "@/hooks/use-grade-edicao";
 
 interface Props {
+  corAtivaId: string;
   isEditing?: boolean;
   gradeEdicao: ReturnType<typeof useGradeEdicao>;
   handleAdicionarItens: () => void;
 }
 
-export const LoteProducaoAddStep4 = ({ isEditing = false, gradeEdicao, handleAdicionarItens }: Props) => {
+export const LoteProducaoAddStep4 = ({ corAtivaId, isEditing = false, gradeEdicao, handleAdicionarItens }: Props) => {
   const { control, watch } = useFormContext<LoteProducaoFormValues>();
 
   const {
@@ -23,7 +24,9 @@ export const LoteProducaoAddStep4 = ({ isEditing = false, gradeEdicao, handleAdi
     podeEditar
   } = gradeEdicao;
 
-  const items = watch("gradeLote") || [];
+  // Filtra grade apenas da cor ativa
+  const items = watch("materiais")
+    .flatMap(m => m.cores?.filter(c => c.id === corAtivaId).flatMap(c => c.gradeLote || []) || []) || [];
 
   // Total geral de peças
   const totalGeral = useMemo(() => {
@@ -55,7 +58,7 @@ export const LoteProducaoAddStep4 = ({ isEditing = false, gradeEdicao, handleAdi
 
         <FormField
           control={control}
-          name="gradeLote"
+          name="materiais"
           render={({ field }) => (
             <div className="space-y-3">
               <div className="flex gap-2">
@@ -85,12 +88,12 @@ export const LoteProducaoAddStep4 = ({ isEditing = false, gradeEdicao, handleAdi
 
               <div className="w-full max-h-96 overflow-auto rounded-md border border-input bg-background">
                 <LoteProducaoTableGrade
-                  itensLote={field.value || []}
                   isFormEditable={podeEditar}
                   isGradeEditMode={isGradeEditMode}
                   handleAdicionarItens={handleAdicionarItens}
                 />
               </div>
+
             </div>
           )}
         />

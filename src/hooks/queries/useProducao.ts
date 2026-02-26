@@ -141,6 +141,7 @@ interface ApiMaterialCor {
     codigoHex?: string;
     qtdFolhas?: number;
     rolos?: ApiMaterialRolo[];
+    gradeLote?: ApiGradeItem[];
 }
 
 interface ApiMaterial {
@@ -184,7 +185,6 @@ export interface ApiLoteProducaoResponse {
     updatedAt: string;
     responsavel?: Partial<Responsavel>;
     materiais?: ApiMaterial[];
-    gradeLote?: ApiGradeItem[];
     direcionamentos?: ApiDirecionamento[];
     enfestos?: LoteProducaoEnfesto[];
 }

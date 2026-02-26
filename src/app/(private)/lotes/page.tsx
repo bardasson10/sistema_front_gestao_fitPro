@@ -64,7 +64,7 @@ export default function Lotes() {
           }))
         )
       );
-      const itemsGradePayload = (values.gradeLote || []).flatMap((item) => ({
+      const itemsGradePayload = (values.materiais || []).flatMap(m => m.cores.flatMap(c => c.gradeLote || [])).map((item) => ({
         produtoId: item.produtoId,
         tamanhoId: item.tamanhoId,
         quantidadePlanejada: item.quantidadePlanejada,
@@ -107,7 +107,7 @@ export default function Lotes() {
 
     const existingItemsGrade = ((editingItem as LoteProducao | null)?.items ?? []);
     const existingKeys = new Set(existingItemsGrade.flatMap((item) => `${item.produtoId}::${item.tamanhoId}`));
-    const itemsGradePayload = (values.gradeLote || []).filter((item) => !existingKeys.has(`${item.produtoId}::${item.tamanhoId}`))
+    const itemsGradePayload = (values.materiais || []).flatMap(m => m.cores.flatMap(c => c.gradeLote || [])).filter((item) => !existingKeys.has(`${item.produtoId}::${item.tamanhoId}`))
       .map((item) => ({
         produtoId: item.produtoId,
         tamanhoId: item.tamanhoId,
@@ -134,6 +134,7 @@ export default function Lotes() {
       toast.info("Nenhum item novo para adicionar.");
       return;
     }
+
 
     adicionarItens({
       id: editingItem.id,

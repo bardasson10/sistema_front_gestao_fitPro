@@ -16,7 +16,12 @@ type CorOption = Cor & {
   optionValue: string;
 };
 
-export const LoteProducaoAddStep3 = () => {
+interface Step3Props {
+  corAtivaId: string | null;
+  setCorAtivaId: (id: string) => void;
+}
+
+export const LoteProducaoAddStep3 = ({ corAtivaId, setCorAtivaId }: Step3Props) => {
   const { control, watch } = useFormContext<LoteProducaoFormValues>();
 
   const materiaisRaw = watch("materiais");
@@ -33,16 +38,18 @@ export const LoteProducaoAddStep3 = () => {
         uniqueByCorId.set(corId, {
           id: corId,
           nome: cor.nome || "Sem cor",
-          codigoHex: cor.codigoHex || "#000000",
+          codigoHex: cor.codigoHex || "",
           optionValue: corId,
         });
       }
     });
 
+    console.log("Cores únicas para o Select:", Array.from(coresFlat));
+
     return Array.from(uniqueByCorId.values());
   }, [materiais]);
 
-      
+
   const qtdRolosEnfestos = materiais.flatMap((m) =>
     (m.cores || []).map((c) => Number(c.rolos?.length || 0))
   );
@@ -58,13 +65,10 @@ export const LoteProducaoAddStep3 = () => {
             <FormLabel>Cores</FormLabel>
             <FormControl>
               <Select
-                onValueChange={field.onChange}
-                value={(Array.isArray(field.value)
-                  ? field.value.flatMap((m) => (m.cores || []).map((c) => c.id || ""))
-                  : []
-                ).join(",") || ""}
+                onValueChange={(val) => setCorAtivaId(val)}
+                value={corAtivaId || ""}
               >
-                <SelectTrigger className="w-full" disabled={corDosRolosLote.length === 0}>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Selecione uma cor" />
                 </SelectTrigger>
                 <SelectContent>

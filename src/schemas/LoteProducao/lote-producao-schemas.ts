@@ -15,12 +15,22 @@ const coresRoloMateriaisSchema = z.object({
   situacao: z.string(),
 });
 
+const gradeLoteItemSchema = z.object({
+  id: z.string(),
+  produtoId: z.string(),
+  tamanhoId: z.string(),
+  quantidadePlanejada: z.number(),
+  produtoNome: z.string(),
+  sku: z.string(),
+  tamanhoNome: z.string(),
+});
 const coresMateriaisSchema = z.object({
   id: z.string(),
   nome: z.string(),
   codigoHex: z.string(),
   qtdFolhas: z.number(),
   rolos: z.array(coresRoloMateriaisSchema),
+  gradeLote: z.array(gradeLoteItemSchema),
 });
 
 const loteMaterialSchema = z.object({
@@ -35,15 +45,6 @@ const loteMaterialSchema = z.object({
   cores: z.array(coresMateriaisSchema),
 });
 
-const gradeLoteItemSchema = z.object({
-  id: z.string(),
-  produtoId: z.string(),
-  tamanhoId: z.string(),
-  quantidadePlanejada: z.number(),
-  produtoNome: z.string(),
-  sku: z.string(),
-  tamanhoNome: z.string(),
-});
 
 const loteDirecionamentoSchema = z.object({
   id: z.string(),
@@ -66,7 +67,6 @@ export const loteProducaoFormSchema = z.object({
   updatedAt: z.string(),
   responsavel: loteResponsavelSchema,
   materiais: z.array(loteMaterialSchema),
-  gradeLote: z.array(gradeLoteItemSchema),
   direcionamento: z.array(loteDirecionamentoSchema),
 });
 
@@ -89,6 +89,5 @@ export const initialValuesLote: LoteProducaoFormValues = {
     funcaoSetor: "",
   },
   materiais: [],
-  gradeLote: [],
   direcionamento: [],
 };
