@@ -17,6 +17,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "FitPro",
   description: "Sistema de Gestão para Confecções",
+  icons: {
+    icon: "/icon.svg", 
+    apple: "/icon.svg", 
+  },
 };
 
 export default function RootLayout({

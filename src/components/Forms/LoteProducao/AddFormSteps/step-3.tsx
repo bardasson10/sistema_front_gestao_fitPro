@@ -1,100 +1,126 @@
-import React, { useMemo } from "react";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useFormContext } from "react-hook-form";
 import { LoteProducaoFormValues } from "@/schemas/LoteProducao/lote-producao-schemas";
-import { CheckCircle2 } from "lucide-react";
-import { LoteProducaoTableGrade } from "@/components/DataTable/Tables/LoteProducao/grade/table";
-import { FormField } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { useGradeEdicao } from "@/hooks/use-grade-edicao";
+import { Input } from "@/components/ui/input";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { CircleColorView } from "@/components/ui/circle-color-view";
+import { useMemo } from "react";
 
-interface Props {
-  isEditing?: boolean;
-  gradeEdicao: ReturnType<typeof useGradeEdicao>;
-  handleAdicionarItens: () => void;
-}
+type Cor = {
+  id: string;
+  nome: string;
+  codigoHex: string;
+};
 
-export const LoteProducaoAddStep3 = ({ isEditing = false, gradeEdicao, handleAdicionarItens }: Props) => {
+type CorOption = Cor & {
+  optionValue: string;
+};
+
+export const LoteProducaoAddStep3 = () => {
   const { control, watch } = useFormContext<LoteProducaoFormValues>();
 
-  const {
-    setModoAdicaoItens,
-    isGradeEditMode,
-    setIsGradeEditMode,
-    podeEditar
-  } = gradeEdicao;
+  const materiaisRaw = watch("materiais");
+  const materiais = Array.isArray(materiaisRaw) ? materiaisRaw : [];
 
-  const items = watch("items") || [];
+  const corDosRolosLote = useMemo<CorOption[]>(() => {
+    const coresFlat = materiais.flatMap((material) => material.cores || []);
+    const uniqueByCorId = new Map<string, CorOption>();
 
-  // Total geral de peças
-  const totalGeral = useMemo(() => {
-    return items.reduce((acc, item) => {
-      return acc + (item.quantidadePlanejada || 0);
-    }, 0);
-  }, [items]);
+    coresFlat.forEach((cor, index) => {
+      const corId = cor.id || `sem-id-${index}`;
 
-  const hasItems = items.length > 0;
+      if (!uniqueByCorId.has(corId)) {
+        uniqueByCorId.set(corId, {
+          id: corId,
+          nome: cor.nome || "Sem cor",
+          codigoHex: cor.codigoHex || "#000000",
+          optionValue: corId,
+        });
+      }
+    });
+
+    return Array.from(uniqueByCorId.values());
+  }, [materiais]);
+
+      
+  const qtdRolosEnfestos = materiais.flatMap((m) =>
+    (m.cores || []).map((c) => Number(c.rolos?.length || 0))
+  );
+
 
   return (
-    <div className="space-y-6">
-
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-base">
-            Produtos e Grades
-          </h3>
-
-          {hasItems && (
-            <div className="text-sm font-medium text-muted-foreground">
-              {items.length} produtos •{" "}
-              <span className="text-primary font-bold">
-                {totalGeral} peças no lote
-              </span>
-            </div>
-          )}
-        </div>
-
-        <FormField
-          control={control}
-          name="items"
-          render={({ field }) => (
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                {isEditing && (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      setModoAdicaoItens(true);
-                      setIsGradeEditMode(true);
-                    }}
-                  >
-                    Adicionar Itens
-                  </Button>
-                )}
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsGradeEditMode((prev) => !prev)}
-                >
-                  Editar Grade
-                </Button>
-              </div>
-
-              <div className="w-full max-h-96 overflow-auto rounded-md border border-input bg-background">
-                <LoteProducaoTableGrade
-                  itensLote={field.value || []}
-                  isFormEditable={podeEditar}
-                  isGradeEditMode={isGradeEditMode}
-                  handleAdicionarItens={handleAdicionarItens}
-                />
-              </div>
-            </div>
-          )}
+    <div className="space-y-4 w-full flex flex-col">
+      <FormField
+        control={control}
+        name="materiais"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Cores</FormLabel>
+            <FormControl>
+              <Select
+                onValueChange={field.onChange}
+                value={(Array.isArray(field.value)
+                  ? field.value.flatMap((m) => (m.cores || []).map((c) => c.id || ""))
+                  : []
+                ).join(",") || ""}
+              >
+                <SelectTrigger className="w-full" disabled={corDosRolosLote.length === 0}>
+                  <SelectValue placeholder="Selecione uma cor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {corDosRolosLote.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground text-center">
+                      Nenhum cor disponível
+                    </div>
+                  ) : (
+                    corDosRolosLote.map((cor) => (
+                      <SelectItem key={cor.optionValue} value={cor.optionValue}>
+                        {cor.nome} - <CircleColorView color={cor.codigoHex} height={18} width={18} />
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormItem>
+        <FormLabel>Qtd de Rolos p/ Cor</FormLabel>
+        <Input
+          value={qtdRolosEnfestos.join(", ")}
+          type="number"
+          min={0}
+          readOnly
+          disabled={true}
         />
-      </div>
+      </FormItem>
+
+      <FormField
+        control={control}
+        name="materiais"
+        render={({ field }) => (
+          <FormItem >
+            <FormLabel>Qtd de Folhas p/ cor</FormLabel>
+            <Input
+              value={(
+                Array.isArray(field.value)
+                  ? field.value.flatMap((m) => (m.cores || []).flatMap((c) => c.qtdFolhas ?? 0))
+                  : []
+              ).join(", ")}
+              type="number"
+              min={0}
+              readOnly
+              placeholder="Digite a quantidade de folhas"
+            />
+            <FormControl>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
     </div>
   );
 };

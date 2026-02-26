@@ -1,6 +1,6 @@
 import { LoteProducaoAddStep1 } from "@/components/Forms/LoteProducao/AddFormSteps/step-1";
 import { LoteProducaoAddStep2 } from "@/components/Forms/LoteProducao/AddFormSteps/step-2";
-import { LoteProducaoAddStep3 } from "@/components/Forms/LoteProducao/AddFormSteps/step-3";
+import { LoteProducaoAddStep3 } from "@/components/Forms/LoteProducao/AddFormSteps/step-4";
 import  { JSX } from "react";
 
 

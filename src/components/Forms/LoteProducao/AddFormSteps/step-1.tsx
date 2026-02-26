@@ -33,7 +33,7 @@ export const LoteProducaoAddStep1 = () => {
       <FormField
       
         control={control}
-        name="responsavelId"
+        name="responsavel.id"
         render={({ field }) => (
           <FormItem >
             <FormLabel>Responsável</FormLabel>

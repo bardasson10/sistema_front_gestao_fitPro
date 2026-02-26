@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { DataTable } from "@/components/DataTable";
 import { GradeEditableRow, getGradeDetalhadaColumns } from "./columns";
 import { useFormContext } from "react-hook-form";
+import { LoteProducaoFormValues } from "@/schemas/LoteProducao/lote-producao-schemas";
 import { mapToGrade } from "@/utils/Mapper/tamanho-helper";
 import { useProdutos } from "@/hooks/queries/useProdutos";
 import { useTamanhos } from "@/hooks/queries/useProdutos";
@@ -38,7 +39,7 @@ export interface ItemLote {
 interface RoloSelecionado {
   id: string;
   codigoBarraRolo: string;
-  pesoAtualKg: string;
+  pesoAtualKg: number;
   corId?: string;
   corNome?: string;
 }
@@ -71,8 +72,24 @@ export const LoteProducaoTableGrade = ({
     [tamanhosData]
   );
 
-  const { setValue, watch } = useFormContext();
-  const rolosSelecionados = (watch("tecido.rolos.itens") || []) as RoloSelecionado[];
+  const { setValue, watch } = useFormContext<LoteProducaoFormValues>();
+
+  const materiais = watch("materiais");
+  const materiaisArray = Array.isArray(materiais) ? materiais : [];
+
+  const rolosSelecionados = useMemo<RoloSelecionado[]>(() => {
+    return materiaisArray.flatMap((material) =>
+      (material.cores || []).flatMap((cor) =>
+        (cor.rolos || []).map((rolo) => ({
+          id: rolo.id,
+          codigoBarraRolo: rolo.codigoBarraRolo || "",
+          pesoAtualKg: Number(rolo.pesoAtualKg || 0),
+          corId: cor.id,
+          corNome: cor.nome,
+        }))
+      )
+    );
+  }, [materiaisArray]);
   const [gradeRowsByCor, setGradeRowsByCor] = useState<Record<string, GradeEditableRow[]>>({});
   const gradeInitializedRef = useRef(false);
   const lastItemsPayloadRef = useRef<string>("");
@@ -95,7 +112,13 @@ export const LoteProducaoTableGrade = ({
       grouped.get(corId)?.rolos.push(rolo);
     });
 
-    return Array.from(grouped.values());
+    const grupos = Array.from(grouped.values());
+
+    if (grupos.length === 0) {
+      return [{ id: SEM_COR_ID, nome: "Sem cor", rolos: [] }];
+    }
+
+    return grupos;
   }, [rolosSelecionados]);
 
   useEffect(() => {
@@ -206,15 +229,14 @@ export const LoteProducaoTableGrade = ({
     if (!isGradeEditMode) return;
 
     // Construir array de itens candidatos
-    const itemsPayload: Array<{
+    const gradeLotePayload: Array<{
+      id: string;
       produtoId: string;
       tamanhoId: string;
       quantidadePlanejada: number;
-      corId: string;
-      rolos: Array<{
-        estoqueRoloId: string;
-        pesoReservado: number;
-      }>;
+      produtoNome: string;
+      sku: string;
+      tamanhoNome: string;
     }> = [];
 
     Object.entries(gradeRowsByCor).forEach(([corId, rows]) => {
@@ -225,71 +247,27 @@ export const LoteProducaoTableGrade = ({
             return;
           }
 
-          const roloAtual = rolosSelecionados.find((rolo) => rolo.id === row.roloId);
-
-          itemsPayload.push({
+          gradeLotePayload.push({
+            id: row.id || `grade-${row.produtoId}-${tamanho.id}`,
             produtoId: row.produtoId,
             tamanhoId: tamanho.id,
             quantidadePlanejada,
-            corId: corId === SEM_COR_ID ? roloAtual?.corId || "" : corId,
-            rolos: row.roloId
-              ? [
-                  {
-                    estoqueRoloId: row.roloId,
-                    pesoReservado: 0, // placeholder, será calculado abaixo
-                  },
-                ]
-              : [],
+            produtoNome: produtos.find((produto) => produto.id === row.produtoId)?.nome || "",
+            sku: "",
+            tamanhoNome: tamanho.nome || "",
           });
         });
       });
     });
 
-    // Agrupar itens por roloId para distribuir peso
-    const itensPorRolo = new Map<string, typeof itemsPayload>();
-    itemsPayload.forEach((item) => {
-      const roloId = item.rolos[0]?.estoqueRoloId;
-      if (!roloId) return;
-
-      if (!itensPorRolo.has(roloId)) {
-        itensPorRolo.set(roloId, []);
-      }
-      itensPorRolo.get(roloId)!.push(item);
-    });
-
-    // Distribuir peso do rolo entre os itens que o usam
-    itensPorRolo.forEach((itensDoRolo, roloId) => {
-      const rolo = rolosSelecionados.find((r) => r.id === roloId);
-      if (!rolo) return;
-
-      const pesoTotal = Number(rolo.pesoAtualKg || 0);
-      
-      if (itensDoRolo.length === 0) return;
-      
-      const pesoPorItem = Number((pesoTotal / itensDoRolo.length).toFixed(2));
-      let pesoAcumulado = 0;
-
-      itensDoRolo.forEach((item, index) => {
-        if (item.rolos[0]) {
-          if (index === itensDoRolo.length - 1) {
-            // Último item recebe a diferença para garantir exatidão
-            item.rolos[0].pesoReservado = Number((pesoTotal - pesoAcumulado).toFixed(2));
-          } else {
-            item.rolos[0].pesoReservado = pesoPorItem;
-            pesoAcumulado += pesoPorItem;
-          }
-        }
-      });
-    });
-
-    const serializedPayload = JSON.stringify(itemsPayload);
+    const serializedPayload = JSON.stringify(gradeLotePayload);
     if (serializedPayload === lastItemsPayloadRef.current) {
       return;
     }
 
     lastItemsPayloadRef.current = serializedPayload;
-    setValue("items", itemsPayload, { shouldDirty: true });
-  }, [isGradeEditMode, gradeRowsByCor, rolosSelecionados, setValue, tamanhos]);
+    setValue("gradeLote", gradeLotePayload, { shouldDirty: true });
+  }, [isGradeEditMode, gradeRowsByCor, produtos, rolosSelecionados, setValue, tamanhos]);
 
   const gradeData = useMemo(
     () => mapToGrade(itensLote),

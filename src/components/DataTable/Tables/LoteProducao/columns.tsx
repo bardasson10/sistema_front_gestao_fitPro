@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { LoteProducao } from "@/hooks/queries/useProducao";
+import { ApiLoteProducaoResponse, LoteProducao } from "@/hooks/queries/useProducao";
 import { ColumnDef } from "@tanstack/react-table";
 import { Eye } from "lucide-react";
 
 
 export const getLoteProducaoColumns = (
-  onView: (item: LoteProducao) => void,
-): ColumnDef<LoteProducao>[] => [
+  onView: (item: ApiLoteProducaoResponse) => void,
+): ColumnDef<ApiLoteProducaoResponse>[] => [
   {
     accessorKey: 'codigoLote',
     header: 'Código',
@@ -25,7 +25,7 @@ export const getLoteProducaoColumns = (
     id: 'tecidos',
     header: 'Tecidos',
     cell: ({ row }) => {
-      const totalRolos = row.original.tecido.rolos.itens.length;
+      const totalRolos = row.original.materiais?.flatMap(m => m.cores?.flatMap(c => c.rolos || []) || [])?.length || 0;
       return <span>{totalRolos} {totalRolos === 1 ? 'rolo' : 'rolos'}</span>;
     },
   },
@@ -33,7 +33,7 @@ export const getLoteProducaoColumns = (
     id: 'produtos',
     header: 'Produtos',
     cell: ({ row }) => {
-      const totalPecas = row.original.items?.reduce((acc, item) => acc + (item.quantidadePlanejada || 0), 0) || 0;
+      const totalPecas = row.original.gradeLote?.reduce((acc, item) => acc + (item.quantidadePlanejada || 0), 0) || 0;
       return <span>{totalPecas} peças</span>;
     },
   },

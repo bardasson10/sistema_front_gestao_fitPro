@@ -7,7 +7,7 @@ import { DataTable } from "@/components/DataTable";
 import { getLoteProducaoColumns } from "./columns";
 import { SemDadosComponent } from "@/components/ErrorManagementComponent/AnyData";
 import { LoteProducaoProps } from "@/types/LoteProduComponents/loteProducao-components";
-import { LoteProducao } from "@/hooks/queries/useProducao";
+import { ApiLoteProducaoResponse } from "@/hooks/queries/useProducao";
 
 interface LoteProducaoTableProps extends LoteProducaoProps {
 
@@ -28,7 +28,7 @@ export const LoteProducaoTable: React.FC<LoteProducaoTableProps> = ({
       {
         !isLoading && lotesProducao.length === 0
       ?
-        (<SemDadosComponent<LoteProducao> nomeDado="lote de produção" data={lotesProducao} />)
+        (<SemDadosComponent<ApiLoteProducaoResponse> nomeDado="lote de produção" data={lotesProducao} />)
       :
       (<DataTable
         columns={columns}

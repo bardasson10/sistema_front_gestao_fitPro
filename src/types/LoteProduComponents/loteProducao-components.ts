@@ -1,11 +1,11 @@
-import { LoteProducao } from "@/hooks/queries/useProducao";
-import { Colaborador, GradeProduto } from "../production";
+import { ApiLoteProducaoResponse } from "@/hooks/queries/useProducao";
+import {  GradeProduto } from "../production";
 
 
 export interface LoteProducaoProps {
-  lotesProducao: LoteProducao[];
+  lotesProducao: ApiLoteProducaoResponse[];
   isLoading: boolean;
-  onView: (item: LoteProducao) => void;
+  onView: (item: ApiLoteProducaoResponse) => void;
 }
 
 export interface LoteProducaoGradeProps {

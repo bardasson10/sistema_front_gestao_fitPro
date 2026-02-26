@@ -1,205 +1,94 @@
 import * as z from "zod";
+import { id } from "zod/v4/locales";
 
-export const loteProducaoGradeSchema = z.object({
-  id: z.string().optional(),
-  produto: z.string().min(1, "Selecione um produto"),
-  produtoId: z.string().min(1, "ID do produto obrigatório"),
-  gradePP: z.number().default(0),
-  gradeP: z.number().default(0),
-  gradeM: z.number().default(0),
-  gradeG: z.number().default(0),
-  gradeGG: z.number().default(0),
-  total: z.number().default(0),
-});
-
-// --- Responsável ---
-export const colaboradorSchema = z.object({
+const loteResponsavelSchema = z.object({
   id: z.string(),
   nome: z.string(),
-  perfil: z.string(),
-  status: z.string(),
-  funcaoSetor: z.string().optional(),
+  funcaoSetor: z.string(),
 });
 
-// --- Tecido e seus aninhados ---
-export const fornecedorSchema = z.object({
+const coresRoloMateriaisSchema = z.object({
   id: z.string(),
-  nome: z.string(),
-  tipo: z.string(),
-  contato: z.string().optional(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
+  codigoBarraRolo: z.string(),
+  pesoAtualKg: z.number(),
+  pesoReservado: z.number(),
+  situacao: z.string(),
 });
 
-export const corSchema = z.object({
+const coresMateriaisSchema = z.object({
   id: z.string(),
   nome: z.string(),
   codigoHex: z.string(),
+  qtdFolhas: z.number(),
+  rolos: z.array(coresRoloMateriaisSchema),
 });
 
-export const roloItemSchema = z.object({
-  id: z.string(),
+const loteMaterialSchema = z.object({
   tecidoId: z.string(),
-  corId: z.string().optional(),
-  corNome: z.string().optional(),
-  codigoBarraRolo: z.string(),
-  pesoInicialKg: z.string(),
-  pesoAtualKg: z.string(),
-  situacao: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  pesoReservado: z.number(),
-});
-
-export const tecidoSchema = z.object({
-  id: z.string(),
-  fornecedorId: z.string(),
-  corId: z.string(),
   nome: z.string(),
-  codigoReferencia: z.string(),
-  rendimentoMetroKg: z.string(),
-  larguraMetros: z.string(),
-  valorPorKg: z.string(),
-  gramatura: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  fornecedor: fornecedorSchema,
-  cor: corSchema,
-  rolos: z.object({
-    itens: z.array(roloItemSchema),
-  }),
+  codigReferencia: z.string(),
+  rendimentoMetroKg: z.number(),
+  larguraMetro: z.number(),
+  gramatura: z.number(),
+  valorPorKg: z.number(),
   pesoTotal: z.number(),
+  cores: z.array(coresMateriaisSchema),
 });
 
-// --- Itens da Grade (Produtos) ---
-export const itemLoteSchema = z.object({
-  id: z.string().optional(),
-  loteProducaoId: z.string().optional(),
+const gradeLoteItemSchema = z.object({
+  id: z.string(),
   produtoId: z.string(),
   tamanhoId: z.string(),
   quantidadePlanejada: z.number(),
-  corId: z.string().optional(),
-  rolos: z
-    .array(
-      z.object({
-        estoqueRoloId: z.string(),
-        pesoReservado: z.number(),
-      })
-    )
-    .optional(),
-  produto: z.object({
-    id: z.string(),
-    tipoProdutoId: z.string(),
-    nome: z.string(),
-    sku: z.string(),
-    fabricante: z.string(),
-    custoMedioPeca: z.string(),
-    precoMedioVenda: z.string(),
-    createdAt: z.string(),
-    updatedAt: z.string(),
-  }).optional(),
-  tamanho: z.object({
-    id: z.string(),
-    nome: z.string(),
-    ordem: z.number(),
-  }).optional(),
+  produtoNome: z.string(),
+  sku: z.string(),
+  tamanhoNome: z.string(),
 });
 
-// --- Direcionamentos ---
-export const direcionamentoSchema = z.object({
+const loteDirecionamentoSchema = z.object({
   id: z.string(),
-  loteProducaoId: z.string(),
   faccaoId: z.string(),
   tipoServico: z.string(),
   status: z.string(),
-  dataSaida: z.string(),
   dataPrevisaoRetorno: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
 });
 
-// --- Schema Principal do Lote (O objeto dentro de "data") ---
-export const loteProducaoSchema = z.object({
+
+
+
+export const loteProducaoFormSchema = z.object({
   id: z.string(),
-  codigoLote: z.string().min(1, "Obrigatório"),
+  codigoLote: z.string(),
   tecidoId: z.string(),
-  responsavelId: z.string(),
   status: z.string(),
-  observacao: z.string().nullable().or(z.literal("")), 
+  observacao: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
-  tecido: tecidoSchema,
-  responsavel: colaboradorSchema,
-  items: z.array(itemLoteSchema),
-  direcionamentos: z.array(direcionamentoSchema),
+  responsavel: loteResponsavelSchema,
+  materiais: z.array(loteMaterialSchema),
+  gradeLote: z.array(gradeLoteItemSchema),
+  direcionamento: z.array(loteDirecionamentoSchema),
 });
 
-export const loteProducaoFormSchema = loteProducaoSchema.extend({
-  rolosSelecionados: z.array(
-    z.object({
-      estoqueRoloId: z.string(),
-      pesoReservado: z.number(),
-    })
-  ).default([]),
-});
+export type LoteProducaoFormValues = z.infer<typeof loteProducaoFormSchema>;
 
 
-export type LoteProducaoFormValues = z.infer<typeof loteProducaoSchema>;
 
 
 export const initialValuesLote: LoteProducaoFormValues = {
-  id: "", // ou uma string vazia se preferir
+  id: "",
   codigoLote: "",
-  status: 'planejado',
+  tecidoId: "",
+  status: "planejado",
   observacao: "",
   createdAt: "",
   updatedAt: "",
-  responsavelId: "",
-  tecidoId: "",
-  
-  // Objeto de responsável conforme o schema
   responsavel: {
     id: "",
     nome: "",
-    perfil: "",
-    status: "ativo",
-    funcaoSetor: ""
+    funcaoSetor: "",
   },
-
-  // No seu JSON é um objeto, não um array []
-  tecido: {
-    id: "",
-    fornecedorId: "",
-    corId: "",
-    nome: "",
-    codigoReferencia: "",
-    rendimentoMetroKg: "0",
-    larguraMetros: "0",
-    valorPorKg: "0",
-    gramatura: "0",
-    createdAt: "",
-    updatedAt: "",
-    pesoTotal: 0,
-    fornecedor: {
-      id: "",
-      nome: "",
-      tipo: "",
-      createdAt: "",
-      updatedAt: ""
-    },
-    cor: {
-      id: "",
-      nome: "",
-      codigoHex: ""
-    },
-    rolos: {
-      itens: []
-    }
-  },
-
-
-  // No seu JSON a lista de tamanhos/produtos chama-se 'items'
-  items: [], 
-  
-  direcionamentos: []
+  materiais: [],
+  gradeLote: [],
+  direcionamento: [],
 };

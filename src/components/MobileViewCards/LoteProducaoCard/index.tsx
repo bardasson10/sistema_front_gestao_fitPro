@@ -2,14 +2,14 @@ import { SemDadosComponent } from "@/components/ErrorManagementComponent/AnyData
 import { BaseCard } from "@/components/MobileViewCards/base-card"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/ui/status-badge"
-import { LoteProducao } from "@/types/production"
+import { ApiLoteProducaoResponse } from "@/hooks/queries/useProducao"
 import { dataFormatter } from "@/utils/Formatter/data-brasil-format"
 import { Eye, Package, User, Calendar, FileText } from "lucide-react"
 
 interface MobileViewLoteProducaoProps {
-  lotesProducao: LoteProducao[]
+  lotesProducao: ApiLoteProducaoResponse[]
   isLoading: boolean
-  onView: (item: LoteProducao) => void
+  onView: (item: ApiLoteProducaoResponse) => void
 }
 
 export const MobileViewLoteProducao = ({
@@ -37,11 +37,11 @@ export const MobileViewLoteProducao = ({
 
   return (
     <div className="flex flex-col gap-3 py-3">
-      <SemDadosComponent<LoteProducao> nomeDado="lote de produção" data={lotesProducao} />
+      <SemDadosComponent<ApiLoteProducaoResponse> nomeDado="lote de produção" data={lotesProducao} />
       {Array.isArray(lotesProducao) && lotesProducao.map((lote) => {
         const statusInfo = statusMap[lote.status as keyof typeof statusMap] || statusMap.planejado;
-        const totalItems = lote.items?.length || 0;
-        const totalPecas = lote.items?.reduce((acc, item) => acc + item.quantidadePlanejada, 0) || 0;
+        const totalItems = lote.gradeLote?.length || 0;
+        const totalPecas = lote.gradeLote?.reduce((acc, item) => acc + (item?.quantidadePlanejada || 0), 0) || 0;
 
         return (
           <BaseCard

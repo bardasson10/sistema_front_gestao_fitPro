@@ -8,13 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useFormModal } from "@/hooks/use-form-modal";
 import {
+  ApiLoteProducaoResponse,
   useAdicionarItensLoteProducao,
   useAtualizarLoteProducao,
   useCriarLoteProducao,
   useLotesProducao,
 } from "@/hooks/queries/useProducao";
 import { useGradeEdicao } from "@/hooks/use-grade-edicao";
-import { initialValuesLote, LoteProducaoFormValues, loteProducaoSchema } from "@/schemas/LoteProducao/lote-producao-schemas";
+import { initialValuesLote, LoteProducaoFormValues, loteProducaoFormSchema } from "@/schemas/LoteProducao/lote-producao-schemas";
 import { LoteProducao } from "@/types/production";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Save, ScissorsIcon } from "lucide-react";
@@ -28,7 +29,7 @@ export default function Lotes() {
   const { mutate: adicionarItens } = useAdicionarItensLoteProducao();
 
   const form = useForm<LoteProducaoFormValues>({
-    resolver: zodResolver(loteProducaoSchema),
+    resolver: zodResolver(loteProducaoFormSchema),
     defaultValues: initialValuesLote,
     mode: 'onChange',
   });
@@ -48,27 +49,43 @@ export default function Lotes() {
       toast.error('Preencha os campos obrigatórios para criar o lote.');
     },
     onSave: (values, id) => {
-      const itemsPayload = values.items.map((item) => ({
-        produtoId: item.produtoId,
-        tamanhoId: item.tamanhoId,
-        quantidadePlanejada: item.quantidadePlanejada,
-        corId: item.corId || values.tecido.corId || "",
-        rolos: item.rolos || [],
-      }));
 
       const payload = {
         codigoLote: values.codigoLote,
-        responsavelId: values.responsavelId,
+        responsavelId: values.responsavel.id,
         status: values.status,
         observacao: values.observacao || "",
       };
+      const payloadRolo = values.materiais.flatMap(m =>
+        m.cores.flatMap(c =>
+          c.rolos.map(r => ({
+            estoqueRoloId: r.id,
+            pesoReservado: r.pesoReservado,
+          }))
+        )
+      );
+      const itemsGradePayload = (values.gradeLote || []).flatMap((item) => ({
+        produtoId: item.produtoId,
+        tamanhoId: item.tamanhoId,
+        quantidadePlanejada: item.quantidadePlanejada,
+      }));
+
+
+      const enfestosPayload = values.materiais.flatMap(m => (
+        m.cores.flatMap(c => ({
+          corId: c.id,
+          qtdFolhas: c.qtdFolhas,
+          rolosProducao: payloadRolo,
+          items: itemsGradePayload,
+        }))
+      ));
 
       if (id && editingItem) {
         atualizar({
           id,
           dados: {
             ...payload,
-            items: itemsPayload,
+            enfestos: enfestosPayload,
           },
         });
         return;
@@ -76,7 +93,7 @@ export default function Lotes() {
 
       criar({
         ...payload,
-        items: itemsPayload,
+        rolos: payloadRolo,
       });
     },
   });
@@ -88,28 +105,39 @@ export default function Lotes() {
 
     if (!editingItem?.id) return;
 
-    const existingItems = ((editingItem as LoteProducao | null)?.items ?? []);
-    const existingKeys = new Set(existingItems.map((item) => `${item.produtoId}::${item.tamanhoId}`));
-
-    const itemsPayload = values.items
-      .filter((item) => item.produtoId && item.tamanhoId)
-      .filter((item) => !existingKeys.has(`${item.produtoId}::${item.tamanhoId}`))
+    const existingItemsGrade = ((editingItem as LoteProducao | null)?.items ?? []);
+    const existingKeys = new Set(existingItemsGrade.flatMap((item) => `${item.produtoId}::${item.tamanhoId}`));
+    const itemsGradePayload = (values.gradeLote || []).filter((item) => !existingKeys.has(`${item.produtoId}::${item.tamanhoId}`))
       .map((item) => ({
         produtoId: item.produtoId,
         tamanhoId: item.tamanhoId,
         quantidadePlanejada: item.quantidadePlanejada,
-        corId: item.corId || values.tecido.corId || "",
-        rolos: item.rolos || [],
       }));
 
-    if (itemsPayload.length === 0) {
+
+    const payloadItensRoloIds = values.materiais.flatMap(m => (m.cores.flatMap(c => c.rolos.map(r => ({
+      estoqueRoloId: r.id,
+    })))));
+
+
+    const enfestosPayload = values.materiais.flatMap(m => (
+      m.cores.flatMap(c => ({
+        corId: c.id,
+        qtdFolhas: c.qtdFolhas,
+        rolosProducao: payloadItensRoloIds,
+        items: itemsGradePayload,
+      }))
+    ));
+
+
+    if (itemsGradePayload.length === 0) {
       toast.info("Nenhum item novo para adicionar.");
       return;
     }
 
     adicionarItens({
       id: editingItem.id,
-      items: itemsPayload,
+      enfestos: enfestosPayload,
     });
   };
 
@@ -169,7 +197,7 @@ export default function Lotes() {
 
       <div className="block md:hidden">
         <MobileViewLoteProducao
-          lotesProducao={dataLote as LoteProducao[]}
+          lotesProducao={dataLote as ApiLoteProducaoResponse[]}
           isLoading={isLoading}
           onView={handleEdit}
         />
