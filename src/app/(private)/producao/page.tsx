@@ -123,18 +123,20 @@ export default function Producao() {
     return lotes
       .filter((item) => item.status === "planejado")
       .map((item) => {
-      const totalPecas = (item.items || []).reduce(
-        (acc, loteItem) => acc + (loteItem.quantidadePlanejada || 0),
-        0,
-      );
+        const totalPecas = (item.materiais || []).reduce(
+          (acc, mat) => acc + (mat.cores?.flatMap((c) => c.gradeLote || []).reduce((gAcc, gItem) => gAcc + (gItem.quantidadePlanejada || 0), 0) || 0),
+          0,
+        );
 
-      return {
-        loteId: item.id,
-        loteCodigo: item.codigoLote || "-",
-        totalPecas,
-        totalProdutos: (item.items || []).length,
-        dataCriacao: item.createdAt,
-      };
+        const totalProduto = (item.materiais?.flatMap((mat) => mat.cores || []) || []).flatMap((c) => c.gradeLote || []).length;
+
+        return {
+          loteId: item.id,
+          loteCodigo: item.codigoLote || "-",
+          totalPecas,
+          totalProdutos: totalProduto,
+          dataCriacao: item.createdAt,
+        };
       });
   }, [lotes]);
 

@@ -1,4 +1,5 @@
-import { ItemLote } from "@/components/DataTable/Tables/LoteProducao/grade/table";
+import { ItemLote } from "@/hooks/queries/useProducao";
+
 
 export interface GradeRow {
   produtoId: string;

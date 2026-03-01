@@ -127,6 +127,15 @@ export interface LoteProducao {
     enfestos: LoteProducaoEnfesto[];
 }
 
+export interface ApiResponsavel {
+    id: string;
+    nome: string;
+    perfil: string;
+    status: string;
+    funcaoSetor: string;
+}
+
+
 interface ApiMaterialRolo {
     id: string;
     codigoBarraRolo?: string;
@@ -156,14 +165,34 @@ interface ApiMaterial {
     cores?: ApiMaterialCor[];
 }
 
+interface ApiTamanho {
+    id: string;
+    nome: string;
+    ordem: number;
+}
+
+export interface ApiProduto {
+    id: string;
+    tipoProdutoId: string;
+    nome: string;
+    sku: string;
+    fabricante: string;
+    custoMedioPeca: string;
+    precoMedioVenda: string;
+    createdAt: string;
+    updatedAt: string;
+}
 interface ApiGradeItem {
     id?: string;
     loteProducaoId?: string;
     produtoId?: string;
     tamanhoId?: string;
     quantidadePlanejada?: number;
-    produto?: Produto;
-    tamanho?: Tamanho;
+    produtoNome?: string;
+    sku?: string;
+    tamanhoNome?: string;
+    produto?: ApiProduto;
+    tamanho?: ApiTamanho;
 }
 
 interface ApiDirecionamento {
@@ -174,19 +203,26 @@ interface ApiDirecionamento {
     dataPrevisaoRetorno: string;
 }
 
+export interface ApiLoteProducaoEnfesto {
+    id: string;
+    cor: string;
+    qtdFolhas: number;
+    rolos: {
+        estoqueRoloId: string;
+    }[];
+}
 export interface ApiLoteProducaoResponse {
     id: string;
     codigoLote: string;
     tecidoId?: string;
-    responsavelId: string;
     status: string;
     observacao?: string;
     createdAt: string;
     updatedAt: string;
-    responsavel?: Partial<Responsavel>;
+    responsavel?: Partial<ApiResponsavel>;
     materiais?: ApiMaterial[];
     direcionamentos?: ApiDirecionamento[];
-    enfestos?: LoteProducaoEnfesto[];
+    enfestos?: ApiLoteProducaoEnfesto[];
 }
 
 
@@ -343,21 +379,23 @@ export const useLoteProducao = (id: string) => {
     });
 };
 
+export interface CriarLoteProducaoPayload {
+    codigoLote: string;
+    responsavelId: string;
+    status: string;
+    observacao?: string;
+    rolos: Array<{
+        estoqueRoloId: string;
+        pesoReservado: number;
+    }>;
+}
+
 export const useCriarLoteProducao = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (dados: {
-            codigoLote: string;
-            responsavelId: string;
-            status: string;
-            observacao?: string;
-            rolos: Array<{
-                estoqueRoloId: string
-                pesoReservado: number
-            }>;
-        }) => {
-            const { data } = await apiClient.post<LoteProducao>('/lotes-producao', dados);
+        mutationFn: async ({body}: {body: CriarLoteProducaoPayload}) => {
+            const { data } = await apiClient.post<LoteProducao>('/lotes-producao', body);
             return data;
         },
         onSuccess: () => {
@@ -372,6 +410,19 @@ export const useCriarLoteProducao = () => {
     });
 };
 
+export interface AdicionarItensLoteProducaoPayload {
+    corId: string;
+    qtdFolhas: number;
+    rolosProducao: Array<{
+        estoqueRoloId: string
+    }>;
+    itens: Array<{
+        produtoId: string;
+        tamanhoId: string;
+        quantidadePlanejada: number;
+    }>;
+}
+
 export const useAdicionarItensLoteProducao = () => {
     const queryClient = useQueryClient();
 
@@ -381,18 +432,7 @@ export const useAdicionarItensLoteProducao = () => {
             enfestos,
         }: {
             id: string;
-            enfestos: Array<{
-                corId: string;
-                qtdFolhas: number;
-                rolosProducao: Array<{
-                    estoqueRoloId: string
-                }>;
-                items: Array<{
-                    produtoId: string;
-                    tamanhoId: string;
-                    quantidadePlanejada: number;
-                }>;
-            }>;
+            enfestos: AdicionarItensLoteProducaoPayload[]
         }) => {
             const { data } = await apiClient.post(
                 `/lotes-producao/${id}/items`,
@@ -415,20 +455,19 @@ export const useAdicionarItensLoteProducao = () => {
     });
 };
 
-
-interface AtualizarLoteProducaoPayload {
+export interface AtualizarLoteProducaoPayload {
     codigoLote?: string;
     responsavelId?: string;
     status?: string;
     observacao?: string;
+    qtdFolhas?: number;
     enfestos?: Array<{
         corId: string;
-        qtdFolhas: number;
-        rolosProducao: Array<{
-            estoqueRoloId: string;
-            pesoReservado: number;
+        rolosProducao?: Array<{
+            estoqueRoloId: string,
+            pesoReservado: number
         }>;
-        items?: Array<{
+        itens?: Array<{
             produtoId: string;
             tamanhoId: string;
             quantidadePlanejada: number;

@@ -1,3 +1,5 @@
+import { ApiLoteProducaoResponse } from "@/hooks/queries/useProducao";
+
 // Core types for the production management system
 export interface PaginatedResponse {
   total: number;
@@ -283,9 +285,9 @@ export interface ProductionContextType {
   removeMovimentacao: (id: string) => void;
 
   // Lotes
-  lotes: LoteProducao[];
-  addLote: (lote: Omit<LoteProducao, 'id'>) => void;
-  updateLote: (id: string, lote: Partial<LoteProducao>) => void;
+  lotes: ApiLoteProducaoResponse[];
+  addLote: (lote: Omit<ApiLoteProducaoResponse, 'id'>) => void;
+  updateLote: (id: string, lote: Partial<ApiLoteProducaoResponse>) => void;
   removeLote: (id: string) => void;
 
   // Conferências

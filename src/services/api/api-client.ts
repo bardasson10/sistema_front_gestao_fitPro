@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import { getAuthToken } from '@/utils/Cookies/auth';
+import { getAuthToken, removeAuthCookies } from '@/utils/Cookies/auth';
 import { toast } from 'sonner';
 
 class APIClient {
@@ -30,11 +30,12 @@ class APIClient {
                 return response;
             },
             (error) => {
-                console.error(`❌ [${error.response?.status}] ${error.config?.url} - Erro:`, error.response?.data);
                 if (error.response?.status === 401) {
                     // Token expirado ou inválido
+                    removeAuthCookies();
                     toast.error(error.response.data?.error);
                 }
+                console.error(`❌ [${error.response?.status}] ${error.config?.url} - Erro:`, error.response?.data);
                 return Promise.reject(error);
             }
         );

@@ -8,10 +8,10 @@ import {
   Faccao,
   Tecido,
   EstoqueTecido,
-  LoteProducao,
   Conferencia,
   MovimentacaoEstoque,
 } from '@/types/production';
+import { ApiLoteProducaoResponse } from '@/hooks/queries/useProducao';
 
 export function ProductionProvider({ children }: { children: ReactNode }) {
   const [colaboradores, setColaboradores] = useState<Colaborador[]>([]);
@@ -20,7 +20,7 @@ export function ProductionProvider({ children }: { children: ReactNode }) {
   const [tecidos, setTecidos] = useState<Tecido[]>([]);
   const [rolos, setRolos] = useState<EstoqueTecido[]>([]);
   const [movimentacoes, setMovimentacoes] = useState<MovimentacaoEstoque[]>([]);
-  const [lotes, setLotes] = useState<LoteProducao[]>([]);
+  const [lotes, setLotes] = useState<ApiLoteProducaoResponse[]>([]);
   const [conferencias, setConferencias] = useState<Conferencia[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -31,13 +31,13 @@ export function ProductionProvider({ children }: { children: ReactNode }) {
 ) {
   return {
     
-    add: async (item: Omit<T, 'id' | 'createdAt' | 'criadoEm'>) => {
+    add: async () => {
       setIsLoading(true);
       await new Promise(resolve => setTimeout(resolve, 500)); 
       
       setState(prev => [
         ...prev, 
-        { ...item, id: generateId(), createdAt: new Date().toISOString() } as T 
+        
       ]);
       setIsLoading(false);
     },

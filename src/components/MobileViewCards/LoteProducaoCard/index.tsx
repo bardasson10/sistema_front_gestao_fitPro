@@ -1,10 +1,13 @@
 import { SemDadosComponent } from "@/components/ErrorManagementComponent/AnyData"
+import { LoteProducaoFormInfo } from "@/components/Forms/LoteProducao/AddFormSteps/loteProducao-info-form"
 import { BaseCard } from "@/components/MobileViewCards/base-card"
+import { BaseModal } from "@/components/Modal/base-modal"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { ApiLoteProducaoResponse } from "@/hooks/queries/useProducao"
 import { dataFormatter } from "@/utils/Formatter/data-brasil-format"
 import { Eye, Package, User, Calendar, FileText } from "lucide-react"
+import { useState } from "react"
 
 interface MobileViewLoteProducaoProps {
   lotesProducao: ApiLoteProducaoResponse[]
@@ -17,6 +20,7 @@ export const MobileViewLoteProducao = ({
   isLoading,
   onView,
 }: MobileViewLoteProducaoProps) => {
+  const [selectedLote, setSelectedLote] = useState<ApiLoteProducaoResponse | null>(null);
 
   if (isLoading) {
     return (
@@ -40,8 +44,12 @@ export const MobileViewLoteProducao = ({
       <SemDadosComponent<ApiLoteProducaoResponse> nomeDado="lote de produção" data={lotesProducao} />
       {Array.isArray(lotesProducao) && lotesProducao.map((lote) => {
         const statusInfo = statusMap[lote.status as keyof typeof statusMap] || statusMap.planejado;
-        const totalItems = lote.gradeLote?.length || 0;
-        const totalPecas = lote.gradeLote?.reduce((acc, item) => acc + (item?.quantidadePlanejada || 0), 0) || 0;
+        const totalPecas = (lote.materiais || []).reduce(
+          (acc, mat) => acc + (mat.cores?.flatMap((c) => c.gradeLote || []).reduce((gAcc, gItem) => gAcc + (gItem.quantidadePlanejada || 0), 0) || 0),
+          0,
+        );
+
+        const totalItems = lote.materiais?.length || 0;
 
         return (
           <BaseCard
@@ -101,7 +109,10 @@ export const MobileViewLoteProducao = ({
                 <Button
                   variant="outline"
                   className="flex-1 h-11 text-sm font-medium"
-                  onClick={() => onView(lote)}
+                  onClick={() => {
+                    setSelectedLote(lote);
+                    onView(lote)
+                  }}
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   Ver Detalhes
@@ -112,6 +123,19 @@ export const MobileViewLoteProducao = ({
           />
         );
       })}
+
+      <BaseModal 
+        open={!!selectedLote} 
+        onOpenChange={(open) => !open && setSelectedLote(null)} 
+        title={`${selectedLote?.codigoLote || ""}`}
+      >
+        {selectedLote && (
+          <LoteProducaoFormInfo 
+            lote={selectedLote} // Passa o lote selecionado como array
+          />
+        )}
+      </BaseModal>
+
     </div>
   )
 }
