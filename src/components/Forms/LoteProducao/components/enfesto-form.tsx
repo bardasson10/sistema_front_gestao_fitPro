@@ -227,29 +227,29 @@ export function EnfestoForm({
                   <SelectContent>
                     {rolosDisponiveis.map((estoqueRolo) => (
                       <SelectItem key={estoqueRolo.id} value={estoqueRolo.id}>
-                        {estoqueRolo.codigoBarraRolo} {addItemPart && `- ${estoqueRolo.pesoAtualKg} kg`}
+                        {estoqueRolo.codigoBarraRolo} 
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="flex w-36 flex-col gap-2">
-                <Label htmlFor={`enfesto-${index}-rolo-${roloIdx}-pesoReservado`} className="text-xs">
-                  Peso Reservado (kg)
-                </Label>
-                <Input
-                  id={`enfesto-${index}-rolo-${roloIdx}-pesoReservado`}
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  disabled={!addItemPart}
-                  placeholder="0"
-                  value={rolo.pesoReservado}
-                  onChange={(event) => updateRolo(roloIdx, "pesoReservado", Number(event.target.value))}
-                  className="h-8 text-sm"
-                />
-              </div>
+
+                <div className="flex w-36 flex-col gap-2">
+                  <Label htmlFor={`enfesto-${index}-rolo-${roloIdx}-pesoReservado`} className="text-xs">
+                    Peso Reservado (kg)
+                  </Label>
+                  <Input
+                    id={`enfesto-${index}-rolo-${roloIdx}-pesoReservado`}
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    disabled={true}
+                    placeholder="0"
+                    value={form.watch(`materiais.0.cores.${index}.rolos.${roloIdx}.pesoReservado`) || 0}
+                    className="h-8 text-sm"
+                  />
+                </div>
               {addItemPart &&
                 <Button
                   type="button"

@@ -27,10 +27,7 @@ export default function Lotes() {
     handleEditLoteCabeçalho, isSubmitting
   } = useProducaoActions();
 
-
-
   const { data: colaboradoresData } = useColaboradores();
-
   const [openCreateFormModal, setOpenCreateFormModal] = useState(false);
 
 
@@ -106,7 +103,6 @@ export default function Lotes() {
     });
   }, [editingItem, form]);
 
- 
 
 
 
@@ -128,11 +124,8 @@ export default function Lotes() {
         onOpenChange={setOpenCreateFormModal}
         description="Aqui voce criar um novo lote"
       >
-
         <CreateLoteForm colaboradoresResponse={colaboradoresData} fecharModal={() => setOpenCreateFormModal(false)} />
-
       </BaseModal>
-
 
       <BaseModal
         title="Editar Lote"
@@ -140,7 +133,6 @@ export default function Lotes() {
         onOpenChange={() => setEditingItem(null)}
         description="Aqui voce editar um lote existente"
       >
-
         {editingItem && (
           <Form {...form}>
             <LoteProducaoAccordionForm
@@ -151,12 +143,7 @@ export default function Lotes() {
             />
           </Form>
         )}
-
       </BaseModal>
-
-
-
-
 
       <div className="hidden md:block">
         <LoteProducaoTable
