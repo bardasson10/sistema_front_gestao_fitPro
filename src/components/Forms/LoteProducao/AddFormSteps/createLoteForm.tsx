@@ -30,12 +30,12 @@ export const CreateLoteForm = ({ colaboradoresResponse, fecharModal }: CreateLot
   });
 
   // Função para adicionar um rolo à lista
-  const addRolo = (id: string) => {
+  const addRolo = (id: string, pesoReservado: number) => {
     if (formValues.rolos.some(r => r.estoqueRoloId === id)) return;
     const roloInfo = rolosTecido.find(r => r.id === id);
     setFormValues({
       ...formValues,
-      rolos: [...formValues.rolos, { estoqueRoloId: id, pesoReservado: 0, info: roloInfo }]
+      rolos: [...formValues.rolos, { estoqueRoloId: id, pesoReservado, info: roloInfo }]
     });
   };
 
@@ -119,7 +119,12 @@ export const CreateLoteForm = ({ colaboradoresResponse, fecharModal }: CreateLot
           </span>
         </div>
 
-        <Select onValueChange={addRolo}>
+        <Select onValueChange={(id) => {
+          const roloInfo = rolosTecido.find(rol => rol.id === id);
+          if (roloInfo) {
+            addRolo(id, parseFloat(roloInfo.pesoAtualKg));
+          }
+        }}>
           <SelectTrigger className="w-full border-dashed border-2">
             <SelectValue placeholder="🔍 Clique para buscar e adicionar rolos..." />
           </SelectTrigger>
@@ -155,7 +160,7 @@ export const CreateLoteForm = ({ colaboradoresResponse, fecharModal }: CreateLot
                   className="h-8"
                   placeholder="0.00"
                   value={item.pesoReservado || ''}
-                  onChange={(e) => updatePeso(item.estoqueRoloId, parseFloat(e.target.value))}
+                  disabled={true} // Desabilitado para evitar edição manual, já que o peso é reservado com base na quantidade planejada
                 />
               </div>
 
