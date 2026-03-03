@@ -460,9 +460,9 @@ export interface AtualizarLoteProducaoPayload {
     responsavelId?: string;
     status?: string;
     observacao?: string;
-    qtdFolhas?: number;
     enfestos?: Array<{
-        corId: string;
+        qtdFolhas?: number;
+        corId?: string;
         rolosProducao?: Array<{
             estoqueRoloId: string,
             pesoReservado: number

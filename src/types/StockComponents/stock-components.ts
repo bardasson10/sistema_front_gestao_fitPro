@@ -17,6 +17,7 @@ export interface StockResume {
   nomeCor: string;
   rolos: number;
   pesoKg: number;
+  valorTotal: number;
 }
 
 export interface StockResumeProps {

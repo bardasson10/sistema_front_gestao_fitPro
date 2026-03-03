@@ -86,17 +86,17 @@ export function useProducaoActions() {
   }, [atualizarLote]);
 
 
-  const handleEditLote = useCallback(async (id: string, values: AtualizarLoteProducaoPayload) => {
+  const handleEditLote = useCallback(async (id: string, values?: AtualizarLoteProducaoPayload) => {
     setIsSubmitting(true);
     try {
       const payload: AtualizarLoteProducaoPayload = {
-        codigoLote: values.codigoLote,
-        responsavelId: values.responsavelId,
-        status: values.status,
-        observacao: values.observacao,
-        qtdFolhas: values.qtdFolhas || 0,
-        enfestos: values.enfestos?.flatMap(e =>
-            ({
+        codigoLote: values?.codigoLote,
+        responsavelId: values?.responsavelId,
+        status: values?.status,
+        observacao: values?.observacao,
+        enfestos: values?.enfestos?.flatMap(e =>
+          ({
+            qtdFolhas: e.qtdFolhas || 0,
             corId: e.corId!,
             rolosProducao: e.rolosProducao?.map(r => ({
               estoqueRoloId: r.estoqueRoloId!,

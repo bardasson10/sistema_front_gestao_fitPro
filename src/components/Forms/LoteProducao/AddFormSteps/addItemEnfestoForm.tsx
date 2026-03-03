@@ -44,22 +44,14 @@ export const AddItemEnfestoForm = ({
     handleAdicionarItens
   } = useProducaoActions();
 
-  const [enfestosNewItens, setEnfestosNewItens] = useState<Enfesto[]>([])
-  const [corAtivaId, setCorAtivaId] = useState<string>("")
-  const loteFormValues = form.getValues()
+  const [enfestosNewItens, setEnfestosNewItens] = useState<Enfesto[]>([{
+    corId: "",
+    qtdFolhas: 0,
+    rolosProducao: [{ estoqueRoloId: "", pesoReservado: 0 }],
+    produtosSelecionados: [],
+    itens: [],
+  }])
 
-  const corDosRolosLote = useMemo(() => {
-    return loteFormValues.materiais.flatMap(m => m.cores).filter((cor, index, self) =>
-      self.findIndex(c => c.id === cor.id) === index
-    )
-  }, [loteFormValues.materiais])
-
-  const rolosFormatados = useMemo(() => {
-    if (!corAtivaId) return []
-    return loteFormValues.materiais.flatMap(m =>
-      m.cores.find(c => c.id === corAtivaId)?.rolos || []
-    )
-  }, [corAtivaId, loteFormValues.materiais])
 
   function handleEnfestoChange(index: number, updatedEnfesto: Enfesto) {
     setEnfestosNewItens((prev) => prev.map((item, itemIndex) => (
@@ -109,7 +101,7 @@ export const AddItemEnfestoForm = ({
   }
 
   return (
-    <Card>
+    <Card >
       <CardHeader>
         <div className="flex items-center gap-3">
           <CardTitle>Novos Itens</CardTitle>
@@ -129,9 +121,9 @@ export const AddItemEnfestoForm = ({
           <Plus className="mr-1.5 size-4" />
           Novo Enfesto
         </Button>
-        <div className=" w-full  flex flex-col gap-4">
-          <Carousel className="w-full">
-            <CarouselContent>
+        <div className=" w-full  flex flex-col gap-4 ">
+          <Carousel className="w-full ">
+            <CarouselContent >
               {enfestosNewItens.map((enfesto, index) => (
                 <CarouselItem key={`${enfesto.corId || 'enfesto'}-${index}`}>
                   <EnfestoForm

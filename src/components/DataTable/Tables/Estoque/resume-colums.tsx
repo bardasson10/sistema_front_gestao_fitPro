@@ -2,13 +2,14 @@ import { EstoqueTecido } from "@/types/production";
 import { ColumnDef } from "@tanstack/table-core";
 import { StockResume } from "@/types/StockComponents/stock-components";
 import { EstoqueRolo } from "@/hooks/queries/useEstoque";
+import { formatNumberToBRL } from "@/utils/Formatter/moeda-brasil-format";
 
 
 
 
 export const getGroupedStockColumns = (
   rolos: EstoqueRolo[],
-  tecidos: { id: string; codigoReferencia: string; corId: string }[],
+  tecidos: { id: string; codigoReferencia: string; corId: string, valorPorKg: number }[],
   cores: { id: string; nome: string; codigoHex: string }[]
 ): StockResume[] => {
   const safeRolos = Array.isArray(rolos) ? rolos : [];
@@ -40,6 +41,7 @@ export const getGroupedStockColumns = (
         nomeCor: cores.find(c => c.id === tecido.corId)?.nome || '',
         rolos: infoAgrupada?.rolos || 0,
         pesoKg: infoAgrupada?.pesoKg || 0,
+        valorTotal: (infoAgrupada?.pesoKg || 0) * tecido.valorPorKg,
       };
     })
     .filter(e => e.rolos > 0);
@@ -76,6 +78,11 @@ export const getStockColumnsResume = (): ColumnDef<StockResume>[] => [
     accessorKey: 'pesoKg',
     header: 'Peso Total (Kg)',
     cell: ({ row }) => <span className="text-muted-foreground">{row.original.pesoKg.toFixed(1)}</span>,
+  },
+  {
+    accessorKey: 'valorTotal',
+    header: 'Valor Total',
+    cell: ({ row }) => <span className="text-muted-foreground">{formatNumberToBRL(row.original.valorTotal)}</span>,
   },
 
 ];

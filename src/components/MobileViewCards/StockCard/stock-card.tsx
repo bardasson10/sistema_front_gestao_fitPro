@@ -5,6 +5,8 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { EstoqueRolo } from "@/hooks/queries/useEstoque"
 import { EstoqueTecido } from "@/types/production"
 import { StockProps } from "@/types/StockComponents/stock-components"
+import { formatNumberToBRL } from "@/utils/Formatter/moeda-brasil-format"
+import { parseNumber } from "@/utils/Formatter/parse-number-format"
 import { Pencil } from "lucide-react"
 
 
@@ -33,6 +35,11 @@ export const MobileViewStock = ({
     reservado: { label: 'Reservado', type: 'warning' as const },
     utilizado: { label: 'Utilizado', type: 'neutral' as const },
   };
+
+
+  function calculateValorTotal(pesoAtualKg: number, valorPorKg: number ): number {
+    return pesoAtualKg * valorPorKg;
+  }
   
   
 
@@ -75,6 +82,14 @@ export const MobileViewStock = ({
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Status:</span>
                   <StatusBadge status={statusInfo.type}>{statusInfo.label}</StatusBadge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Valor Tecido:</span>
+                    <span className="font-medium">{formatNumberToBRL(item.tecido.valorPorKg)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Valor Total:</span>
+                    <span className="font-medium">{formatNumberToBRL(calculateValorTotal(parseNumber(item.pesoAtualKg), parseNumber(item.tecido.valorPorKg)))}</span>
                 </div>
               </div>
             }

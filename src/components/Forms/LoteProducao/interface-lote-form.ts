@@ -31,8 +31,8 @@ export interface GradeLote {
 }
 
 export interface Enfesto {
-  corId: string
   qtdFolhas: number
+  corId: string
   rolosProducao: RoloProducao[]
   produtosSelecionados?: string[]
   itens: GradeLote[]
@@ -43,6 +43,5 @@ export interface LoteFormData {
   codigoLote: string
   status: string
   observacao: string
-  qtdFolhas: number
   enfestos: Enfesto[]
 }

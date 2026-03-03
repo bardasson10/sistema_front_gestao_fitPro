@@ -137,6 +137,7 @@ export default function Lotes() {
           <Form {...form}>
             <LoteProducaoAccordionForm
               form={form}
+              lote={dataLote .find(l => l.id === editingItem.id) as ApiLoteProducaoResponse}
               submitting={isSubmitting}
               colaboradoresResponse={colaboradoresData}
               handleEditLoteCabeçalho={handleEditLoteCabeçalho}

@@ -58,6 +58,12 @@ export const MobileViewStockResume = ({
                   {item.pesoKg.toFixed(1)} Kg
                 </span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Valor Total:</span>
+                <span className="font-medium">
+                  {item.valorTotal.toFixed(2)} R$
+                </span>
+              </div>
             </div>
           }
         //     footer={

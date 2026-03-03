@@ -142,8 +142,8 @@ export function LoteProducaoFormInfo({ lote }: LoteProducaoFormProps) {
                 {/* Valores */}
                 <div className="grid grid-cols-2 gap-6 text-center text-sm">
                   <div>
-                    <span className="text-[10px] uppercase text-muted-foreground">
-                      Valor do Kg
+                    <span className="text-[10px] uppercase text-muted-foreground text-wrap">
+                      Total dos Tecidos (R$/kg)
                     </span>
                     <p className="font-medium">
                       {formatNumberToBRL(parseNumber(valorKg))}
@@ -151,7 +151,7 @@ export function LoteProducaoFormInfo({ lote }: LoteProducaoFormProps) {
                   </div>
 
                   <div>
-                    <span className="text-[10px] uppercase text-muted-foreground">
+                    <span className="text-[10px] uppercase text-muted-foreground text-wrap">
                       Peso Total Kg
                     </span>
                     <p className="font-medium">
@@ -179,7 +179,7 @@ export function LoteProducaoFormInfo({ lote }: LoteProducaoFormProps) {
       </div>
 
       {/* Observações */}
-      <div>
+      {/* <div>
         <Label className="mb-2 block text-sm font-semibold">
           Observações
         </Label>
@@ -190,7 +190,7 @@ export function LoteProducaoFormInfo({ lote }: LoteProducaoFormProps) {
           className="resize-none h-24 bg-muted/30"
           placeholder="Nenhuma observação para este lote."
         />
-      </div>
+      </div> */}
 
     </div>
   );

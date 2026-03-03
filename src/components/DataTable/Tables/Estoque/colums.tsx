@@ -4,6 +4,8 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Pencil } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { dataFormatter } from "@/utils/Formatter/data-brasil-format";
+import { formatNumberToBRL } from "@/utils/Formatter/moeda-brasil-format";
+import { parseNumber } from "@/utils/Formatter/parse-number-format";
 
 
 export const getStockColumns = (
@@ -56,6 +58,27 @@ export const getStockColumns = (
         const status = statusMap[row.original.situacao as keyof typeof statusMap];
         return <StatusBadge status={status.type}>{status.label}</StatusBadge>
       }
+    },
+    {
+      accessorKey: 'tecido',
+      header: 'Valor do tecido',
+      cell: ({ row }) => <span className="text-muted-foreground">{formatNumberToBRL(row.original.tecido.valorPorKg)}</span>,
+    },
+    {
+      id: 'valorTotal', // Use um ID único para colunas calculadas
+      header: 'Valor Total',
+      // accessorFn extrai o valor numérico para que a tabela consiga ordenar os valores
+      accessorFn: (row) => {
+        const valorPorKg = parseNumber(row.tecido.valorPorKg) ?? 0;
+        const pesoAtualKg = parseNumber(row.pesoAtualKg) ?? 0;
+        return valorPorKg * pesoAtualKg;
+      },
+      // cell formata a exibição para o usuário
+      cell: ({ getValue }) => (
+        <span className="text-muted-foreground">
+          {formatNumberToBRL(getValue<number>())}
+        </span>
+      ),
     },
     {
       accessorKey: 'createdAt',

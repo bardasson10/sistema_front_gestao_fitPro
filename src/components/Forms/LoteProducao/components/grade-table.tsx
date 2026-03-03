@@ -29,6 +29,7 @@ interface GradeTableProps {
   enfestoIndex: number
   onProdutosChange: (produtos: string[]) => void
   onGradeChange: (grade: GradeLote[]) => void
+  onRemoveProduto: (produtoId: string) => void
 }
 
 export function GradeTable({
@@ -39,6 +40,7 @@ export function GradeTable({
   produtos: PRODUTOS,
   onProdutosChange,
   onGradeChange,
+  onRemoveProduto,
 }: GradeTableProps) {
 
   const produtosUnicos = Array.from(
@@ -54,20 +56,6 @@ export function GradeTable({
   function addProduto(produtoId: string) {
     if (!produtoId || produtosSelecionadosUnicos.includes(produtoId)) return
     onProdutosChange([...produtosSelecionadosUnicos, produtoId])
-  }
-
-  function removeProduto(produtoId: string) {
-    onProdutosChange(produtosSelecionadosUnicos.filter((id) => id !== produtoId))
-    // Limpar entradas da grade para esse produto
-    const newGrade = [...itens]
-    for (let i = 0; i < newGrade.length; i++) {
-      const key = `${newGrade[i].produtoId}::${newGrade[i].tamanhoId}`
-      if (key.startsWith(`${produtoId}::`)) {
-        newGrade.splice(i, 1)
-        i--
-      }
-    }
-    onGradeChange(newGrade)
   }
 
   function updateQuantidade(produtoId: string, tamanhoId: string, value: number) {
@@ -123,9 +111,6 @@ export function GradeTable({
     return itens.reduce((sum, g) => sum + g.quantidadePlanejada, 0)
   }
 
-  const produtosDisponiveis = produtosUnicos.filter(
-    (p) => !produtosSelecionadosUnicos.includes(p.id)
-  )
 
   return (
     <div className="flex flex-col gap-3">
@@ -133,20 +118,7 @@ export function GradeTable({
         <h4 className="text-sm font-medium text-muted-foreground">
           Grade de Tamanhos
         </h4>
-        {produtosDisponiveis.length > 0 && (
-          <Select onValueChange={addProduto}>
-            <SelectTrigger className="h-8 w-52 text-sm">
-              <SelectValue placeholder="Adicionar produto" />
-            </SelectTrigger>
-            <SelectContent>
-              {produtosDisponiveis.map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  {p.label} ({p.sku})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+      
       </div>
 
       {produtosSelecionadosUnicos.length === 0 ? (
@@ -214,7 +186,7 @@ export function GradeTable({
                         variant="ghost"
                         size="icon"
                         className="size-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => removeProduto(produtoId)}
+                        onClick={() => onRemoveProduto(produtoId)}
                       >
                         <Trash2 className="size-3.5" />
                         <span className="sr-only">

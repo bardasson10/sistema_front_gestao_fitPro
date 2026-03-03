@@ -1,11 +1,11 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { DadosLoteForm } from "../AddFormSteps/dadosLoteForm"
 import { AddItemEnfestoForm } from "../AddFormSteps/addItemEnfestoForm"
 import { EnfestoEditarForm } from "../AddFormSteps/editarEnfestoForm"
 import { PackagePlus, Pencil } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { LoteProducaoFormValues } from "@/schemas/LoteProducao/lote-producao-schemas";
+import React from "react";
 
 
 
@@ -16,13 +16,25 @@ interface LoteEnfestoGradeFormProps {
 
 
 export function LoteEnfestoGradeForm({ form, submitting }: LoteEnfestoGradeFormProps) {
+  const [activeTab, setActiveTab] = React.useState("editar");
+  const materiais = form.watch("materiais") || []
+
+  const hasGrade = React.useMemo(() => {
+    return materiais.flatMap((m) => m.cores.flatMap((c) => c.gradeLote || [])).length > 0
+  }, [materiais])
+
+  React.useEffect(() => {
+    if (!hasGrade && activeTab !== "adicionar") {
+      setActiveTab("adicionar")
+    }
+  }, [hasGrade, activeTab])
 
 
   return (
     <div className="flex flex-col gap-6">
 
       {/* Tabs: Editar vs Adicionar */}
-      <Tabs defaultValue="editar" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="editar" className="flex items-center gap-2">
             <Pencil className="size-4" />
