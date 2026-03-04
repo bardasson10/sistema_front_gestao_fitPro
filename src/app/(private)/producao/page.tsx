@@ -31,6 +31,13 @@ import { DirecionamentoSchema } from "@/types/ProducaoDirecionamento/producao-di
 const initialValues: DirecionamentoFormValues = {
   tipoServico: "costura",
   faccaoId: "",
+  direcionamentos: [
+    {
+      faccaoId: "",
+      tipoServico: "costura",
+      quantidade: 1,
+    },
+  ],
   produtos: [],
 };
 
@@ -45,7 +52,9 @@ export default function Producao() {
   const dataLote = lotesData.data || [];
 
   const { data: direcionamentosData, isLoading: isLoadingDirecionamentos } = useDirecionamentos();
-  const direcionamentos = direcionamentosData?.data || [];
+  const direcionamentos = (direcionamentosData?.data || []).filter((dir) =>
+    (dir.lote?.items || []).some((item) => (item.quantidadePlanejada || 0) > 0),
+  );
   const { data: faccoesData } = useFaccoes("ativo");
   const faccoes = faccoesData || [];
 
@@ -147,7 +156,8 @@ export default function Producao() {
           totalProdutos,
           dataCriacao: item.createdAt,
         };
-      });
+      })
+      .filter((item) => item.totalProdutos > 0 && item.totalPecas > 0);
   }, [dataLote]);
 
   const getProdutosDisponiveis = (lote: LoteProdutos | null) => {
@@ -184,6 +194,13 @@ export default function Producao() {
     transformItemToForm: (item) => ({
       faccaoId: item.faccaoId || "",
       tipoServico: (item.tipoServico as DirecionamentoFormValues["tipoServico"]) || "costura",
+      direcionamentos: [
+        {
+          faccaoId: item.faccaoId || "",
+          tipoServico: (item.tipoServico as DirecionamentoFormValues["tipoServico"]) || "costura",
+          quantidade: item.totalPecas || 1,
+        },
+      ],
       produtos: getProdutosDisponiveis((direcionamentosMap[item.id]?.lote as LoteProdutos) || null).map((produto) => ({
         produto: produto.produto,
         quantidade: produto.total,
@@ -194,10 +211,18 @@ export default function Producao() {
     },
     onSave: (values, id) => {
       if (id) {
+        const faccaoId = values.faccaoId || values.direcionamentos?.[0]?.faccaoId || "";
+        const tipoServico = values.tipoServico || values.direcionamentos?.[0]?.tipoServico;
+
+        if (!faccaoId || !tipoServico) {
+          toast.error("Selecione facção e tipo de serviço para atualizar.");
+          return;
+        }
+
         atualizarDirecionamento({
           id,
-          faccaoId: values.faccaoId,
-          tipoServico: values.tipoServico,
+          faccaoId,
+          tipoServico,
         });
 
         toast.success("Direcionamento atualizado com sucesso!");
@@ -209,17 +234,24 @@ export default function Producao() {
         return;
       }
 
-      const quantidadeTotal = (values.produtos || []).reduce((acc, item) => acc + (item.quantidade || 0), 0);
+      const direcionamentosPayload = (values.direcionamentos || [])
+        .filter((direcionamento) => direcionamento.faccaoId && direcionamento.quantidade > 0)
+        .map((direcionamento) => ({
+          faccaoId: direcionamento.faccaoId,
+          tipoServico: direcionamento.tipoServico,
+          quantidade: direcionamento.quantidade,
+        }));
+
+
+
+      if (!direcionamentosPayload.length) {
+        toast.error("Adicione ao menos um direcionamento válido.");
+        return;
+      }
 
       const createPayload: CreateDirecionamentoPayload = {
         loteProducaoId: selectedLote.id,
-        direcionamentos: [
-          {
-            faccaoId: values.faccaoId,
-            tipoServico: values.tipoServico,
-            quantidade: quantidadeTotal > 0 ? quantidadeTotal : 1,
-          },
-        ],
+        direcionamentos: direcionamentosPayload,
       };
 
       criarDirecionamento(createPayload);
@@ -231,9 +263,21 @@ export default function Producao() {
     const loteSelecionado = (dataLote.find((lote) => lote.id === item.loteId) as LoteProdutos) || null;
     setSelectedLote(loteSelecionado);
 
+    const quantidadeTotalLote = getProdutosDisponiveis(loteSelecionado).reduce(
+      (acc, produto) => acc + (produto.total || 0),
+      0,
+    );
+
     form.reset({
       tipoServico: "costura",
       faccaoId: "",
+      direcionamentos: [
+        {
+          faccaoId: "",
+          tipoServico: "costura",
+          quantidade: quantidadeTotalLote > 0 ? quantidadeTotalLote : 1,
+        },
+      ],
       produtos: getProdutosDisponiveis(loteSelecionado).map((produto) => ({
         produto: produto.produto,
         quantidade: 0,
@@ -309,6 +353,8 @@ export default function Producao() {
             selectedLote={null}
             produtosDisponiveis={getProdutosDisponiveis(selectedLote)}
             faccoes={faccoes}
+            isCreateMode={!editingItem}
+            numPecas={lotesProntosParaDirecionar.find((l) => l.loteId === selectedLote?.id)?.totalPecas || 0}
           />
         </Form>
       </FormModal>
