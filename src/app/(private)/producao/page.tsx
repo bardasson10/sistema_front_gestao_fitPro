@@ -18,6 +18,7 @@ import { ProducaoDirecionamentoItem } from "@/components/DataTable/Tables/Produc
 import { ProducaoDirecionamentoTable } from "@/components/DataTable/Tables/ProducaoDirecionamento/table";
 import { MobileViewProducaoDirecionamento } from "@/components/MobileViewCards/ProducaoDirecionamentoCard";
 import {
+  CreateDirecionamentoPayload,
   useDirecionamentos,
   useLotesProducao,
   useCriarDirecionamento,
@@ -26,6 +27,7 @@ import {
   useFaccoes,
 } from "@/hooks/queries/useProducao";
 import { DirecionamentoSchema } from "@/types/ProducaoDirecionamento/producao-direcionamento-type";
+
 const initialValues: DirecionamentoFormValues = {
   tipoServico: "costura",
   faccaoId: "",
@@ -39,16 +41,17 @@ type LoteProdutos = {
 };
 
 export default function Producao() {
-  const { data: lotesData, isLoading: isLoadingLotes } = useLotesProducao();
-  const lotes = lotesData?.data || [];
+  const { data: lotesData = { data: [], pagination: {} } } = useLotesProducao();
+  const dataLote = lotesData.data || [];
+
   const { data: direcionamentosData, isLoading: isLoadingDirecionamentos } = useDirecionamentos();
   const direcionamentos = direcionamentosData?.data || [];
   const { data: faccoesData } = useFaccoes("ativo");
   const faccoes = faccoesData || [];
 
   const { mutate: criarDirecionamento, isPending: isCreating } = useCriarDirecionamento();
-  const { mutate: atualizarDirecionamento, isPending: isUpdating } = useAtualizarDirecionamento();
-  const { mutate: deletarDirecionamento, isPending: isDeleting } = useDeletarDirecionamento();
+  const { mutate: atualizarDirecionamento } = useAtualizarDirecionamento();
+  const { mutate: deletarDirecionamento } = useDeletarDirecionamento();
 
   const [selectedLote, setSelectedLote] = useState<LoteProdutos | null>(null);
 
@@ -120,25 +123,32 @@ export default function Producao() {
   }, [direcionamentos, faccoes]);
 
   const lotesProntosParaDirecionar = useMemo<LoteProntoDirecionamentoItem[]>(() => {
-    return lotes
+    return dataLote
       .filter((item) => item.status === "planejado")
       .map((item) => {
         const totalPecas = (item.materiais || []).reduce(
-          (acc, mat) => acc + (mat.cores?.flatMap((c) => c.gradeLote || []).reduce((gAcc, gItem) => gAcc + (gItem.quantidadePlanejada || 0), 0) || 0),
+          (acc, mat) =>
+            acc +
+            (mat.cores
+              ?.flatMap((c) => c.gradeLote || [])
+              .reduce((gAcc, gItem) => gAcc + (gItem.quantidadePlanejada || 0), 0) || 0),
           0,
         );
 
-        const totalProduto = (item.materiais?.flatMap((mat) => mat.cores || []) || []).flatMap((c) => c.gradeLote || []).length;
+        const totalProdutos =
+          (item.materiais?.flatMap((mat) => mat.cores || []) || []).flatMap(
+            (c) => c.gradeLote || [],
+          ).length;
 
         return {
           loteId: item.id,
           loteCodigo: item.codigoLote || "-",
           totalPecas,
-          totalProdutos: totalProduto,
+          totalProdutos,
           dataCriacao: item.createdAt,
         };
       });
-  }, [lotes]);
+  }, [dataLote]);
 
   const getProdutosDisponiveis = (lote: LoteProdutos | null) => {
     if (!lote) return [];
@@ -180,25 +190,15 @@ export default function Producao() {
       })),
     }),
     onInvalid: () => {
-      toast.error('Preencha os campos obrigatórios para criar o lote.');
-      console.log('Form validation failed:', form.formState.errors);
+      toast.error("Preencha os campos obrigatórios para criar o direcionamento.");
     },
     onSave: (values, id) => {
-      const produtosDirecionados = (values?.produtos || []).filter((p) => p.quantidade > 0);
-
-      if (!produtosDirecionados.length) {
-        toast.error("Selecione ao menos um produto para direcionar");
-        return;
-      }
-
       if (id) {
-        const updatePayload: { id: string; faccaoId: string; tipoServico?: string } = {
+        atualizarDirecionamento({
           id,
           faccaoId: values.faccaoId,
-        };
-        updatePayload.tipoServico = values.tipoServico;
-
-        atualizarDirecionamento(updatePayload as any);
+          tipoServico: values.tipoServico,
+        });
 
         toast.success("Direcionamento atualizado com sucesso!");
         return;
@@ -209,25 +209,26 @@ export default function Producao() {
         return;
       }
 
-      const createPayload: {
-        loteProducaoId: string;
-        faccaoId?: string;
-        tipoServico: "costura" | "estampa" | "tingimento" | "acabamento" | "corte" | "outro";
-      } = {
+      const quantidadeTotal = (values.produtos || []).reduce((acc, item) => acc + (item.quantidade || 0), 0);
+
+      const createPayload: CreateDirecionamentoPayload = {
         loteProducaoId: selectedLote.id,
-        tipoServico: values.tipoServico,
+        direcionamentos: [
+          {
+            faccaoId: values.faccaoId,
+            tipoServico: values.tipoServico,
+            quantidade: quantidadeTotal > 0 ? quantidadeTotal : 1,
+          },
+        ],
       };
 
-      createPayload.faccaoId = values.faccaoId;
-
       criarDirecionamento(createPayload);
-
       toast.success("Direcionamento confirmado com sucesso!");
     },
   });
 
   const handleOpenDirecionar = (item: LoteProntoDirecionamentoItem) => {
-    const loteSelecionado = (lotes.find((lote) => lote.id === item.loteId) as LoteProdutos) || null;
+    const loteSelecionado = (dataLote.find((lote) => lote.id === item.loteId) as LoteProdutos) || null;
     setSelectedLote(loteSelecionado);
 
     form.reset({
@@ -252,9 +253,7 @@ export default function Producao() {
     <div className="space-y-6">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Produção</h1>
-        <p className="text-muted-foreground">
-          Direcionamento e acompanhamento de produção
-        </p>
+        <p className="text-muted-foreground">Direcionamento e acompanhamento de produção</p>
       </div>
 
       <LotesProntosDirecionamentoSection
@@ -292,16 +291,15 @@ export default function Producao() {
         onConfirm={(id) => {
           deletarDirecionamento(id);
           toast.success("Direcionamento removido com sucesso!");
-
           setIsRemoveOpen(false);
         }}
       />
 
-      {/* Modal para direcionar */}
       <FormModal
         open={isOpen}
         onClose={handleClose}
         isViewSaveOrCancel={true}
+        loading={isSubmitting || isCreating}
         submitText={editingItem ? "Salvar Alterações" : "Confirmar Direcionamento"}
         onSubmit={onSubmit}
         title={`Direcionar Produção - ${selectedLote?.codigoLote || ""}`}

@@ -19,15 +19,31 @@ export function LoteEnfestoGradeForm({ form, submitting }: LoteEnfestoGradeFormP
   const [activeTab, setActiveTab] = React.useState("editar");
   const materiais = form.watch("materiais") || []
 
-  const hasGrade = React.useMemo(() => {
-    return materiais.flatMap((m) => m.cores.flatMap((c) => c.gradeLote || [])).length > 0
+  const coresDoLote = React.useMemo(() => {
+    return materiais.flatMap((material) => material.cores || [])
   }, [materiais])
 
+  const hasGrade = React.useMemo(() => {
+    return coresDoLote.flatMap((cor) => cor.gradeLote || []).length > 0
+  }, [coresDoLote])
+
+  const todasCoresComGrade = React.useMemo(() => {
+    if (!coresDoLote.length) return false
+    return coresDoLote.every((cor) => (cor.gradeLote || []).length > 0)
+  }, [coresDoLote])
+
+  const podeAdicionarItens = !todasCoresComGrade
+
   React.useEffect(() => {
-    if (!hasGrade && activeTab !== "adicionar") {
+    if (!podeAdicionarItens && activeTab !== "editar") {
+      setActiveTab("editar")
+      return
+    }
+
+    if (podeAdicionarItens && !hasGrade && activeTab !== "adicionar") {
       setActiveTab("adicionar")
     }
-  }, [hasGrade, activeTab])
+  }, [hasGrade, activeTab, podeAdicionarItens])
 
 
   return (
@@ -35,15 +51,17 @@ export function LoteEnfestoGradeForm({ form, submitting }: LoteEnfestoGradeFormP
 
       {/* Tabs: Editar vs Adicionar */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className={`grid w-full ${podeAdicionarItens ? "grid-cols-2" : "grid-cols-1"}`}>
           <TabsTrigger value="editar" className="flex items-center gap-2">
             <Pencil className="size-4" />
             Editar Grade Existente
           </TabsTrigger>
-          <TabsTrigger value="adicionar" className="flex items-center gap-2">
-            <PackagePlus className="size-4" />
-            Adicionar Novos Itens
-          </TabsTrigger>
+          {podeAdicionarItens && (
+            <TabsTrigger value="adicionar" className="flex items-center gap-2">
+              <PackagePlus className="size-4" />
+              Adicionar Novos Itens
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Tab: Editar Grade Existente (PUT) */}
@@ -55,9 +73,11 @@ export function LoteEnfestoGradeForm({ form, submitting }: LoteEnfestoGradeFormP
         </TabsContent>
 
         {/* Tab: Adicionar Novos Itens (POST) */}
-        <TabsContent value="adicionar" className="flex flex-col gap-6 mt-6">
-          <AddItemEnfestoForm form={form} submittingAdd={submitting}  />
-        </TabsContent>
+        {podeAdicionarItens && (
+          <TabsContent value="adicionar" className="flex flex-col gap-6 mt-6">
+            <AddItemEnfestoForm form={form} submittingAdd={submitting}  />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   )

@@ -52,6 +52,7 @@ export const getStockColumns = (
         const statusMap = {
           disponivel: { label: 'Disponível', type: 'success' as const },
           reservado: { label: 'Reservado', type: 'warning' as const },
+          em_uso: { label: 'Em Uso', type: 'neutral' as const },
           utilizado: { label: 'Utilizado', type: 'neutral' as const },
           esgotado: { label: 'Esgotado', type: 'danger' as const },
         };

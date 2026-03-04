@@ -1,5 +1,6 @@
 'use client';
 
+
 import { LoteProducaoTable } from "@/components/DataTable/Tables/LoteProducao/table";
 import { LoteProducaoAccordionForm } from "@/components/Forms/LoteProducao/accordion-lote-form";
 import { CreateLoteForm } from "@/components/Forms/LoteProducao/AddFormSteps/createLoteForm";
@@ -8,13 +9,21 @@ import { BaseModal } from "@/components/Modal/base-modal";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useColaboradores } from "@/hooks/queries/useColaboradores";
-import { ApiLoteProducaoResponse, useLotesProducao } from "@/hooks/queries/useProducao";
+import {
+  ApiLoteProducaoResponse,
+  useCriarDirecionamento,
+  useFaccoes,
+  useLotesProducao,
+} from "@/hooks/queries/useProducao";
+
 import { useProducaoActions } from "@/hooks/use-Producao-actions";
 import { initialValuesLote, loteProducaoFormSchema, LoteProducaoFormValues } from "@/schemas/LoteProducao/lote-producao-schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect,useState } from "react";
 import { useForm } from "react-hook-form";
+
+
 
 
 
@@ -22,6 +31,9 @@ export default function Lotes() {
 
   const { data: lotesData = { data: [], pagination: {} }, isLoading } = useLotesProducao();
   const dataLote = lotesData.data || [];
+  const { data: faccoesData } = useFaccoes("ativo");
+  const faccoes = faccoesData || [];
+  const { mutate: criarDirecionamento, isPending: isCreatingDirecionamento } = useCriarDirecionamento();
 
   const {
     handleEditLoteCabeçalho, isSubmitting
@@ -40,6 +52,7 @@ export default function Lotes() {
     resolver: zodResolver(loteProducaoFormSchema),
     defaultValues: initialValuesLote,
   });
+
 
   useEffect(() => {
     if (!editingItem) {
@@ -117,6 +130,8 @@ export default function Lotes() {
           Novo Lote
         </Button>
       </div>
+
+
 
       <BaseModal
         title="Criar Novo Lote"

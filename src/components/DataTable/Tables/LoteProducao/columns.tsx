@@ -34,7 +34,8 @@ export const getLoteProducaoColumns = (
     header: 'Produtos',
     cell: ({ row }) => {
       const totalPecas = row.original.materiais?.flatMap(m => m.cores?.flatMap(c => c.gradeLote || []) || [])?.reduce((acc, item) => acc + (item.quantidadePlanejada || 0), 0) || 0;
-      return <span>{totalPecas} peças</span>;
+      const qtdFolhas = row.original.materiais?.flatMap(m => m.cores?.flatMap(c => c.qtdFolhas || []) || [])?.reduce((acc, folhas) => acc + (folhas || 0), 0) || 0;
+      return <span>{totalPecas * qtdFolhas}</span>;
     },
   },
   {
@@ -43,6 +44,7 @@ export const getLoteProducaoColumns = (
     cell: ({ row }) => {
       const statusMap: Record<string, string> = {
         planejado: 'Planejado',
+        esgotado: 'Esgotado',
         criado: 'Criado',
         cortado: 'Cortado',
         em_producao: 'Em Produção',

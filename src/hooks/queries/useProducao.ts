@@ -548,21 +548,22 @@ export const useDirecionamento = (id: string) => {
     });
 };
 
+type TypeOfServico = 'costura' | 'estampa' | 'tingimento' | 'acabamento' | 'corte' | 'outro';
+
+export interface CreateDirecionamentoPayload {
+    loteProducaoId: string;
+    direcionamentos: Array<{
+        faccaoId: string;
+        tipoServico: TypeOfServico;
+        quantidade: number;
+    }>;
+}
+
 export const useCriarDirecionamento = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (dados: {
-            loteProducaoId: string;
-            faccaoId?: string;
-            tipoServico:
-            | 'costura'
-            | 'estampa'
-            | 'tingimento'
-            | 'acabamento'
-            | 'corte'
-            | 'outro';
-        }) => {
+        mutationFn: async (dados: CreateDirecionamentoPayload) => {
             const { data } = await apiClient.post<{ data: DirecionamentoSchema[], pagination: PaginatedResponse }>('/direcionamentos', dados);
             return data;
         },

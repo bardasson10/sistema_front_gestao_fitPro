@@ -34,7 +34,6 @@ export const EnfestoEditarForm = ({
 
   const [enfestosNewItens, setEnfestosNewItens] = useState<Enfesto[]>([])
   const loteId = form.watch("id")
-  const loteFormValues = form.getValues()
 
   const mapFormToEnfestos = () => {
     return (form.getValues("materiais") || []).flatMap((m) => (m.cores || []).map<Enfesto>((c) => ({
