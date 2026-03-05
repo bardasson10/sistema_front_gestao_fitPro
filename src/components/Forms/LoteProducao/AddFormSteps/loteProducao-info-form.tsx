@@ -14,43 +14,7 @@ interface LoteProducaoFormProps {
 export function LoteProducaoFormInfo({ lote }: LoteProducaoFormProps) {
   return (
     <div className="space-y-6">
-
-      {/* Header */}
-      <div className="grid grid-cols-2 gap-6">
-        <div>
-          <Label className="block text-xs text-muted-foreground">
-            Data de Criação
-          </Label>
-          <span className="text-sm font-medium">
-            {lote.createdAt ? dataFormatter(lote.createdAt) : '-'}
-          </span>
-        </div>
-
-        <div>
-          <Label className="block text-xs text-muted-foreground text-center mb-1">
-            Status
-          </Label>
-          <Badge className="w-fit h-8 font-medium px-4 flex items-center justify-center mx-auto" variant={
-            lote.status === 'concluido' ? 
-            'secondary' : lote.status === 'em_andamento' ? 
-            'outline' : lote.status === 'cancelado' ? 
-            'destructive' : 'default'}>
-
-            {lote.status || 'Planejado'}
-          </Badge>
-        </div>
-      </div>
-
-      {/* Responsável */}
-      <div>
-        <Label className="block text-xs text-muted-foreground">
-          Lote criado por
-        </Label>
-        <span className="text-sm font-semibold">
-          {lote.responsavel?.nome?.toUpperCase() || '-'}
-        </span>
-      </div>
-
+      
       {/* Materiais */}
       <div className="pt-2">
         <Label className="mb-3 block text-sm font-semibold">
@@ -59,11 +23,6 @@ export function LoteProducaoFormInfo({ lote }: LoteProducaoFormProps) {
 
         <div className="space-y-5">
           {lote.materiais?.map((m) => {
-
-            const peso = Number(m.pesoTotal) || 0;
-            const valorKg = Number(m.valorPorKg) || 0;
-            const totalMaterial = peso * valorKg;
-
             return (
               <div
                 key={m.tecidoId}
@@ -74,103 +33,93 @@ export function LoteProducaoFormInfo({ lote }: LoteProducaoFormProps) {
                   <h3 className="text-xl font-semibold tracking-tight">
                     {m.nome}
                   </h3>
+                  {/* Informações Técnicas do Material */}
+                  <div className="bg-muted/30 rounded-md p-4 mt-3">
+                    <div className="grid grid-cols-3 gap-6 text-center text-sm">
+                      <div>
+                        <span className="text-[10px] uppercase text-muted-foreground">
+                          Rendimento
+                        </span>
+                        <p className="font-medium">
+                          {parseNumber(m.rendimentoMetroKg)} m/kg
+                        </p>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] uppercase text-muted-foreground">
+                          Largura
+                        </span>
+                        <p className="font-medium">
+                          {parseNumber(m.larguraMetros)} m
+                        </p>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] uppercase text-muted-foreground">
+                          Gramatura
+                        </span>
+                        <p className="font-medium">
+                          {parseNumber(m.gramatura)} g/m²
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Cores */}
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground text-center w-full block">
+                {/* Cores - Separadas por cor */}
+                <div className="space-y-4">
+                  <Label className="text-xs text-muted-foreground block">
                     Cores dos rolos de tecido
                   </Label>
 
-                  <div className="flex flex-wrap justify-center gap-6">
-                    {m.cores?.map((c) => (
-                      <div
-                        key={c.corId}
-                        className="flex flex-col items-center gap-1"
-                      >
-                        <span className="text-sm font-medium">
-                          {c.nome}
-                        </span>
-
-                        <div className="flex items-center gap-2">
-                          <CircleColorView
-                            color={c.codigoHex}
-                            height={18}
-                            width={18}
-                          />
-                          <span className="text-xs text-muted-foreground">
-                            {c.rolos?.map(r => r.codigoBarraRolo).join(", ")}
-                          </span>
+                  {m.cores?.map((c) => (
+                    <div
+                      key={c.corId}
+                      className="border rounded-lg p-4 bg-card space-y-3"
+                    >
+                      {/* Cabeçalho da Cor */}
+                      <div className="flex items-center gap-3 border-b pb-3">
+                        <CircleColorView
+                          color={c.codigoHex}
+                          height={24}
+                          width={24}
+                        />
+                        <div>
+                          <p className="text-sm font-semibold">
+                            {c.nome}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Valor do Tecido: <span className="font-medium">{formatNumberToBRL(Number(m.valorPorKg))}/kg</span>
+                          </p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
 
-                {/* Informações Técnicas */}
-                <div className="bg-muted/30 rounded-md p-4">
-                  <div className="grid grid-cols-3 gap-6 text-center text-sm">
-                    <div>
-                      <span className="text-[10px] uppercase text-muted-foreground">
-                        Rendimento
-                      </span>
-                      <p className="font-medium">
-                        {parseNumber(m.rendimentoMetroKg)} m/kg
-                      </p>
+                      {/* Rolos da Cor */}
+                      <div className="space-y-2">
+                        <Label className="text-xs text-muted-foreground">
+                          Rolos dessa cor
+                        </Label>
+                        <div className="space-y-2">
+                          {c.rolos?.map((r) => (
+                            <div key={r.codigoBarraRolo} className="flex justify-between items-center text-xs bg-muted/40 p-2 rounded">
+                              <span className="font-medium">{r.codigoBarraRolo}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground">Peso:</span>
+                                <span className="font-medium">{parseNumber(r.pesoReservado)}kg</span>
+                                <span className="text-muted-foreground">|</span>
+                                <span className="text-muted-foreground">Valor:</span>
+                                <span className="font-medium text-primary">{formatNumberToBRL(Number(m.valorPorKg) * Number(r.pesoReservado))}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Grade da Cor */}
+                     
+                      
                     </div>
-
-                    <div>
-                      <span className="text-[10px] uppercase text-muted-foreground">
-                        Largura
-                      </span>
-                      <p className="font-medium">
-                        {parseNumber(m.larguraMetros)} m
-                      </p>
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] uppercase text-muted-foreground">
-                        Gramatura
-                      </span>
-                      <p className="font-medium">
-                        {parseNumber(m.gramatura)} g/m²
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Valores */}
-                <div className="grid grid-cols-2 gap-6 text-center text-sm">
-                  <div>
-                    <span className="text-[10px] uppercase text-muted-foreground text-wrap">
-                      Total dos Tecidos (R$/kg)
-                    </span>
-                    <p className="font-medium">
-                      {formatNumberToBRL(parseNumber(valorKg))}
-                    </p>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] uppercase text-muted-foreground text-wrap">
-                      Peso Total Kg
-                    </span>
-                    <p className="font-medium">
-                      {parseNumber(peso)} kg
-                    </p>
-                  </div>
-                </div>
-
-                {/* Total */}
-                <div className="bg-muted/50 rounded-lg px-4 py-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-semibold text-muted-foreground">
-                      Total do Material
-                    </span>
-
-                    <span className="text-lg font-bold text-primary tracking-tight">
-                      {formatNumberToBRL(totalMaterial)}
-                    </span>
-                  </div>
+                  ))}
                 </div>
               </div>
             )

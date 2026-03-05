@@ -6,7 +6,9 @@ import {
   CriarLoteProducaoPayload,
   AtualizarLoteProducaoPayload,
   ApiLoteProducaoResponse,
-  AdicionarItensLoteProducaoPayload
+  AdicionarItensLoteProducaoPayload,
+  useAdicionarRolosLoteProducao,
+  AdicionarRolosLoteProducaoPayload
 } from "./queries/useProducao";
 
 export function useProducaoActions() {
@@ -15,6 +17,7 @@ export function useProducaoActions() {
   const { mutateAsync: criarLote } = useCriarLoteProducao();
   const { mutateAsync: adicionarItensLote } = useAdicionarItensLoteProducao();
   const { mutateAsync: atualizarLote } = useAtualizarLoteProducao();
+  const { mutateAsync: adicionarRolosLote } = useAdicionarRolosLoteProducao();
 
   /**
    * Transforma os dados brutos do formulário/interface no payload de CRIAÇÃO
@@ -63,6 +66,23 @@ export function useProducaoActions() {
       setIsSubmitting(false);
     }
   }, [adicionarItensLote]);
+
+
+  const handleAdicionarRolos = useCallback(async (id: string, values: AdicionarRolosLoteProducaoPayload ) => {
+    setIsSubmitting(true);
+    try {
+      const payload: AdicionarRolosLoteProducaoPayload = {
+        rolosProducao: values.rolosProducao?.map(r => ({
+          estoqueRoloId: r.estoqueRoloId!,
+          pesoReservado: r.pesoReservado || 0,
+        })) || [],
+      };
+
+      await adicionarRolosLote({ id, payload });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [adicionarRolosLote]);
 
   /**
    * Transforma os dados para ATUALIZAÇÃO GERAL
@@ -119,6 +139,7 @@ export function useProducaoActions() {
   return {
     handleCriarLote,
     handleAdicionarItens,
+    handleAdicionarRolos,
     handleEditLoteCabeçalho,
     handleEditLote,
     isSubmitting,

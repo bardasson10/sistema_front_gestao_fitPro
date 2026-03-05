@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { PackagePlus, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react"
+import { PackagePlus, Pencil, Plus, RotateCcw } from "lucide-react"
 import { Enfesto, GradeLote } from "../interface-lote-form"
 import { CircleColorView } from "@/components/ui/circle-color-view"
 import { GradeTable } from "./grade-table"
@@ -21,9 +21,8 @@ import { LoteProducaoFormValues } from "@/schemas/LoteProducao/lote-producao-sch
 import { UseFormReturn } from "react-hook-form"
 import { useProdutos, useTamanhos } from "@/hooks/queries/useProdutos"
 import { useProducaoActions } from "@/hooks/use-Producao-actions"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Spinner } from "@/components/ui/spinner"
-import { useEstoqueTecido, useEstoqueTecidos } from "@/hooks/queries/useEstoque"
 
 interface EnfestoFormProps {
   form: UseFormReturn<LoteProducaoFormValues>
@@ -51,7 +50,11 @@ export function EnfestoForm({
   limparEnfestos,
 }: EnfestoFormProps) {
   const [showGradeEdicao, setShowGradeEdicao] = useState(false)
-  const [roloId, setSetRoloId] = useState<string>("")
+  const [selectedCorId, setSelectedCorId] = useState(enfesto.corId || "")
+
+  useEffect(() => {
+    setSelectedCorId(enfesto.corId || "")
+  }, [enfesto.corId])
 
   const materiaisRaw = form.watch("materiais") || []
   const materiais = Array.isArray(materiaisRaw) ? materiaisRaw : [];
@@ -102,34 +105,31 @@ export function EnfestoForm({
 
   const coresDisponiveis = materiais.flatMap((material) => material.cores || [])
 
-  const rolosDisponiveis = coresDisponiveis
-    .filter((cor) => !enfesto.corId || cor.id === enfesto.corId)
-    .flatMap((cor) => cor.rolos || [])
+  // Filtrar cores que já possuem grade quando addItemPart é true
+  const coresParaSelecionar = addItemPart
+    ? coresDisponiveis.filter((cor) => !cor.gradeLote || cor.gradeLote.length === 0)
+    : coresDisponiveis
+
+  // Auto-selecionar cor quando há apenas 1 disponível
+  useEffect(() => {
+    if (coresParaSelecionar.length === 1 && !selectedCorId) {
+      const corUnica = coresParaSelecionar[0]
+      setSelectedCorId(corUnica.id)
+      onChange(index, {
+        ...enfesto,
+        corId: corUnica.id,
+        rolosProducao: corUnica.rolos && corUnica.rolos.length > 0 ? [
+          {
+            estoqueRoloId: corUnica.rolos[0].id,
+            pesoReservado: corUnica.rolos[0].pesoAtualKg,
+          },
+        ] : enfesto.rolosProducao,
+      })
+    }
+  }, [coresParaSelecionar.length])
 
   function updateField<K extends keyof Enfesto>(field: K, value: Enfesto[K]) {
     onChange(index, { ...enfesto, [field]: value })
-  }
-
-  function addRolo() {
-    updateField("rolosProducao", [
-      ...(enfesto.rolosProducao || []),
-      { estoqueRoloId: "", pesoReservado: 0 },
-    ])
-  }
-
-  function removeRolo(roloIndex: number) {
-    updateField(
-      "rolosProducao",
-      (enfesto.rolosProducao || []).filter((_, i) => i !== roloIndex)
-    )
-  }
-
-  function updateRolo(roloIndex: number, field: "estoqueRoloId" | "pesoReservado", value: string | number) {
-    const updated = (enfesto.rolosProducao || []).map((rolo, i) =>
-      i === roloIndex ? { ...rolo, [field]: value } : rolo
-    )
-
-    updateField("rolosProducao", updated)
   }
 
   function handleProdutosChange(produtosSelecionados: string[]) {
@@ -148,29 +148,10 @@ export function EnfestoForm({
     })
   }
 
-  const { data: estoqueRolosData } = useEstoqueTecido( roloId );
-  const estoqueRolos = estoqueRolosData || []
-
-
-
-  // Log para verificar os valores do formulário e do enfesto
-
   return (
     <Card className="border-muted-foreground/20 cursor-grab active:cursor-grabbing select-none">
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <CardTitle className="text-base font-semibold">Enfesto #{index + 1}</CardTitle>
-        {canRemove && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-            onClick={() => onRemove(index)}
-          >
-            <Trash2 className="size-4" />
-            <span className="sr-only">Remover enfesto {index + 1}</span>
-          </Button>
-        )}
       </CardHeader>
 
       <CardContent className="flex flex-col gap-6">
@@ -178,14 +159,29 @@ export function EnfestoForm({
           <div className="flex flex-col gap-2">
             <Label htmlFor={`enfesto-${index}-corId`}>Cor</Label>
             <Select
-              value={enfesto.corId}
-              onValueChange={(value) => updateField("corId", value)}
+              value={selectedCorId}
+              onValueChange={(value) => {
+                setSelectedCorId(value)
+                updateField("corId", value)
+                // Auto-selecionar o primeiro rolo quando cor for escolhida
+                const rolosDisponiveisCor = coresDisponiveis
+                  .find((cor) => cor.id === value)?.rolos || []
+                if (rolosDisponiveisCor.length > 0) {
+                  const primeiroRolo = rolosDisponiveisCor[0]
+                  updateField("rolosProducao", [
+                    {
+                      estoqueRoloId: primeiroRolo.id,
+                      pesoReservado: primeiroRolo.pesoAtualKg,
+                    },
+                  ])
+                }
+              }}
             >
-              <SelectTrigger id={`enfesto-${index}-corId`} className="w-full" disabled={!addItemPart}>
+              <SelectTrigger id={`enfesto-${index}-corId`} className="w-full">
                 <SelectValue placeholder="Selecione a cor" />
               </SelectTrigger>
               <SelectContent>
-                {coresDisponiveis.map((cor) => (
+                {coresParaSelecionar.map((cor) => (
                   <SelectItem key={cor.id} value={cor.id}>
                     <span className="flex items-center gap-2">
                       <CircleColorView height={18} width={18} color={cor.codigoHex} />
@@ -208,84 +204,6 @@ export function EnfestoForm({
               onChange={(e) => updateField("qtdFolhas", Number(e.target.value) || 0)}
             />
           </div>
-        </div>
-
-        <Separator />
-
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-medium text-muted-foreground">Rolos de Produção</h4>
-            {addItemPart &&
-              <Button type="button" variant="outline" size="sm" onClick={addRolo}>
-                <Plus className="mr-1 size-3.5" />
-                Adicionar Rolo
-              </Button>}
-          </div>
-
-          {(enfesto.rolosProducao || []).length === 0 && (
-            <p className="text-sm text-muted-foreground italic py-2">Nenhum rolo adicionado.</p>
-          )}
-
-          {(enfesto.rolosProducao || []).map((rolo, roloIdx) => (
-            <div
-              key={`${rolo.estoqueRoloId || "rolo"}-${roloIdx}`}
-              className="flex items-end gap-3 rounded-lg border border-border bg-muted/30 p-3"
-            >
-              <div className="flex flex-1 flex-col gap-2">
-                <Label htmlFor={`enfesto-${index}-rolo-${roloIdx}-estoqueRoloId`} className="text-xs">
-                  Estoque Rolo
-                </Label>
-                <Select
-                  value={rolo.estoqueRoloId}
-                  onValueChange={(value) =>{ updateRolo(roloIdx, "estoqueRoloId", value), setSetRoloId(value)}}
-                  disabled={enfesto.corId === ""}
-                >
-
-
-                  <SelectTrigger id={`enfesto-${index}-rolo-${roloIdx}-estoqueRoloId`} className="h-8 text-sm w-full" disabled={!addItemPart}>
-                    <SelectValue placeholder="Selecione o rolo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {rolosDisponiveis.map((estoqueRolo) => (
-                      <SelectItem key={estoqueRolo.id} value={estoqueRolo.id}>
-                        {estoqueRolo.codigoBarraRolo}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-
-
-
-              <div className="flex w-36 flex-col gap-2">
-                <Label htmlFor={`enfesto-${index}-rolo-${roloIdx}-pesoReservado`} className="text-xs">
-                  Peso Reservado (kg)
-                </Label>
-                <Input
-                  id={`enfesto-${index}-rolo-${roloIdx}-pesoReservado`}
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  disabled={true}
-                  placeholder="0"
-                  value={addItemPart ? estoqueRolosData?.pesoAtualKg || 0 : rolo.pesoReservado || 0}
-                  className="h-8 text-sm"
-                />
-              </div>
-              {addItemPart &&
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-8 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={() => removeRolo(roloIdx)}
-                >
-                  <Trash2 className="size-3.5" />
-                  <span className="sr-only">Remover rolo {roloIdx + 1}</span>
-                </Button>}
-            </div>
-          ))}
         </div>
 
         <Separator />
@@ -334,6 +252,23 @@ export function EnfestoForm({
 
         <Separator />
 
+        {addItemPart && (
+          <>
+            <GradeTable
+              produtosSelecionados={enfesto.produtosSelecionados || []}
+              produtos={produtos}
+              tamanhos={tamanhos}
+              itens={enfesto.itens || []}
+              enfestoIndex={index}
+              onProdutosChange={handleProdutosChange}
+              onGradeChange={handleGradeChange}
+              onRemoveProduto={handleRemoveProduto}
+            />
+
+            <Separator />
+          </>
+        )}
+
         <GradeViewTable
           produtosSelecionados={enfesto.produtosSelecionados || []}
           produtos={produtos}
@@ -342,28 +277,32 @@ export function EnfestoForm({
           qtdFolhas={enfesto.qtdFolhas || 0}
         />
 
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setShowGradeEdicao((current) => !current)}
-          >
-            {showGradeEdicao ? "Ocultar grade de edição" : "Mostrar grade de edição"}
-          </Button>
-        </div>
+        {!addItemPart && (
+          <>
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowGradeEdicao((current) => !current)}
+              >
+                {showGradeEdicao ? "Ocultar grade de edição" : "Mostrar grade de edição"}
+              </Button>
+            </div>
 
-        {showGradeEdicao && (
-          <GradeTable
-            produtosSelecionados={enfesto.produtosSelecionados || []}
-            produtos={produtos}
-            tamanhos={tamanhos}
-            itens={enfesto.itens || []}
-            enfestoIndex={index}
-            onProdutosChange={handleProdutosChange}
-            onGradeChange={handleGradeChange}
-            onRemoveProduto={handleRemoveProduto}
-          />
+            {showGradeEdicao && (
+              <GradeTable
+                produtosSelecionados={enfesto.produtosSelecionados || []}
+                produtos={produtos}
+                tamanhos={tamanhos}
+                itens={enfesto.itens || []}
+                enfestoIndex={index}
+                onProdutosChange={handleProdutosChange}
+                onGradeChange={handleGradeChange}
+                onRemoveProduto={handleRemoveProduto}
+              />
+            )}
+          </>
         )}
 
         <CardFooter className="flex justify-end p-0">
@@ -377,7 +316,13 @@ export function EnfestoForm({
                 </Button>
                 <Button
                   type="button"
-                  onClick={() => handleSubmitAdicionarItens?.(form.watch(`materiais.${index}.cores.${index}.qtdFolhas`) || 0)}
+                  onClick={() => {
+                    if (!selectedCorId) {
+                      alert("Por favor, selecione uma cor antes de adicionar à grade.")
+                      return
+                    }
+                    handleSubmitAdicionarItens?.(form.watch(`materiais.${index}.cores.${index}.qtdFolhas`) || 0)
+                  }}
                   disabled={isSubmitting}
                 >
                   <PackagePlus className="mr-1.5 size-4" />
@@ -388,16 +333,22 @@ export function EnfestoForm({
             :
             (
               <Button type="submit" disabled={isSubmitting}
-                onClick={() => handleEditLote(form.getValues("id"), {
-                  enfestos: [
-                    {
-                      corId: enfesto.corId,
-                      qtdFolhas: enfesto.qtdFolhas,
-                      rolosProducao: enfesto.rolosProducao,
-                      itens: enfesto.itens
-                    }
-                  ]
-                })}
+                onClick={() => {
+                  if (!selectedCorId) {
+                    alert("Por favor, selecione uma cor antes de atualizar o lote.")
+                    return
+                  }
+                  handleEditLote(form.getValues("id"), {
+                    enfestos: [
+                      {
+                        corId: selectedCorId,
+                        qtdFolhas: enfesto.qtdFolhas,
+                        rolosProducao: enfesto.rolosProducao,
+                        itens: enfesto.itens
+                      }
+                    ]
+                  })
+                }}
               >
                 <Pencil className="mr-1.5 size-4" />
                 {isSubmitting ? <Spinner /> : "Atualizar Lote"}

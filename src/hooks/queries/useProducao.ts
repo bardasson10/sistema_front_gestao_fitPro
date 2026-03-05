@@ -455,6 +455,48 @@ export const useAdicionarItensLoteProducao = () => {
     });
 };
 
+export interface AdicionarRolosLoteProducaoPayload {
+    rolosProducao: Array<{
+        estoqueRoloId: string,
+        pesoReservado: number
+    }>;
+}
+
+
+export const useAdicionarRolosLoteProducao = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({
+            id,
+            payload,
+        }: {
+            id: string;
+            payload: AdicionarRolosLoteProducaoPayload
+        }) => {
+            const { data } = await apiClient.post(
+                `/lotes-producao/${id}/rolos`,
+                { rolos: payload.rolosProducao }
+            );
+
+            return data;
+        },
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['lotes-producao'] });
+            queryClient.invalidateQueries({ queryKey: ['lotes-producao', variables.id] });
+
+            toast.success('Itens adicionados ao lote com sucesso!');
+        },
+        onError: (error: any) => {
+            const mensagem = error.response?.data?.details?.[0]?.mensage ||
+                error.response?.data?.error
+            toast.error(mensagem);;
+        },
+    });
+};
+
+
+
 export interface AtualizarLoteProducaoPayload {
     codigoLote?: string;
     responsavelId?: string;

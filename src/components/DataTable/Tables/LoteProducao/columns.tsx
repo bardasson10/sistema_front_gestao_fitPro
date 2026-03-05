@@ -33,9 +33,19 @@ export const getLoteProducaoColumns = (
     id: 'produtos',
     header: 'Produtos',
     cell: ({ row }) => {
-      const totalPecas = row.original.materiais?.flatMap(m => m.cores?.flatMap(c => c.gradeLote || []) || [])?.reduce((acc, item) => acc + (item.quantidadePlanejada || 0), 0) || 0;
-      const qtdFolhas = row.original.materiais?.flatMap(m => m.cores?.flatMap(c => c.qtdFolhas || []) || [])?.reduce((acc, folhas) => acc + (folhas || 0), 0) || 0;
-      return <span>{totalPecas * qtdFolhas}</span>;
+      // Calcular total de peças por cor: (qtdFolhas * quantidadePlanejada) para cada item
+      const totalPecas = row.original.materiais?.reduce((materialAcc, material) => {
+        return materialAcc + (material.cores?.reduce((corAcc, cor) => {
+          const qtdFolhas = cor.qtdFolhas || 0;
+          // Para cada cor: somar (qtdFolhas * quantidadePlanejada) de todos os itens de gradeLote
+          const pecasPorCor = cor.gradeLote?.reduce((itemAcc, item) => {
+            return itemAcc + (qtdFolhas * (item.quantidadePlanejada || 0));
+          }, 0) || 0;
+          return corAcc + pecasPorCor;
+        }, 0) || 0);
+      }, 0) || 0;
+      
+      return <span>{totalPecas}</span>;
     },
   },
   {

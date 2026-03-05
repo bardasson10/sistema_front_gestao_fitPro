@@ -48,14 +48,6 @@ export const CreateLoteForm = ({ colaboradoresResponse, fecharModal }: CreateLot
   };
 
   // Função para atualizar o peso de um rolo específico
-  const updatePeso = (id: string, peso: number) => {
-    setFormValues({
-      ...formValues,
-      rolos: formValues.rolos.map(r =>
-        r.estoqueRoloId === id ? { ...r, pesoReservado: peso } : r
-      )
-    });
-  };
 
   return (
     <section className="space-y-6 p-1">

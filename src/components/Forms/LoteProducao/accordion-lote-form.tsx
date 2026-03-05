@@ -8,8 +8,9 @@ import { Colaborador } from "@/types/production";
 import { PaginatedResponse } from "@/hooks/queries/useColaboradores";
 import { ApiLoteProducaoResponse } from "@/hooks/queries/useProducao";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Pencil, PackagePlus, Package } from "lucide-react";
+import { Pencil, Package, Shirt, CirclePile } from "lucide-react";
 import { LoteProducaoFormInfo } from "./AddFormSteps/loteProducao-info-form";
+import { DadosTecido } from "./AddFormSteps/dadosTecido";
 
 
 
@@ -36,35 +37,44 @@ export const LoteProducaoAccordionForm = ({
           <AccordionContent>
             <div className="flex flex-col gap-6">
 
+              <DadosLoteForm form={form} lote={lote} colaboradoresResponse={colaboradoresResponse} handleEditLoteCabeçalho={handleEditLoteCabeçalho} />
               {/* Tabs: Editar vs Adicionar */}
-              <Tabs defaultValue="editar" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="editar" className="flex items-center gap-2">
-                    <Pencil className="size-4" />
-                    Editar Cabeçalho Lote
-                  </TabsTrigger>
-                  <TabsTrigger value="informacao" className="flex items-center gap-2">
-                    <Package className="size-4" />
-                    Informações do Lote
-                  </TabsTrigger>
-                </TabsList>
 
-                {/* Tab: Editar Grade Existente (PUT) */}
-                <TabsContent value="editar" className="flex flex-col gap-6 mt-6">
-                  <DadosLoteForm form={form} colaboradoresResponse={colaboradoresResponse} handleEditLoteCabeçalho={handleEditLoteCabeçalho} />
-                </TabsContent>
-
-                {/* Tab: Adicionar Novos Itens (POST) */}
-                <TabsContent value="informacao" className="flex flex-col gap-6 mt-6">
-                  <LoteProducaoFormInfo lote={lote} />
-                </TabsContent>
-              </Tabs>
             </div>
           </AccordionContent>
         </AccordionItem>
 
+
         <AccordionItem value="tecidos">
-          <AccordionTrigger>2. Rolos de Tecido</AccordionTrigger>
+          <AccordionTrigger>2. Tecidos</AccordionTrigger>
+          <AccordionContent>
+
+            <Tabs defaultValue="editar" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="editar" className="flex items-center gap-2">
+                  <CirclePile className="size-4" />
+                  Tecidos do Lote
+                </TabsTrigger>
+                <TabsTrigger value="informacao" className="flex items-center gap-2">
+                  <Shirt className="size-4" />
+                  Informações dos Tecidos
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="editar" className="flex flex-col gap-6 mt-6">
+                <DadosTecido form={form} />
+              </TabsContent>
+
+              <TabsContent value="informacao" className="flex flex-col gap-6 mt-6">
+                <LoteProducaoFormInfo lote={lote} />
+              </TabsContent>
+
+            </Tabs>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="enfesto">
+          <AccordionTrigger>3. Enfesto</AccordionTrigger>
           <AccordionContent>
             <LoteEnfestoGradeForm form={form} submitting={submitting} />
           </AccordionContent>
