@@ -84,9 +84,25 @@ export const AddItemEnfestoForm = ({
       return
     }
 
+    // Validar cada enfesto antes de enviar
+    for (const enfesto of enfestosNewItens) {
+      if (!enfesto.corId) {
+        toast.error("Todos os enfestos devem ter uma cor selecionada.")
+        return
+      }
+      if (!enfesto.qtdFolhas || enfesto.qtdFolhas <= 0) {
+        toast.error("Todos os enfestos devem ter quantidade de folhas maior que 0.")
+        return
+      }
+      if (!enfesto.itens || enfesto.itens.length === 0) {
+        toast.error("Todos os enfestos devem ter ao menos um item na grade.")
+        return
+      }
+    }
+
     const payload = enfestosNewItens.map((enfesto) => ({
       corId: enfesto.corId,
-      qtdFolhas: qtdFolhas,
+      qtdFolhas: enfesto.qtdFolhas,  // Usar qtdFolhas do próprio enfesto
       rolosProducao: (enfesto.rolosProducao || []).map((rolo) => ({
         estoqueRoloId: rolo.estoqueRoloId,
       })),

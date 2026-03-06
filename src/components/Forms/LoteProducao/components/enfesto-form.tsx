@@ -18,6 +18,7 @@ import { CircleColorView } from "@/components/ui/circle-color-view"
 import { GradeTable } from "./grade-table"
 import { GradeViewTable } from "./grade-view-table"
 import { LoteProducaoFormValues } from "@/schemas/LoteProducao/lote-producao-schemas"
+import { toast } from "sonner"
 import { UseFormReturn } from "react-hook-form"
 import { useProdutos, useTamanhos } from "@/hooks/queries/useProdutos"
 import { useProducaoActions } from "@/hooks/use-Producao-actions"
@@ -50,11 +51,6 @@ export function EnfestoForm({
   limparEnfestos,
 }: EnfestoFormProps) {
   const [showGradeEdicao, setShowGradeEdicao] = useState(false)
-  const [selectedCorId, setSelectedCorId] = useState(enfesto.corId || "")
-
-  useEffect(() => {
-    setSelectedCorId(enfesto.corId || "")
-  }, [enfesto.corId])
 
   const materiaisRaw = form.watch("materiais") || []
   const materiais = Array.isArray(materiaisRaw) ? materiaisRaw : [];
@@ -112,9 +108,8 @@ export function EnfestoForm({
 
   // Auto-selecionar cor quando há apenas 1 disponível
   useEffect(() => {
-    if (coresParaSelecionar.length === 1 && !selectedCorId) {
+    if (coresParaSelecionar.length === 1 && !enfesto.corId) {
       const corUnica = coresParaSelecionar[0]
-      setSelectedCorId(corUnica.id)
       onChange(index, {
         ...enfesto,
         corId: corUnica.id,
@@ -126,7 +121,7 @@ export function EnfestoForm({
         ] : enfesto.rolosProducao,
       })
     }
-  }, [coresParaSelecionar.length])
+  }, [coresParaSelecionar.length, enfesto.corId])
 
   function updateField<K extends keyof Enfesto>(field: K, value: Enfesto[K]) {
     onChange(index, { ...enfesto, [field]: value })
@@ -159,22 +154,29 @@ export function EnfestoForm({
           <div className="flex flex-col gap-2">
             <Label htmlFor={`enfesto-${index}-corId`}>Cor</Label>
             <Select
-              value={selectedCorId}
+            disabled={!addItemPart}
+              value={enfesto.corId || ""}
               onValueChange={(value) => {
-                setSelectedCorId(value)
-                updateField("corId", value)
                 // Auto-selecionar o primeiro rolo quando cor for escolhida
                 const rolosDisponiveisCor = coresDisponiveis
                   .find((cor) => cor.id === value)?.rolos || []
+                
+                const novoEnfesto: Enfesto = {
+                  ...enfesto,
+                  corId: value,
+                }
+                
                 if (rolosDisponiveisCor.length > 0) {
                   const primeiroRolo = rolosDisponiveisCor[0]
-                  updateField("rolosProducao", [
+                  novoEnfesto.rolosProducao = [
                     {
                       estoqueRoloId: primeiroRolo.id,
                       pesoReservado: primeiroRolo.pesoAtualKg,
                     },
-                  ])
+                  ]
                 }
+                
+                onChange(index, novoEnfesto)
               }}
             >
               <SelectTrigger id={`enfesto-${index}-corId`} className="w-full">
@@ -317,11 +319,19 @@ export function EnfestoForm({
                 <Button
                   type="button"
                   onClick={() => {
-                    if (!selectedCorId) {
-                      alert("Por favor, selecione uma cor antes de adicionar à grade.")
+                    if (!enfesto.corId) {
+                      toast.error("Por favor, selecione uma cor antes de adicionar à grade.")
                       return
                     }
-                    handleSubmitAdicionarItens?.(form.watch(`materiais.${index}.cores.${index}.qtdFolhas`) || 0)
+                    if (!enfesto.qtdFolhas || enfesto.qtdFolhas <= 0) {
+                      toast.error("Por favor, informe a quantidade de folhas (deve ser maior que 0).")
+                      return
+                    }
+                    if (!enfesto.itens || enfesto.itens.length === 0) {
+                      toast.error("Por favor, adicione ao menos um item à grade antes de salvar.")
+                      return
+                    }
+                    handleSubmitAdicionarItens?.(enfesto.qtdFolhas)
                   }}
                   disabled={isSubmitting}
                 >
@@ -334,14 +344,14 @@ export function EnfestoForm({
             (
               <Button type="submit" disabled={isSubmitting}
                 onClick={() => {
-                  if (!selectedCorId) {
-                    alert("Por favor, selecione uma cor antes de atualizar o lote.")
+                  if (!enfesto.corId) {
+                    toast.error("Por favor, selecione uma cor antes de atualizar o lote.")
                     return
                   }
                   handleEditLote(form.getValues("id"), {
                     enfestos: [
                       {
-                        corId: selectedCorId,
+                        corId: enfesto.corId,
                         qtdFolhas: enfesto.qtdFolhas,
                         rolosProducao: enfesto.rolosProducao,
                         itens: enfesto.itens
