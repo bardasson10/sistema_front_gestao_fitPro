@@ -61,6 +61,11 @@ const data = {
       groupTitle: "Estoque",
       items: [
         {
+          title: "Tamanhos",
+          url: "/tamanhos",
+          icon: Shirt,
+        },
+        {
           title: "Tipos de Produtos",
           url: "/tipos-produtos",
           icon: BookType,
