@@ -1,7 +1,7 @@
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { LoteEnfestoGradeForm } from "./components/lote-enfesto-grade-form";
-import { DadosLoteForm } from "./AddFormSteps/dadosLoteForm";
+import { DadosLoteForm } from "./subForms/dadosLoteForm";
 import { LoteProducaoFormValues } from "@/schemas/LoteProducao/lote-producao-schemas";
 import { UseFormReturn } from "react-hook-form";
 import { Colaborador } from "@/types/production";
@@ -9,8 +9,8 @@ import { PaginatedResponse } from "@/hooks/queries/useColaboradores";
 import { ApiLoteProducaoResponse } from "@/hooks/queries/useProducao";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Pencil, Package, Shirt, CirclePile } from "lucide-react";
-import { LoteProducaoFormInfo } from "./AddFormSteps/loteProducao-info-form";
-import { DadosTecido } from "./AddFormSteps/dadosTecido";
+import { LoteProducaoFormInfo } from "./subForms/loteProducao-info-form";
+import { DadosTecido } from "./subForms/dadosTecido";
 
 
 

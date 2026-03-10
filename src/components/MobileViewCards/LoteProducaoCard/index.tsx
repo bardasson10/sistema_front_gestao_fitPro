@@ -1,5 +1,5 @@
 import { SemDadosComponent } from "@/components/ErrorManagementComponent/AnyData"
-import { LoteProducaoFormInfo } from "@/components/Forms/LoteProducao/AddFormSteps/loteProducao-info-form"
+import { LoteProducaoFormInfo } from "@/components/Forms/LoteProducao/subForms/loteProducao-info-form"
 import { BaseCard } from "@/components/MobileViewCards/base-card"
 import { BaseModal } from "@/components/Modal/base-modal"
 import { Button } from "@/components/ui/button"

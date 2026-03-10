@@ -3,7 +3,7 @@
 
 import { LoteProducaoTable } from "@/components/DataTable/Tables/LoteProducao/table";
 import { LoteProducaoAccordionForm } from "@/components/Forms/LoteProducao/accordion-lote-form";
-import { CreateLoteForm } from "@/components/Forms/LoteProducao/AddFormSteps/createLoteForm";
+import { CreateLoteForm } from "@/components/Forms/LoteProducao/subForms/createLoteForm";
 import { MobileViewLoteProducao } from "@/components/MobileViewCards/LoteProducaoCard";
 import { BaseModal } from "@/components/Modal/base-modal";
 import { Button } from "@/components/ui/button";

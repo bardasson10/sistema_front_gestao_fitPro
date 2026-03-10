@@ -1,7 +1,7 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AddItemEnfestoForm } from "../AddFormSteps/addItemEnfestoForm"
-import { EnfestoEditarForm } from "../AddFormSteps/editarEnfestoForm"
+import { AddItemEnfestoForm } from "../subForms/addItemEnfestoForm"
+import { EnfestoEditarForm } from "../subForms/editarEnfestoForm"
 import { PackagePlus, Pencil } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { LoteProducaoFormValues } from "@/schemas/LoteProducao/lote-producao-schemas";
