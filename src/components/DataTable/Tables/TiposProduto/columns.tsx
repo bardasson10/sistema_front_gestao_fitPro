@@ -2,10 +2,11 @@ import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { TiposProdutosSchema } from "@/hooks/queries/useProdutos";
 import { dataFormatter } from "@/utils/Formatter/data-brasil-format";
-import { Link2, Pencil, Trash2 } from "lucide-react";
+import { Link2, Pencil, Trash2, Unlink } from "lucide-react";
 
 export const getTiposProdutoColumns = (
 	onAssociate: (item: TiposProdutosSchema) => void,
+	onDissociate: (item: TiposProdutosSchema) => void,
 	onEdit: (item: TiposProdutosSchema) => void,
 	onRemove: (id: string) => void,
 ): ColumnDef<TiposProdutosSchema>[] => [
@@ -35,7 +36,7 @@ export const getTiposProdutoColumns = (
 	{
 		id: 'actions',
 		cell: ({ row }) => (
-			<div className="flex items-center gap-2">
+			<div className="flex flex-wrap items-center gap-2">
 				<Button
 					variant="outline"
 					size="sm"
@@ -43,6 +44,15 @@ export const getTiposProdutoColumns = (
 				>
 					<Link2 className="mr-2 h-4 w-4" />
 					Associar tamanhos
+				</Button>
+				<Button
+					variant="outline"
+					size="sm"
+					onClick={() => onDissociate(row.original)}
+					disabled={!row.original.tamanhos?.length}
+				>
+					<Unlink className="mr-2 h-4 w-4" />
+					Desassociar tamanhos
 				</Button>
 				<Button
 					variant="ghost"

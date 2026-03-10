@@ -14,6 +14,7 @@ import {
   useAssociarTamanhoTipo,
   useCriarTipoProduto,
   useAtualizarTipoProduto,
+  useDeletarAssociacaoTamanhoTipo,
   useDeletarTipoProduto,
   useTamanhos,
   Tamanho,
@@ -43,16 +44,23 @@ export default function TiposProdutosPage() {
   const tamanhos = Array.isArray(tamanhosData) ? tamanhosData : [];
 
   const { mutate: associarTamanho, isPending: isAssociando } = useAssociarTamanhoTipo();
+  const { mutate: desassociarTamanho, isPending: isDesassociando } = useDeletarAssociacaoTamanhoTipo();
   const { mutate: criarTipo, isPending: isCriandoTipo } = useCriarTipoProduto();
   const { mutate: atualizarTipo, isPending: isAtualizandoTipo } = useAtualizarTipoProduto();
   const { mutate: deletarTipo } = useDeletarTipoProduto();
 
   const [isAssociarOpen, setIsAssociarOpen] = useState(false);
+  const [isDesassociarOpen, setIsDesassociarOpen] = useState(false);
   const [tipoSelecionado, setTipoSelecionado] = useState<TiposProdutosSchema | null>(null);
   const [tamanhosDisponiveis, setTamanhosDisponiveis] = useState<Tamanho[]>([]);
+  const [tamanhosAssociados, setTamanhosAssociados] = useState<Tamanho[]>([]);
 
   const associarForm = useForm<AssociarTamanhoFormValues>({
     resolver: zodResolver(associarTamanhoSchema),
+    defaultValues: { tamanhos: [] },
+  });
+
+  const desassociarForm = useForm<AssociarTamanhoFormValues>({
     defaultValues: { tamanhos: [] },
   });
 
@@ -95,6 +103,13 @@ export default function TiposProdutosPage() {
     }
   }, [isAssociarOpen, associarForm]);
 
+  useEffect(() => {
+    if (!isDesassociarOpen) {
+      desassociarForm.reset({ tamanhos: [] });
+      setTamanhosAssociados([]);
+    }
+  }, [isDesassociarOpen, desassociarForm]);
+
   const handleOpenAssociar = (tipo: TiposProdutosSchema) => {
     const associados = new Set((tipo.tamanhos || []).map((tamanho) => tamanho.tamanhoId));
     const disponiveis = tamanhos.filter((tamanho) => !associados.has(tamanho.id));
@@ -114,6 +129,30 @@ export default function TiposProdutosPage() {
     setTipoSelecionado(null);
   };
 
+  const handleOpenDesassociar = (tipo: TiposProdutosSchema) => {
+    const associados = (tipo.tamanhos || []).map((tamanho) => ({
+      id: tamanho.tamanhoId,
+      nome: tamanho.NomeTamanho,
+      ordem: tamanho.OrdemTamanho,
+      createdAt: "",
+    }));
+
+    if (associados.length === 0) {
+      toast.info("Nao ha tamanhos associados a este tipo.");
+      return;
+    }
+
+    setTipoSelecionado(tipo);
+    setTamanhosAssociados(associados);
+    desassociarForm.reset({ tamanhos: associados.map((tamanho) => tamanho.id) });
+    setIsDesassociarOpen(true);
+  };
+
+  const handleCloseDesassociar = () => {
+    setIsDesassociarOpen(false);
+    setTipoSelecionado(null);
+  };
+
   const handleSubmitAssociar = associarForm.handleSubmit((values) => {
     if (!tipoSelecionado) return;
 
@@ -123,6 +162,27 @@ export default function TiposProdutosPage() {
     });
 
     handleCloseAssociar();
+  });
+
+  const handleSubmitDesassociar = desassociarForm.handleSubmit((values) => {
+    if (!tipoSelecionado) return;
+
+    const tamanhosMarcados = new Set(values.tamanhos);
+    const tamanhosParaDesassociar = tamanhosAssociados
+      .filter((tamanho) => !tamanhosMarcados.has(tamanho.id))
+      .map((tamanho) => ({ tamanhoId: tamanho.id }));
+
+    if (tamanhosParaDesassociar.length === 0) {
+      toast.info("Desmarque ao menos um tamanho para desassociar.");
+      return;
+    }
+
+    desassociarTamanho({
+      idProduto: tipoSelecionado.id,
+      tamanhos: tamanhosParaDesassociar,
+    });
+
+    handleCloseDesassociar();
   });
 
   return (
@@ -163,6 +223,19 @@ export default function TiposProdutosPage() {
         </Form>
       </FormModal>
 
+      <FormModal
+        open={isDesassociarOpen}
+        onClose={handleCloseDesassociar}
+        title={tipoSelecionado ? `Desassociar tamanhos - ${tipoSelecionado.nome}` : "Desassociar tamanhos"}
+        onSubmit={handleSubmitDesassociar}
+        loading={isDesassociando}
+        isViewSaveOrCancel={true}
+      >
+        <Form {...desassociarForm}>
+          <AssociarTamanhoForm tamanhos={tamanhosAssociados} />
+        </Form>
+      </FormModal>
+
       <RemoveItemWarning
         id={removingItemId || ""}
         isOpen={isRemoveOpen}
@@ -177,8 +250,9 @@ export default function TiposProdutosPage() {
       <div className="hidden md:block">
         <TiposProdutoTable
           tiposProdutos={tiposProdutos}
-          isLoading={isLoading || isCriandoTipo || isAtualizandoTipo}
+          isLoading={isLoading || isCriandoTipo || isAtualizandoTipo || isDesassociando}
           onAssociate={handleOpenAssociar}
+          onDissociate={handleOpenDesassociar}
           onEdit={handleEditCriar}
           onRemove={handleRemoveTipo}
         />
@@ -187,8 +261,9 @@ export default function TiposProdutosPage() {
       <div className="block md:hidden">
         <MobileViewTiposProduto
           tiposProdutos={tiposProdutos}
-          isLoading={isLoading || isCriandoTipo || isAtualizandoTipo}
+          isLoading={isLoading || isCriandoTipo || isAtualizandoTipo || isDesassociando}
           onAssociate={handleOpenAssociar}
+          onDissociate={handleOpenDesassociar}
           onEdit={handleEditCriar}
           onRemove={handleRemoveTipo}
         />

@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/services/api/api-client';
 import { toast } from 'sonner';
-import { id } from 'zod/v4/locales';
 import { PaginatedResponse } from '@/types/production';
 
 // ============ TIPOS ============
@@ -187,9 +186,9 @@ export const useAtualizarTamanho = () => {
       const { data } = await apiClient.put<Tamanho>(`/tamanhos/${id}`, dados);
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['tamanhos'] });
-      queryClient.invalidateQueries({ queryKey: ['tamanhos', id] });
+      queryClient.invalidateQueries({ queryKey: ['tamanhos', variables.id] });
       toast.success('Tamanho atualizado com sucesso!');
     },
     onError: (error: any) => {
@@ -342,11 +341,22 @@ export const useDeletarAssociacaoTamanhoTipo = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      await apiClient.delete(`/tipos-produto-tamanho/${id}`);
+    mutationFn: async ({
+      idProduto,
+      tamanhos,
+    }: {
+      idProduto: string;
+      tamanhos: { tamanhoId: string }[];
+    }) => {
+      await apiClient.delete(`/tipos-produto-tamanho/${idProduto}`, {
+        data: { tamanhos },
+      });
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['tipos-produto'] });
+      queryClient.invalidateQueries({
+        queryKey: ['tipos-produto', variables.idProduto, 'tamanhos'],
+      });
       toast.success('Associação removida com sucesso!');
     },
     onError: (error: any) => {

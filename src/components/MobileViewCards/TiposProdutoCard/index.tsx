@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/button";
 import { SemDadosComponent } from "@/components/ErrorManagementComponent/AnyData";
 import { TiposProdutosSchema } from "@/hooks/queries/useProdutos";
 import { dataFormatter } from "@/utils/Formatter/data-brasil-format";
-import { Link2, Pencil, Trash2 } from "lucide-react";
+import { Link2, Pencil, Trash2, Unlink } from "lucide-react";
 
 interface MobileViewTiposProdutoProps {
   tiposProdutos: TiposProdutosSchema[];
   isLoading: boolean;
   onAssociate: (item: TiposProdutosSchema) => void;
+  onDissociate: (item: TiposProdutosSchema) => void;
   onEdit: (item: TiposProdutosSchema) => void;
   onRemove: (id: string) => void;
 }
@@ -17,6 +18,7 @@ export const MobileViewTiposProduto = ({
   tiposProdutos,
   isLoading,
   onAssociate,
+  onDissociate,
   onEdit,
   onRemove,
 }: MobileViewTiposProdutoProps) => {
@@ -56,10 +58,10 @@ export const MobileViewTiposProduto = ({
             </div>
           }
           footer={
-            <div className="flex w-full gap-2">
+            <div className="grid w-full grid-cols-2 gap-2">
               <Button
                 variant="outline"
-                className="flex-1"
+                className="w-full"
                 onClick={() => onAssociate(item)}
               >
                 <Link2 className="mr-2 h-4 w-4" />
@@ -67,7 +69,16 @@ export const MobileViewTiposProduto = ({
               </Button>
               <Button
                 variant="outline"
-                className="flex-1"
+                className="w-full"
+                onClick={() => onDissociate(item)}
+                disabled={!item.tamanhos?.length}
+              >
+                <Unlink className="mr-2 h-4 w-4" />
+                Desassociar tamanhos
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
                 onClick={() => onEdit(item)}
               >
                 <Pencil className="mr-2 h-4 w-4" />
@@ -75,10 +86,11 @@ export const MobileViewTiposProduto = ({
               </Button>
               <Button
                 variant="destructive"
-                size="icon"
+                className="w-full"
                 onClick={() => onRemove(item.id)}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="mr-2 h-4 w-4" />
+                Remover
               </Button>
             </div>
           }
