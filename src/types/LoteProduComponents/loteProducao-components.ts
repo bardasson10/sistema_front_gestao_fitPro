@@ -6,6 +6,7 @@ export interface LoteProducaoProps {
   lotesProducao: ApiLoteProducaoResponse[];
   isLoading: boolean;
   onView: (item: ApiLoteProducaoResponse) => void;
+  onRemove: (id: string) => void;
 }
 
 export interface LoteProducaoGradeProps {

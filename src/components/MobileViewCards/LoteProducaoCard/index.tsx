@@ -6,19 +6,21 @@ import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { ApiLoteProducaoResponse } from "@/hooks/queries/useProducao"
 import { dataFormatter } from "@/utils/Formatter/data-brasil-format"
-import { Eye, Package, User, Calendar, FileText } from "lucide-react"
+import { Eye, Package, User, Calendar, FileText, Trash2 } from "lucide-react"
 import { useState } from "react"
 
 interface MobileViewLoteProducaoProps {
   lotesProducao: ApiLoteProducaoResponse[]
   isLoading: boolean
   onView: (item: ApiLoteProducaoResponse) => void
+  onRemove: (id: string) => void
 }
 
 export const MobileViewLoteProducao = ({
   lotesProducao,
   isLoading,
   onView,
+  onRemove,
 }: MobileViewLoteProducaoProps) => {
   const [selectedLote, setSelectedLote] = useState<ApiLoteProducaoResponse | null>(null);
 
@@ -116,6 +118,14 @@ export const MobileViewLoteProducao = ({
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   Ver Detalhes
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="h-11 w-11"
+                  onClick={() => onRemove(lote.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             }

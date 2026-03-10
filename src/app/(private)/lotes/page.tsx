@@ -2,6 +2,7 @@
 
 
 import { LoteProducaoTable } from "@/components/DataTable/Tables/LoteProducao/table";
+import { RemoveItemWarning } from "@/components/ErrorManagementComponent/WarnningRemoveItem";
 import { LoteProducaoAccordionForm } from "@/components/Forms/LoteProducao/accordion-lote-form";
 import { CreateLoteForm } from "@/components/Forms/LoteProducao/subForms/createLoteForm";
 import { MobileViewLoteProducao } from "@/components/MobileViewCards/LoteProducaoCard";
@@ -12,6 +13,7 @@ import { useColaboradores } from "@/hooks/queries/useColaboradores";
 import {
   ApiLoteProducaoResponse,
   useCriarDirecionamento,
+  useDeletarLoteProducao,
   useFaccoes,
   useLotesProducao,
 } from "@/hooks/queries/useProducao";
@@ -34,6 +36,7 @@ export default function Lotes() {
   const { data: faccoesData } = useFaccoes("ativo");
   const faccoes = faccoesData || [];
   const { mutate: criarDirecionamento, isPending: isCreatingDirecionamento } = useCriarDirecionamento();
+  const { mutate: deletarLote, isPending: isDeleting } = useDeletarLoteProducao();
 
   const {
     handleEditLoteCabeçalho, isSubmitting
@@ -41,11 +44,18 @@ export default function Lotes() {
 
   const { data: colaboradoresData } = useColaboradores();
   const [openCreateFormModal, setOpenCreateFormModal] = useState(false);
+  const [removingItemId, setRemovingItemId] = useState<string | null>(null);
+  const [isRemoveOpen, setIsRemoveOpen] = useState(false);
 
 
   const [editingItem, setEditingItem] = useState<Partial<ApiLoteProducaoResponse> | null>(null);
   const handleEdit = (item: ApiLoteProducaoResponse) => {
     setEditingItem(item);
+  };
+
+  const handleRemove = (id: string) => {
+    setRemovingItemId(id);
+    setIsRemoveOpen(true);
   };
 
   const form = useForm<LoteProducaoFormValues>({
@@ -161,19 +171,32 @@ export default function Lotes() {
         )}
       </BaseModal>
 
+      <RemoveItemWarning
+        id={removingItemId || ""}
+        isOpen={isRemoveOpen}
+        onClose={() => setIsRemoveOpen(false)}
+        title="Deseja remover?"
+        onConfirm={(id) => {
+          deletarLote(id);
+          setIsRemoveOpen(false);
+        }}
+      />
+
       <div className="hidden md:block">
         <LoteProducaoTable
           lotesProducao={dataLote}
-          isLoading={isLoading}
+          isLoading={isLoading || isDeleting}
           onView={handleEdit}
+          onRemove={handleRemove}
         />
       </div>
 
       <div className="block md:hidden">
         <MobileViewLoteProducao
           lotesProducao={dataLote}
-          isLoading={isLoading}
+          isLoading={isLoading || isDeleting}
           onView={handleEdit}
+          onRemove={handleRemove}
         />
       </div>
 

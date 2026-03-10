@@ -83,6 +83,15 @@ export function EnfestoForm({
     new Map([...produtosDaGrade, ...produtosDoCatalogo].map((produto) => [produto.id, produto])).values()
   )
 
+  // Permite incluir novos produtos no catalogo geral no modo de adicao
+  // e tambem quando a grade de edicao estiver visivel.
+  const podeAdicionarProdutos = addItemPart || showGradeEdicao
+  const produtosDisponiveisParaAdicionar = produtosApi.filter(
+    (produto) => !(enfesto.produtosSelecionados || []).includes(produto.id)
+  )
+  const mostrarSeletorProdutos =
+    podeAdicionarProdutos && produtosDisponiveisParaAdicionar.length > 0
+
   const tamanhosDaGrade = (enfesto.itens || []).map((item, itemIndex) => ({
     id: item.tamanhoId,
     label: item.tamanhoNome,
@@ -210,14 +219,14 @@ export function EnfestoForm({
 
         <Separator />
 
-        {addItemPart && (
+        {mostrarSeletorProdutos && (
           <div className="flex flex-col gap-3 p-4 border rounded-lg bg-secondary/20">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-bold flex items-center gap-2">
                 <Plus className="size-4" /> Adicionar Produtos à Grade
               </Label>
               <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full uppercase font-bold">
-                Catálogo Geral
+                {addItemPart ? "Catálogo Geral" : "Modo Edição"}
               </span>
             </div>
 
@@ -233,11 +242,10 @@ export function EnfestoForm({
                 <SelectValue placeholder="Pesquisar produto no catálogo..." />
               </SelectTrigger>
               <SelectContent>
-                {produtosApi.map((produto) => (
+                {produtosDisponiveisParaAdicionar.map((produto) => (
                   <SelectItem
                     key={produto.id}
                     value={produto.id}
-                    disabled={enfesto.produtosSelecionados?.includes(produto.id)}
                   >
                     <div className="flex flex-col">
                       <span className="font-medium">{produto.nome}</span>
