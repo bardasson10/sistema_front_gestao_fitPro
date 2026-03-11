@@ -1,17 +1,43 @@
-import { Badge } from "@/components/ui/badge"
+import { useMemo } from "react";
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
-import { dataFormatter } from "@/utils/Formatter/data-brasil-format";
 import { Label } from "@/components/ui/label";
 import { ApiLoteProducaoResponse } from "@/hooks/queries/useProducao";
 import { formatNumberToBRL } from "@/utils/Formatter/moeda-brasil-format";
-import { Textarea } from "@/components/ui/textarea";
 import { CircleColorView } from "@/components/ui/circle-color-view";
+import { useEstoqueTecidos } from "@/hooks/queries/useEstoque";
 
 interface LoteProducaoFormProps {
   lote: ApiLoteProducaoResponse
 }
 
 export function LoteProducaoFormInfo({ lote }: LoteProducaoFormProps) {
+  const { data: estoqueRolosData = [] } = useEstoqueTecidos();
+
+  const roloEstoqueById = useMemo(() => {
+    return new Map(estoqueRolosData.map((rolo) => [rolo.id, rolo]));
+  }, [estoqueRolosData]);
+
+  const getValorPorKgRolo = (
+    rolo: { id: string; valorPorKg?: number | string; tecido?: { valorPorKg?: number | string } },
+    fallbackValorPorKg: number
+  ) => {
+    const valorNoRolo = parseNumber(rolo.valorPorKg);
+    if (valorNoRolo > 0) return valorNoRolo;
+
+    const valorNoTecidoDoRolo = parseNumber(rolo.tecido?.valorPorKg);
+    if (valorNoTecidoDoRolo > 0) return valorNoTecidoDoRolo;
+
+    const valorDoEstoque = parseNumber(roloEstoqueById.get(rolo.id)?.tecido.valorPorKg);
+    return valorDoEstoque > 0 ? valorDoEstoque : fallbackValorPorKg;
+  };
+
+  const formatKg = (peso: number) => {
+    return parseNumber(peso).toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
   return (
     <div className="space-y-6">
       
@@ -23,6 +49,20 @@ export function LoteProducaoFormInfo({ lote }: LoteProducaoFormProps) {
 
         <div className="space-y-5">
           {lote.materiais?.map((m) => {
+            const valorMaterialFallback = parseNumber(m.valorPorKg);
+            const totalMaterialTecidos = (m.cores || []).reduce((accCor, cor) => {
+              const rolosDaCor = cor.rolos || [];
+              const valorCorNoPayload = parseNumber((cor as { valorPorKg?: number | string }).valorPorKg);
+              const fallbackCor = valorCorNoPayload > 0 ? valorCorNoPayload : valorMaterialFallback;
+
+              const totalValorCor = rolosDaCor.reduce((accRolo, rolo) => {
+                const valorPorKgRolo = getValorPorKgRolo(rolo, fallbackCor);
+                return accRolo + valorPorKgRolo * parseNumber(rolo.pesoReservado);
+              }, 0);
+
+              return accCor + totalValorCor;
+            }, 0);
+
             return (
               <div
                 key={m.tecidoId}
@@ -72,54 +112,87 @@ export function LoteProducaoFormInfo({ lote }: LoteProducaoFormProps) {
                     Cores dos rolos de tecido
                   </Label>
 
-                  {m.cores?.map((c) => (
-                    <div
-                      key={c.corId}
-                      className="border rounded-lg p-4 bg-card space-y-3"
-                    >
-                      {/* Cabeçalho da Cor */}
-                      <div className="flex items-center gap-3 border-b pb-3">
-                        <CircleColorView
-                          color={c.codigoHex}
-                          height={24}
-                          width={24}
-                        />
-                        <div>
-                          <p className="text-sm font-semibold">
-                            {c.nome}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Valor do Tecido: <span className="font-medium">{formatNumberToBRL(Number(m.valorPorKg))}/kg</span>
-                          </p>
-                        </div>
-                      </div>
+                  {m.cores?.map((c) => {
+                    const rolosDaCor = c.rolos || [];
+                    const valorCorNoPayload = parseNumber((c as { valorPorKg?: number | string }).valorPorKg);
+                    const fallbackCor = valorCorNoPayload > 0 ? valorCorNoPayload : valorMaterialFallback;
 
-                      {/* Rolos da Cor */}
-                      <div className="space-y-2">
-                        <Label className="text-xs text-muted-foreground">
-                          Rolos dessa cor
-                        </Label>
+                    const totalPesoCor = rolosDaCor.reduce(
+                      (acc, rolo) => acc + parseNumber(rolo.pesoReservado),
+                      0
+                    );
+
+                    const totalValorCor = rolosDaCor.reduce((acc, rolo) => {
+                      const valorPorKgRolo = getValorPorKgRolo(rolo, fallbackCor);
+                      return acc + valorPorKgRolo * parseNumber(rolo.pesoReservado);
+                    }, 0);
+
+                    const valorCorPorKg = totalPesoCor > 0
+                      ? totalValorCor / totalPesoCor
+                      : fallbackCor;
+
+                    return (
+                      <div
+                        key={c.corId}
+                        className="border rounded-lg p-4 bg-card space-y-3"
+                      >
+                        {/* Cabecalho da Cor */}
+                        <div className="flex items-center gap-3 border-b pb-3">
+                          <CircleColorView
+                            color={c.codigoHex}
+                            height={24}
+                            width={24}
+                          />
+                          <div>
+                            <p className="text-sm font-semibold">
+                              {c.nome}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Valor do Tecido: <span className="font-medium">{formatNumberToBRL(valorCorPorKg)}/kg</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Rolos da Cor */}
                         <div className="space-y-2">
-                          {c.rolos?.map((r) => (
-                            <div key={r.codigoBarraRolo} className="flex justify-between items-center text-xs bg-muted/40 p-2 rounded">
-                              <span className="font-medium">{r.codigoBarraRolo}</span>
-                              <div className="flex items-center gap-2">
-                                <span className="text-muted-foreground">Peso:</span>
-                                <span className="font-medium">{parseNumber(r.pesoReservado)}kg</span>
-                                <span className="text-muted-foreground">|</span>
-                                <span className="text-muted-foreground">Valor:</span>
-                                <span className="font-medium text-primary">{formatNumberToBRL(Number(m.valorPorKg) * Number(r.pesoReservado))}</span>
-                              </div>
-                            </div>
-                          ))}
+                          <Label className="text-xs text-muted-foreground">
+                            Rolos dessa cor
+                          </Label>
+                          <div className="space-y-2">
+                            {rolosDaCor.map((r) => {
+                              const pesoReservado = parseNumber(r.pesoReservado);
+                              const valorPorKgRolo = getValorPorKgRolo(r, valorCorPorKg);
+                              const valorTotalRolo = valorPorKgRolo * pesoReservado;
+
+                              return (
+                                <div key={r.codigoBarraRolo} className="flex justify-between items-center text-xs bg-muted/40 p-2 rounded">
+                                  <span className="font-medium">{r.codigoBarraRolo}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-muted-foreground">Peso:</span>
+                                    <span className="font-medium">{formatKg(pesoReservado)}kg</span>
+                                    <span className="text-muted-foreground">|</span>
+                                    <span className="text-muted-foreground">Valor:</span>
+                                    <span className="font-medium text-primary">{formatNumberToBRL(valorTotalRolo)}</span>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end border-t pt-2">
+                          <p className="text-xs font-semibold text-primary">
+                            Total da Cor: {formatNumberToBRL(totalValorCor)}
+                          </p>
                         </div>
                       </div>
+                    )
+                  })}
+                </div>
 
-                      {/* Grade da Cor */}
-                     
-                      
-                    </div>
-                  ))}
+                <div className="border-t pt-3 flex justify-between items-center">
+                  <span className="text-sm font-semibold">Valor Total dos Tecidos:</span>
+                  <span className="text-base font-bold text-primary">{formatNumberToBRL(totalMaterialTecidos)}</span>
                 </div>
               </div>
             )
