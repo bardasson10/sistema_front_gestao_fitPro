@@ -2,7 +2,7 @@ import * as z from "zod";
 
 const roloLoteSchema = z.object({
   pesoInicialKg: z
-    .number({ invalid_type_error: "Peso inicial inválido" })
+    .number({error:"Peso inicial inválido" })
     .positive("Peso inicial deve ser positivo"),
 });
 
