@@ -1,23 +1,16 @@
 
 import { LoteProducaoFormValues } from "@/schemas/LoteProducao/lote-producao-schemas";
 import { Button } from "@/components/ui/button";
-import { Plus, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { EnfestoForm } from "@/components/Forms/LoteProducao/components/enfesto-form";
 import { UseFormReturn } from "react-hook-form";
 import { Enfesto } from "../interface-lote-form";
 import { useEffect, useState } from "react";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import { useProducaoActions } from "@/hooks/use-Producao-actions";
-
-function createFreshEnfesto(): Enfesto {
-  return {
-    corId: "",
-    qtdFolhas: 0,
-    rolosProducao: [{ estoqueRoloId: "", pesoReservado: 0 }],
-    produtosSelecionados: [],
-    itens: [],
-  }
-}
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 
 
 interface EnfestoEditarFormProps {
@@ -29,6 +22,13 @@ export const EnfestoEditarForm = ({
   form,
   submittingUpdate,
 }: EnfestoEditarFormProps) => {
+
+  const {
+    handleEditLote,
+    isSubmitting,
+  } = useProducaoActions();
+
+  const isLoading = isSubmitting || submittingUpdate
 
 
 
@@ -73,22 +73,58 @@ export const EnfestoEditarForm = ({
     setEnfestosNewItens(updatedEnfestos)
   }
 
+  async function handleSubmitAtualizarLote() {
+    const idLote = form.getValues("id")
+
+    if (!idLote) {
+      toast.error("ID do lote nao encontrado para atualizar.")
+      return
+    }
+
+    if (enfestosNewItens.length === 0) {
+      toast.error("Nao ha enfestos para atualizar.")
+      return
+    }
+
+    for (const enfesto of enfestosNewItens) {
+      if (!enfesto.corId) {
+        toast.error("Todos os enfestos devem ter uma cor selecionada.")
+        return
+      }
+
+      if (!enfesto.qtdFolhas || enfesto.qtdFolhas <= 0) {
+        toast.error("Todos os enfestos devem ter quantidade de folhas maior que 0.")
+        return
+      }
+
+      if (!enfesto.itens || enfesto.itens.length === 0) {
+        toast.error("Todos os enfestos devem ter ao menos um item na grade.")
+        return
+      }
+    }
+
+    await handleEditLote(idLote, {
+      enfestos: enfestosNewItens.map((enfesto) => ({
+        corId: enfesto.corId,
+        qtdFolhas: enfesto.qtdFolhas,
+        rolosProducao: enfesto.rolosProducao,
+        itens: enfesto.itens,
+      })),
+    })
+  }
+
 
   return (
-    <div className="flex flex-col gap-6">
+    <Card>
+      <CardHeader>
+        <CardTitle>Enfestos</CardTitle>
+        <CardDescription>
+          Edite os enfestos, rolos e a grade de tamanhos existentes.
+        </CardDescription>
+      </CardHeader>
 
-      {/* Enfestos Existentes */}
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">Enfestos</h2>
-            <p className="text-sm text-muted-foreground">
-              Edite os enfestos, rolos e a grade de tamanhos existentes.
-            </p>
-          </div>
-        </div>
-
-        <div className=" w-full  flex flex-col gap-4">
+      <CardContent className="flex flex-col gap-4">
+        <div className="w-full flex flex-col gap-4">
           <Carousel className="w-full">
             <CarouselContent>
               {enfestosNewItens.map((enfesto, index) => (
@@ -100,7 +136,6 @@ export const EnfestoEditarForm = ({
                     enfesto={enfesto}
                     form={form}
                     canRemove={enfestosNewItens.length > 1}
-                    submittingUpdate={submittingUpdate}
                   />
                 </CarouselItem>
               ))}
@@ -109,11 +144,14 @@ export const EnfestoEditarForm = ({
             <CarouselNext />
           </Carousel>
         </div>
-      </div>
+      </CardContent>
 
-
- 
-
-    </div>
+      <CardFooter className="flex justify-end">
+        <Button type="button" onClick={handleSubmitAtualizarLote} disabled={isLoading}>
+          <Pencil className="mr-1.5 size-4" />
+          {isLoading ? <Spinner /> : "Atualizar Lote"}
+        </Button>
+      </CardFooter>
+    </Card>
   )
 };

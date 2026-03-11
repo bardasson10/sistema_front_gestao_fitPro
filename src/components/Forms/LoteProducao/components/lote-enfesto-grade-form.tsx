@@ -1,12 +1,12 @@
 
+import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AddItemEnfestoForm } from "../subForms/addItemEnfestoForm"
 import { EnfestoEditarForm } from "../subForms/editarEnfestoForm"
 import { PackagePlus, Pencil, Table2 } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { LoteProducaoFormValues } from "@/schemas/LoteProducao/lote-producao-schemas";
-import React from "react";
-import { GradeTotalPorCorTabs } from "./grade-total-por-cor-tabs";
+
 
 
 
@@ -84,9 +84,6 @@ export function LoteEnfestoGradeForm({ form, submitting }: LoteEnfestoGradeFormP
           </TabsContent>
         )}
 
-        <TabsContent value="resumo" className="flex flex-col gap-6 mt-6">
-          <GradeTotalPorCorTabs form={form} />
-        </TabsContent>
       </Tabs>
     </div>
   )

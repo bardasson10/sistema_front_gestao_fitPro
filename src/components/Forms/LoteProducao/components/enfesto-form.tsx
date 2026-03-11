@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
@@ -12,18 +12,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { PackagePlus, Pencil, Plus, RotateCcw } from "lucide-react"
+import { Plus } from "lucide-react"
 import { Enfesto, GradeLote } from "../interface-lote-form"
 import { CircleColorView } from "@/components/ui/circle-color-view"
 import { GradeTable } from "./grade-table"
 import { GradeViewTable } from "./grade-view-table"
 import { LoteProducaoFormValues } from "@/schemas/LoteProducao/lote-producao-schemas"
-import { toast } from "sonner"
 import { UseFormReturn } from "react-hook-form"
 import { useProdutos, useTamanhos } from "@/hooks/queries/useProdutos"
-import { useProducaoActions } from "@/hooks/use-Producao-actions"
 import { useState, useEffect } from "react"
-import { Spinner } from "@/components/ui/spinner"
 
 interface EnfestoFormProps {
   form: UseFormReturn<LoteProducaoFormValues>
@@ -33,9 +30,6 @@ interface EnfestoFormProps {
   onRemove: (index: number) => void
   canRemove?: boolean
   addItemPart?: boolean
-  submittingUpdate: boolean;
-  handleSubmitAdicionarItens?: (qtdFolhas: number) => Promise<void>
-  limparEnfestos?: () => void
 }
 
 export function EnfestoForm({
@@ -46,20 +40,11 @@ export function EnfestoForm({
   onRemove,
   canRemove,
   addItemPart,
-  submittingUpdate,
-  handleSubmitAdicionarItens,
-  limparEnfestos,
 }: EnfestoFormProps) {
   const [showGradeEdicao, setShowGradeEdicao] = useState(false)
 
   const materiaisRaw = form.watch("materiais") || []
   const materiais = Array.isArray(materiaisRaw) ? materiaisRaw : [];
-
-
-  const {
-    handleEditLote, isSubmitting
-  } = useProducaoActions();
-
   const { data: produtosResponse } = useProdutos()
   const { data: tamanhosResponse } = useTamanhos()
 
@@ -314,67 +299,6 @@ export function EnfestoForm({
             )}
           </>
         )}
-
-        <CardFooter className="flex justify-end p-0">
-
-          {addItemPart ?
-            (
-              <div className="flex justify-end gap-3 w-full">
-                <Button type="button" variant="outline" onClick={limparEnfestos}>
-                  <RotateCcw className="mr-1.5 size-4" />
-                  Limpar
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    if (!enfesto.corId) {
-                      toast.error("Por favor, selecione uma cor antes de adicionar à grade.")
-                      return
-                    }
-                    if (!enfesto.qtdFolhas || enfesto.qtdFolhas <= 0) {
-                      toast.error("Por favor, informe a quantidade de folhas (deve ser maior que 0).")
-                      return
-                    }
-                    if (!enfesto.itens || enfesto.itens.length === 0) {
-                      toast.error("Por favor, adicione ao menos um item à grade antes de salvar.")
-                      return
-                    }
-                    handleSubmitAdicionarItens?.(enfesto.qtdFolhas)
-                  }}
-                  disabled={isSubmitting}
-                >
-                  <PackagePlus className="mr-1.5 size-4" />
-                  {isSubmitting ? <Spinner /> : "Adicionar à Grade"}
-                </Button>
-              </div>
-            )
-            :
-            (
-              <Button type="submit" disabled={isSubmitting}
-                onClick={() => {
-                  if (!enfesto.corId) {
-                    toast.error("Por favor, selecione uma cor antes de atualizar o lote.")
-                    return
-                  }
-                  handleEditLote(form.getValues("id"), {
-                    enfestos: [
-                      {
-                        corId: enfesto.corId,
-                        qtdFolhas: enfesto.qtdFolhas,
-                        rolosProducao: enfesto.rolosProducao,
-                        itens: enfesto.itens
-                      }
-                    ]
-                  })
-                }}
-              >
-                <Pencil className="mr-1.5 size-4" />
-                {isSubmitting ? <Spinner /> : "Atualizar Lote"}
-              </Button>
-            )}
-
-
-        </CardFooter>
 
       </CardContent>
     </Card>

@@ -1,7 +1,7 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { useFormContext, UseFormReturn } from "react-hook-form"
+import { useState } from "react"
+import { UseFormReturn } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
@@ -11,13 +11,13 @@ import { Separator } from "@/components/ui/separator"
 
 import { Plus, RotateCcw, PackagePlus } from "lucide-react"
 
-import { CircleColorView } from "@/components/ui/circle-color-view"
 import { EnfestoForm } from "@/components/Forms/LoteProducao/components/enfesto-form"
 
 import { LoteProducaoFormValues } from "@/schemas/LoteProducao/lote-producao-schemas"
 import { Enfesto } from "@/components/Forms/LoteProducao/interface-lote-form"
 import { useProducaoActions } from "@/hooks/use-Producao-actions"
 import { toast } from "sonner"
+import { Spinner } from "@/components/ui/spinner"
 
 function createFreshEnfesto(): Enfesto {
   return {
@@ -41,8 +41,11 @@ export const AddItemEnfestoForm = ({
 }: AddItemEnfestoFormProps) => {
 
   const {
-    handleAdicionarItens
+    handleAdicionarItens,
+    isSubmitting,
   } = useProducaoActions();
+
+  const isLoading = isSubmitting || submittingAdd
 
   const [enfestosNewItens, setEnfestosNewItens] = useState<Enfesto[]>([{
     corId: "",
@@ -71,7 +74,7 @@ export const AddItemEnfestoForm = ({
     setEnfestosNewItens([])
   }
 
-  async function handleSubmitAdicionarItens(qtdFolhas: number) {
+  async function handleSubmitAdicionarItens() {
     const loteId = form.getValues("id")
 
     if (!loteId) {
@@ -150,9 +153,6 @@ export const AddItemEnfestoForm = ({
                     form={form}
                     canRemove={enfestosNewItens.length > 1}
                     addItemPart={true}
-                    submittingUpdate={submittingAdd}
-                    handleSubmitAdicionarItens={handleSubmitAdicionarItens}
-                    limparEnfestos={limparEnfestos}
                   />
                 </CarouselItem>
               ))}
@@ -165,6 +165,17 @@ export const AddItemEnfestoForm = ({
         <Separator />
 
       </CardContent>
+
+      <CardFooter className="flex justify-end gap-3">
+        <Button type="button" variant="outline" onClick={limparEnfestos} disabled={isLoading}>
+          <RotateCcw className="mr-1.5 size-4" />
+          Limpar
+        </Button>
+        <Button type="button" onClick={handleSubmitAdicionarItens} disabled={isLoading}>
+          <PackagePlus className="mr-1.5 size-4" />
+          {isLoading ? <Spinner /> : "Adicionar à Grade"}
+        </Button>
+      </CardFooter>
     </Card>
   )
 }
