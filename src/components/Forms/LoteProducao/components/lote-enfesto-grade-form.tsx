@@ -2,10 +2,11 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AddItemEnfestoForm } from "../subForms/addItemEnfestoForm"
 import { EnfestoEditarForm } from "../subForms/editarEnfestoForm"
-import { PackagePlus, Pencil } from "lucide-react";
+import { PackagePlus, Pencil, Table2 } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { LoteProducaoFormValues } from "@/schemas/LoteProducao/lote-producao-schemas";
 import React from "react";
+import { GradeTotalPorCorTabs } from "./grade-total-por-cor-tabs";
 
 
 
@@ -35,12 +36,12 @@ export function LoteEnfestoGradeForm({ form, submitting }: LoteEnfestoGradeFormP
   const podeAdicionarItens = !todasCoresComGrade
 
   React.useEffect(() => {
-    if (!podeAdicionarItens && activeTab !== "editar") {
+    if (!podeAdicionarItens && activeTab === "adicionar") {
       setActiveTab("editar")
       return
     }
 
-    if (podeAdicionarItens && !hasGrade && activeTab !== "adicionar") {
+    if (podeAdicionarItens && !hasGrade && activeTab === "editar") {
       setActiveTab("adicionar")
     }
   }, [hasGrade, activeTab, podeAdicionarItens])
@@ -51,7 +52,7 @@ export function LoteEnfestoGradeForm({ form, submitting }: LoteEnfestoGradeFormP
 
       {/* Tabs: Editar vs Adicionar */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className={`grid w-full ${podeAdicionarItens ? "grid-cols-2" : "grid-cols-1"}`}>
+        <TabsList className={`grid w-full ${podeAdicionarItens ? "grid-cols-3" : "grid-cols-2"}`}>
           <TabsTrigger value="editar" className="flex items-center gap-2">
             <Pencil className="size-4" />
             Editar Grade Existente
@@ -62,6 +63,10 @@ export function LoteEnfestoGradeForm({ form, submitting }: LoteEnfestoGradeFormP
               Adicionar Novos Itens
             </TabsTrigger>
           )}
+          <TabsTrigger value="resumo" className="flex items-center gap-2">
+            <Table2 className="size-4" />
+            Resumo Por Cor
+          </TabsTrigger>
         </TabsList>
 
         {/* Tab: Editar Grade Existente (PUT) */}
@@ -78,6 +83,10 @@ export function LoteEnfestoGradeForm({ form, submitting }: LoteEnfestoGradeFormP
             <AddItemEnfestoForm form={form} submittingAdd={submitting}  />
           </TabsContent>
         )}
+
+        <TabsContent value="resumo" className="flex flex-col gap-6 mt-6">
+          <GradeTotalPorCorTabs form={form} />
+        </TabsContent>
       </Tabs>
     </div>
   )

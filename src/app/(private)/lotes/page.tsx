@@ -2,6 +2,7 @@
 
 
 import { LoteProducaoTable } from "@/components/DataTable/Tables/LoteProducao/table";
+import { ResumoGradePorCorTabs } from "@/components/DataTable/Tables/LoteProducao/resumo-grade-por-cor-tabs";
 import { RemoveItemWarning } from "@/components/ErrorManagementComponent/WarnningRemoveItem";
 import { LoteProducaoAccordionForm } from "@/components/Forms/LoteProducao/accordion-lote-form";
 import { CreateLoteForm } from "@/components/Forms/LoteProducao/subForms/createLoteForm";
@@ -9,6 +10,7 @@ import { MobileViewLoteProducao } from "@/components/MobileViewCards/LoteProduca
 import { BaseModal } from "@/components/Modal/base-modal";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useColaboradores } from "@/hooks/queries/useColaboradores";
 import {
   ApiLoteProducaoResponse,
@@ -131,15 +133,52 @@ export default function Lotes() {
 
   return (
     <main className="space-y-6">
-      <div className="flex justify-between items-center mb-6">
-        <div className="text-sm text-muted-foreground p-4 items-center">
-          {dataLote?.length || 0} lotes cadastrados
+      <Tabs defaultValue="lotes-cadastrados" className="w-full">
+        <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:justify-between sm:items-center">
+          <TabsList className="w-full flex-col h-auto sm:w-auto sm:flex-row sm:h-10">
+            <TabsTrigger value="lotes-cadastrados" className="w-full justify-center sm:w-auto text-xs sm:text-sm">
+              Lotes Cadastrados
+            </TabsTrigger>
+            <TabsTrigger value="resumo-grade-por-cor" className="w-full justify-center sm:w-auto text-xs sm:text-sm">
+              Resumo Grade por Cor
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="flex items-center justify-between gap-3 w-full sm:w-auto">
+            <div className="text-sm text-muted-foreground">
+              {dataLote?.length || 0} lotes cadastrados
+            </div>
+            <Button onClick={() => setOpenCreateFormModal(true)}>
+              <PlusIcon className="size-4" />
+              Novo Lote
+            </Button>
+          </div>
         </div>
-        <Button onClick={() => setOpenCreateFormModal(true)}>
-          <PlusIcon className="size-4" />
-          Novo Lote
-        </Button>
-      </div>
+
+        <TabsContent value="lotes-cadastrados">
+          <div className="hidden md:block">
+            <LoteProducaoTable
+              lotesProducao={dataLote}
+              isLoading={isLoading || isDeleting}
+              onView={handleEdit}
+              onRemove={handleRemove}
+            />
+          </div>
+
+          <div className="block md:hidden">
+            <MobileViewLoteProducao
+              lotesProducao={dataLote}
+              isLoading={isLoading || isDeleting}
+              onView={handleEdit}
+              onRemove={handleRemove}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="resumo-grade-por-cor">
+          <ResumoGradePorCorTabs lotes={dataLote} />
+        </TabsContent>
+      </Tabs>
 
 
 
@@ -181,24 +220,6 @@ export default function Lotes() {
           setIsRemoveOpen(false);
         }}
       />
-
-      <div className="hidden md:block">
-        <LoteProducaoTable
-          lotesProducao={dataLote}
-          isLoading={isLoading || isDeleting}
-          onView={handleEdit}
-          onRemove={handleRemove}
-        />
-      </div>
-
-      <div className="block md:hidden">
-        <MobileViewLoteProducao
-          lotesProducao={dataLote}
-          isLoading={isLoading || isDeleting}
-          onView={handleEdit}
-          onRemove={handleRemove}
-        />
-      </div>
 
     </main>
   );
