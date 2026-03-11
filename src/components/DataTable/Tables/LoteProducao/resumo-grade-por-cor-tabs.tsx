@@ -2,7 +2,6 @@
 
 import React from "react";
 import { ApiLoteProducaoResponse } from "@/hooks/queries/useProducao";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -13,6 +12,13 @@ import {
 } from "@/components/ui/table";
 import { CircleColorView } from "@/components/ui/circle-color-view";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type ProductMeta = {
   nome: string;
@@ -261,6 +267,12 @@ export function ResumoGradePorCorTabs({ lotes }: ResumoGradePorCorTabsProps) {
   }, [lotes]);
 
   const hasAnyData = getGrandTotal(totalAggregate) > 0;
+  const [selectedColorKey, setSelectedColorKey] = React.useState<string>("all");
+
+  const colorAggregatesFiltrados = React.useMemo(() => {
+    if (selectedColorKey === "all") return colorAggregates;
+    return colorAggregates.filter((color) => color.key === selectedColorKey);
+  }, [colorAggregates, selectedColorKey]);
 
   if (!hasAnyData) {
     return (
@@ -274,27 +286,55 @@ export function ResumoGradePorCorTabs({ lotes }: ResumoGradePorCorTabsProps) {
     <div className="flex flex-col gap-4">
       <Badge variant="outline">Quantidade real = qtdFolhas x quantidadePlanejada</Badge>
 
-      <Tabs defaultValue="total-geral" className="w-full">
-        <TabsList className="flex w-full justify-start gap-1 overflow-x-auto">
-          <TabsTrigger value="total-geral">Total Geral</TabsTrigger>
-          {colorAggregates.map((color) => (
-            <TabsTrigger key={color.key} value={`color-${color.key}`} className="gap-2">
-              <CircleColorView color={color.color} height={14} width={14} />
-              {color.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        <TabsContent value="total-geral" className="mt-4">
+      <div className="space-y-6">
+        <section className="space-y-3">
+          <h4 className="text-sm font-semibold">Total Geral</h4>
           <AggregateTable aggregate={totalAggregate} />
-        </TabsContent>
+        </section>
 
-        {colorAggregates.map((color) => (
-          <TabsContent key={color.key} value={`color-${color.key}`} className="mt-4">
-            <AggregateTable aggregate={color} />
-          </TabsContent>
-        ))}
-      </Tabs>
+        <section className="space-y-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h4 className="text-sm font-semibold">Resumo por cor</h4>
+            <div className="w-full sm:w-72">
+              <Select value={selectedColorKey} onValueChange={setSelectedColorKey}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filtrar por cor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as cores</SelectItem>
+                  {colorAggregates.map((color) => (
+                    <SelectItem key={color.key} value={color.key}>
+                      {color.label} ({getGrandTotal(color)} pecas)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {colorAggregatesFiltrados.length === 0 ? (
+            <p className="text-sm text-muted-foreground italic py-2">
+              Nenhuma cor encontrada para o filtro selecionado.
+            </p>
+          ) : (
+            <div className="space-y-5">
+              {colorAggregatesFiltrados.map((color) => (
+                <section key={color.key} className="space-y-3 rounded-lg border p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <CircleColorView color={color.color} height={14} width={14} />
+                      <h5 className="text-sm font-semibold">{color.label}</h5>
+                    </div>
+                    <Badge variant="secondary">{getGrandTotal(color)} pecas</Badge>
+                  </div>
+
+                  <AggregateTable aggregate={color} />
+                </section>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }
