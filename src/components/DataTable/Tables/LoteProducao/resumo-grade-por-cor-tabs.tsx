@@ -138,7 +138,13 @@ function AggregateTable({ aggregate }: { aggregate: Aggregate }) {
     [aggregate],
   );
 
-  if (products.length === 0 || sizes.length === 0) {
+  // Exibe apenas tamanhos com total > 0 para evitar cabecalhos vazios como PP sem valor.
+  const sizesComValor = React.useMemo(
+    () => sizes.filter(([sizeId]) => getSizeTotal(aggregate, sizeId) > 0),
+    [aggregate, sizes],
+  );
+
+  if (products.length === 0 || sizesComValor.length === 0) {
     return (
       <p className="text-sm text-muted-foreground italic py-2">
         Sem dados de grade para esta seleção.
@@ -152,7 +158,7 @@ function AggregateTable({ aggregate }: { aggregate: Aggregate }) {
         <TableHeader>
           <TableRow className="bg-muted/50">
             <TableHead className="min-w-44 font-semibold">Produto</TableHead>
-            {sizes.map(([sizeId, size]) => (
+            {sizesComValor.map(([sizeId, size]) => (
               <TableHead key={sizeId} className="text-center min-w-20 font-semibold">
                 {size.nome}
               </TableHead>
@@ -171,7 +177,7 @@ function AggregateTable({ aggregate }: { aggregate: Aggregate }) {
                 </div>
               </TableCell>
 
-              {sizes.map(([sizeId]) => (
+              {sizesComValor.map(([sizeId]) => (
                 <TableCell key={sizeId} className="text-center text-sm tabular-nums">
                   {getCellValue(aggregate, productId, sizeId)}
                 </TableCell>
@@ -185,7 +191,7 @@ function AggregateTable({ aggregate }: { aggregate: Aggregate }) {
 
           <TableRow className="bg-muted/30 font-semibold">
             <TableCell className="text-sm">Total</TableCell>
-            {sizes.map(([sizeId]) => (
+            {sizesComValor.map(([sizeId]) => (
               <TableCell key={sizeId} className="text-center text-sm tabular-nums">
                 {getSizeTotal(aggregate, sizeId)}
               </TableCell>
@@ -256,9 +262,9 @@ export function ResumoGradePorCorTabs({ lotes }: ResumoGradePorCorTabsProps) {
       });
     });
 
-    const colors = Array.from(byColor.values()).sort((a, b) =>
-      a.label.localeCompare(b.label, "pt-BR", { sensitivity: "base" }),
-    );
+    const colors = Array.from(byColor.values())
+      .filter((aggregate) => getGrandTotal(aggregate) > 0)
+      .sort((a, b) => a.label.localeCompare(b.label, "pt-BR", { sensitivity: "base" }));
 
     return {
       totalAggregate: total,

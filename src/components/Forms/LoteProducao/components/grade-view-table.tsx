@@ -60,6 +60,11 @@ export function GradeViewTable({
     )
   }
 
+  // Mostra apenas tamanhos que possuem total > 0 na grade atual.
+  const tamanhosComValor = tamanhosOrdenados.filter(
+    (tamanho) => getTotalTamanho(tamanho.id) > 0
+  )
+
   function getTotalGeral(): number {
     // Soma a partir dos totais exibidos por produto para evitar
     // inflar resultado quando o array de itens vier com duplicidades.
@@ -76,7 +81,7 @@ export function GradeViewTable({
         <span className="text-xs text-muted-foreground">Qtd. Folhas: {qtdFolhasValidada}</span>
       </div>
 
-      {produtosSelecionadosUnicos.length === 0 ? (
+      {produtosSelecionadosUnicos.length === 0 || tamanhosComValor.length === 0 ? (
         <p className="text-sm text-muted-foreground italic py-2">
           Nenhum produto adicionado para visualizar a grade.
         </p>
@@ -86,7 +91,7 @@ export function GradeViewTable({
             <TableHeader>
               <TableRow className="bg-muted/50">
                 <TableHead className="min-w-40 font-semibold">Produto</TableHead>
-                {tamanhosOrdenados.map((tamanho) => (
+                {tamanhosComValor.map((tamanho) => (
                   <TableHead key={tamanho.id} className="text-center min-w-18 font-semibold">
                     {tamanho.label}
                   </TableHead>
@@ -109,7 +114,7 @@ export function GradeViewTable({
                       </div>
                     </TableCell>
 
-                    {tamanhosOrdenados.map((tamanho) => {
+                    {tamanhosComValor.map((tamanho) => {
                       const planejado = getQuantidadePlanejada(produtoId, tamanho.id)
                       const calculado = planejado * qtdFolhasValidada
 
@@ -134,7 +139,7 @@ export function GradeViewTable({
 
               <TableRow className="bg-muted/30 font-semibold">
                 <TableCell className="text-sm">Total</TableCell>
-                {tamanhosOrdenados.map((tamanho) => (
+                {tamanhosComValor.map((tamanho) => (
                   <TableCell key={tamanho.id} className="text-center text-sm tabular-nums">
                     {getTotalTamanho(tamanho.id)}
                   </TableCell>
