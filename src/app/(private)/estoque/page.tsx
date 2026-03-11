@@ -14,20 +14,36 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResumeStockTable } from "@/components/DataTable/Tables/Estoque/resume-table";
 import { MobileViewStock } from "@/components/MobileViewCards/StockCard/stock-card";
 import { MobileViewStockResume } from "@/components/MobileViewCards/StockCard/stock-card-resume";
-import { useAtualizarEstoqueTecido, useCriarEstoqueTecido, useCriarMovimentacaoEstoque, useDeletarEstoqueTecido, useEstoqueTecidos, useMovimentacaoEstoque, useMovimentacoesEstoque, useRelatorioEstoque } from "@/hooks/queries/useEstoque";
+import { EstoqueRolo, useAtualizarEstoqueTecido, useCriarEstoqueTecido, useEstoqueTecidos, useMovimentacoesEstoque, useRelatorioEstoque } from "@/hooks/queries/useEstoque";
 import { useCores, useTecidos } from "@/hooks/queries/useMateriais";
 import { MovementStockTable } from "@/components/DataTable/Tables/Estoque/MovimentacaoEstoque/table";
 import { MobileViewStockMovement } from "@/components/MobileViewCards/StockCard/stock-card-movement";
-import { useAuth } from "@/hooks/use-auth";
-import { useColaboradores } from "@/hooks/queries/useColaboradores";
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
-import { use, useEffect } from "react";
+
+const getTodayDate = () => new Date().toISOString().split("T")[0];
+
+const normalizeSituacaoForApi = (situacao: RoloTecidoFormValues["situacao"]) => {
+  if (situacao === "esgotado") return "descartado" as const;
+  if (!situacao) return "disponivel" as const;
+  return situacao;
+};
+
+const normalizeSituacaoForForm = (situacao: string): RoloTecidoFormValues["situacao"] => {
+  if (situacao === "esgotado") return "descartado";
+  if (situacao === "disponivel" || situacao === "reservado" || situacao === "em_uso" || situacao === "descartado") {
+    return situacao;
+  }
+  return "disponivel";
+};
 
 const initialValues: RoloTecidoFormValues = {
   tecidoId: "",
+  prefixo: "",
+  dataLote: getTodayDate(),
+  rolos: [{ pesoInicialKg: 0 }],
   codigoBarraRolo: "",
   pesoAtualKg: 0,
-  situacao: "",
+  situacao: "disponivel",
 };
 
 export default function Estoque() {
@@ -46,19 +62,8 @@ export default function Estoque() {
   const { data: movimentacoesData } = useMovimentacoesEstoque();
   const movimentacoes = movimentacoesData || [];
 
-  const { user } = useAuth();
-
-  const { data: colaboradoresData } = useColaboradores({
-    userPerfil: user.perfil as 'ADM' | 'GERENTE' | 'FUNCIONARIO',
-    excludeUserId: user.id,
-  });
-
-  const usuarios = colaboradoresData?.data || [];
-
-
   const { mutate: criar, isPending: isCreating } = useCriarEstoqueTecido();
   const { mutate: atualizar, isPending: isUpdating } = useAtualizarEstoqueTecido();
-  const { mutate: deletar } = useDeletarEstoqueTecido();
 
   const form = useForm<RoloTecidoFormValues>({
     resolver: zodResolver(roloTecidoSchema),
@@ -73,46 +78,45 @@ export default function Estoque() {
     handleOpen,
     handleEdit,
     onSubmit,
-    isSubmitting,
-    handleClose } = useFormModal({
+    handleClose,
+  } = useFormModal<RoloTecidoFormValues, EstoqueRolo>({
       initialValues,
       form,
+      transformItemToForm: (item) => ({
+        tecidoId: item.tecidoId,
+        prefixo: item.codigoBarraRolo?.split("-")[0] || "ROL",
+        dataLote: item.createdAt?.split("T")[0] || getTodayDate(),
+        rolos: [{ pesoInicialKg: parseNumber(item.pesoInicialKg) }],
+        codigoBarraRolo: item.codigoBarraRolo,
+        pesoAtualKg: parseNumber(item.pesoAtualKg),
+        situacao: normalizeSituacaoForForm(item.situacao),
+      }),
       onSave: (values, id) => {
         if (id) {
           atualizar({
             id,
             pesoAtualKg: parseNumber(values.pesoAtualKg),
-            situacao: values.situacao as 'disponivel' | 'reservado' | 'em_uso' | 'descartado',
+            situacao: normalizeSituacaoForApi(values.situacao),
           });
         } else {
           criar({
             tecidoId: values.tecidoId,
-            codigoBarraRolo: values.codigoBarraRolo,
-            pesoInicialKg: parseNumber(values.pesoAtualKg),
-            pesoAtualKg: parseNumber(values.pesoAtualKg),
-            situacao: values.situacao as 'disponivel' | 'reservado' | 'em_uso' | 'descartado',
+            prefixo: values.prefixo.trim().toUpperCase(),
+            situacao: normalizeSituacaoForApi(values.situacao),
+            dataLote: values.dataLote,
+            rolos: values.rolos.map((rolo) => ({
+              pesoInicialKg: parseNumber(rolo.pesoInicialKg),
+            })),
           });
         }
       }
     });
 
-      useEffect(() => {
-        if (editingItem) {
-          form.reset({
-            ...editingItem,
-            tecidoId: form.getValues("tecidoId"),
-            codigoBarraRolo: form.getValues("codigoBarraRolo"),
-            pesoAtualKg: parseNumber(form.getValues("pesoAtualKg")),
-            situacao: form.getValues("situacao") as 'disponivel' | 'reservado' | 'em_uso' | 'descartado',
-          } as RoloTecidoFormValues);
-        }
-      }, [editingItem]);
-
   return (
     <main>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <MetricCard
-          title="Rolos Disponíveis"
+          title="Total de Rolos"
           value={`${estoqueAgrupadoData?.totalRolos} rolos`}
           icon={Package}
           variant="primary"
@@ -124,7 +128,7 @@ export default function Estoque() {
           variant="success"
         />
         <MetricCard
-          title="TRolos Disponíveis"
+          title="Rolos Disponíveis"
           value={`${estoqueAgrupadoData?.rolosDisponíveis} Disponíveis`}
           icon={Layers}
           variant="default"
@@ -140,18 +144,18 @@ export default function Estoque() {
           <FormModal
             open={isOpen}
             onClose={handleClose}
-            title={editingItem ? 'Editar Tecido' : "Novo Tecido"}
+            title={editingItem ? 'Editar Rolo' : "Novo Lote de Rolos"}
             onSubmit={onSubmit}
-            loading={isSubmitting}
+            loading={isCreating || isUpdating}
             isViewSaveOrCancel={true}
             trigger={
               <Button onClick={handleOpen} >
-                <Plus className="mr-2 h-4 w-4" /> Novo Tecido
+                <Plus className="mr-2 h-4 w-4" /> Novo Lote
               </Button>
             }
           >
             <Form {...form} >
-              <StockFabricForm tecidos={tecidos} cores={cores} />
+              <StockFabricForm tecidos={tecidos} cores={cores} isEditing={!!editingItem} />
             </Form>
           </FormModal>
 

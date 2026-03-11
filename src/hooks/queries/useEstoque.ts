@@ -18,6 +18,8 @@ interface RelatorioEstoque {
     movimentacoesMes: number;
 }
 
+type SituacaoRolo = 'disponivel' | 'reservado' | 'em_uso' | 'descartado' | 'esgotado';
+
 interface EstoqueTecidoListResponse {
     data: EstoqueTecido[];
     pagination: PaginatedResponse;
@@ -83,11 +85,21 @@ export interface EstoqueRolo {
     codigoBarraRolo: string;
     pesoInicialKg: string;
     pesoAtualKg: string;
-    situacao: 'disponivel' | 'reservado' | 'esgotado' | string;
+    situacao: SituacaoRolo | string;
     createdAt: string;
     updatedAt: string;
     tecido: Tecido;
     movimentacoes: Movimentacao[];
+}
+
+interface CriarEstoqueLotePayload {
+    tecidoId: string;
+    prefixo: string;
+    situacao: Exclude<SituacaoRolo, 'esgotado'>;
+    dataLote: string;
+    rolos: Array<{
+        pesoInicialKg: number;
+    }>;
 }
 
 // ============ ESTOQUE ROLOS ============
@@ -124,19 +136,13 @@ export const useCriarEstoqueTecido = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (dados: {
-            tecidoId: string;
-            codigoBarraRolo: string;
-            pesoInicialKg: number;
-            pesoAtualKg: number;
-            situacao: 'disponivel' | 'reservado' | 'em_uso' | 'descartado';
-        }) => {
-            const { data } = await apiClient.post<EstoqueTecido>('/estoque-rolos', dados);
+        mutationFn: async (dados: CriarEstoqueLotePayload) => {
+            const { data } = await apiClient.post<EstoqueTecido | EstoqueTecido[]>('/estoque-rolos', dados);
             return data;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['estoque-rolos'] });
-            toast.success('Rolo adicionado ao estoque com sucesso!');
+            toast.success('Rolos adicionados ao estoque com sucesso!');
         },
         onError: (error: any) => {
             toast.error(error.response?.data?.error || 'Erro ao adicionar rolo ao estoque');
@@ -146,7 +152,7 @@ export const useCriarEstoqueTecido = () => {
 
 interface AtualizarEstoqueTecidoBody {
     pesoAtualKg: number;
-    situacao: "disponivel" | "reservado" | "em_uso" | "descartado";
+    situacao: SituacaoRolo;
 }
 
 export const useAtualizarEstoqueTecido = () => {

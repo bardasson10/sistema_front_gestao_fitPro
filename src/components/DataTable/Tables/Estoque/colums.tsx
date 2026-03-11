@@ -55,8 +55,9 @@ export const getStockColumns = (
           em_uso: { label: 'Em Uso', type: 'neutral' as const },
           utilizado: { label: 'Utilizado', type: 'neutral' as const },
           esgotado: { label: 'Esgotado', type: 'danger' as const },
+          descartado: { label: 'Descartado', type: 'danger' as const },
         };
-        const status = statusMap[row.original.situacao as keyof typeof statusMap];
+        const status = statusMap[row.original.situacao as keyof typeof statusMap] || { label: row.original.situacao, type: 'neutral' as const };
         return <StatusBadge status={status.type}>{status.label}</StatusBadge>
       }
     },
