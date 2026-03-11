@@ -61,7 +61,12 @@ export function GradeViewTable({
   }
 
   function getTotalGeral(): number {
-    return itens.reduce((sum, item) => sum + (item.quantidadePlanejada * qtdFolhasValidada), 0)
+    // Soma a partir dos totais exibidos por produto para evitar
+    // inflar resultado quando o array de itens vier com duplicidades.
+    return produtosSelecionadosUnicos.reduce(
+      (sum, produtoId) => sum + getTotalProduto(produtoId),
+      0
+    )
   }
 
   return (
