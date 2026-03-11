@@ -6,6 +6,7 @@ import { EnfestoEditarForm } from "../subForms/editarEnfestoForm"
 import { PackagePlus, Pencil, Table2 } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { LoteProducaoFormValues } from "@/schemas/LoteProducao/lote-producao-schemas";
+import { GradeTotalPorCorTabs } from "./grade-total-por-cor-tabs";
 
 
 
@@ -80,9 +81,13 @@ export function LoteEnfestoGradeForm({ form, submitting }: LoteEnfestoGradeFormP
         {/* Tab: Adicionar Novos Itens (POST) */}
         {podeAdicionarItens && (
           <TabsContent value="adicionar" className="flex flex-col gap-6 mt-6">
-            <AddItemEnfestoForm form={form} submittingAdd={submitting}  />
+            <AddItemEnfestoForm form={form} submittingAdd={submitting} />
           </TabsContent>
         )}
+
+        <TabsContent value="resumo" className="flex flex-col gap-6 mt-6">
+          <GradeTotalPorCorTabs form={form} />
+        </TabsContent>
 
       </Tabs>
     </div>
