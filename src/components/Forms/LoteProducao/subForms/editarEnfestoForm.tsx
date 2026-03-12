@@ -36,21 +36,35 @@ export const EnfestoEditarForm = ({
   const loteId = form.watch("id")
 
   const mapFormToEnfestos = () => {
-    return (form.getValues("materiais") || []).flatMap((m) => (m.cores || []).map<Enfesto>((c) => ({
-      corId: c.id,
-      qtdFolhas: c.qtdFolhas || 0,
-      rolosProducao: (c.rolos || []).map((r) => ({ estoqueRoloId: r.id, pesoReservado: r.pesoReservado })),
-      produtosSelecionados: Array.from(new Set((c.gradeLote || []).map((g) => g.produtoId))),
-      itens: (c.gradeLote || []).map((g) => ({
-        id: g.id,
-        produtoId: g.produtoId,
-        tamanhoId: g.tamanhoId,
-        quantidadePlanejada: g.quantidadePlanejada,
-        produtoNome: g.produtoNome,
-        sku: g.sku,
-        tamanhoNome: g.tamanhoNome,
-      })),
-    })))
+    return (form.getValues("materiais") || []).flatMap((m) =>
+      (m.cores || []).map<Enfesto>((c) => {
+        const qtdFolhas = Number(c.qtdFolhas || 0)
+
+        return {
+          corId: c.id,
+          qtdFolhas,
+          rolosProducao: (c.rolos || []).map((r) => ({ estoqueRoloId: r.id, pesoReservado: r.pesoReservado })),
+          produtosSelecionados: Array.from(new Set((c.gradeLote || []).map((g) => g.produtoId))),
+          itens: (c.gradeLote || []).map((g) => {
+            const quantidadePlanejada = Number(g.quantidadePlanejada || 0)
+            const qtdMultiplicadorGrade = Number(
+              g.qtdMultiplicadorGrade ?? (qtdFolhas > 0 ? quantidadePlanejada / qtdFolhas : 0),
+            )
+
+            return {
+              id: g.id,
+              produtoId: g.produtoId,
+              tamanhoId: g.tamanhoId,
+              qtdMultiplicadorGrade,
+              quantidadePlanejada,
+              produtoNome: g.produtoNome,
+              sku: g.sku,
+              tamanhoNome: g.tamanhoNome,
+            }
+          }),
+        }
+      }),
+    )
   }
 
   useEffect(() => {

@@ -156,7 +156,7 @@ export const LoteProducaoTableGrade = ({
           payload.push({
             produtoId: row.produtoId,
             tamanhoId: tamanho.id,
-            quantidadePlanejada: qtd,
+            qtdMultiplicadorGrade: qtd,
             corId,
             estoqueRoloId: row.roloId,
           });

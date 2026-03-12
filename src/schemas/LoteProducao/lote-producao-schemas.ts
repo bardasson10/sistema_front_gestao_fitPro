@@ -1,5 +1,4 @@
 import * as z from "zod";
-import { id } from "zod/v4/locales";
 
 const loteResponsavelSchema = z.object({
   id: z.string(),
@@ -19,6 +18,7 @@ const gradeLoteItemSchema = z.object({
   id: z.string(),
   produtoId: z.string(),
   tamanhoId: z.string(),
+  qtdMultiplicadorGrade: z.number(),
   quantidadePlanejada: z.number(),
   produtoNome: z.string(),
   sku: z.string(),

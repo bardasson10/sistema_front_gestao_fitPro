@@ -19,11 +19,12 @@ export type MaterialRoloSelect = {
   codigoBarraRolo: string
 }
 
-// Grade: chave = "produtoId::tamanhoId", valor = quantidade planejada
+// Grade: chave = "produtoId::tamanhoId", valor digitado = qtdMultiplicadorGrade
 export interface GradeLote {
   id: string
   produtoId: string
   tamanhoId: string
+  qtdMultiplicadorGrade: number
   quantidadePlanejada: number
   produtoNome: string
   sku: string

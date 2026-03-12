@@ -34,13 +34,16 @@ export const getLoteProducaoColumns = (
     id: 'produtos',
     header: 'Produtos',
     cell: ({ row }) => {
-      // Calcular total de peças por cor: (qtdFolhas * quantidadePlanejada) para cada item
+      // A API já retorna quantidadePlanejada calculada; mantém fallback para payloads legados.
       const totalPecas = row.original.materiais?.reduce((materialAcc, material) => {
         return materialAcc + (material.cores?.reduce((corAcc, cor) => {
           const qtdFolhas = cor.qtdFolhas || 0;
-          // Para cada cor: somar (qtdFolhas * quantidadePlanejada) de todos os itens de gradeLote
           const pecasPorCor = cor.gradeLote?.reduce((itemAcc, item) => {
-            return itemAcc + (qtdFolhas * (item.quantidadePlanejada || 0));
+            const quantidadePlanejada = Number(item.quantidadePlanejada || 0);
+            const qtdMultiplicadorGrade = Number(item.qtdMultiplicadorGrade || 0);
+            return itemAcc + (quantidadePlanejada > 0
+              ? quantidadePlanejada
+              : qtdFolhas * qtdMultiplicadorGrade);
           }, 0) || 0;
           return corAcc + pecasPorCor;
         }, 0) || 0);

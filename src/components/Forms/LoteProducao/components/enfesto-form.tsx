@@ -29,7 +29,6 @@ interface EnfestoFormProps {
   onChange: (index: number, enfesto: Enfesto) => void
   onRemove: (index: number) => void
   canRemove?: boolean
-  addItemPart?: boolean
 }
 
 export function EnfestoForm({
@@ -39,7 +38,6 @@ export function EnfestoForm({
   onChange,
   onRemove,
   canRemove,
-  addItemPart,
 }: EnfestoFormProps) {
   const [showGradeEdicao, setShowGradeEdicao] = useState(false)
 
@@ -68,9 +66,7 @@ export function EnfestoForm({
     new Map([...produtosDaGrade, ...produtosDoCatalogo].map((produto) => [produto.id, produto])).values()
   )
 
-  // Permite incluir novos produtos no catalogo geral no modo de adicao
-  // e tambem quando a grade de edicao estiver visivel.
-  const podeAdicionarProdutos = addItemPart || showGradeEdicao
+  const podeAdicionarProdutos = showGradeEdicao
   const produtosDisponiveisParaAdicionar = produtosApi.filter(
     (produto) => !(enfesto.produtosSelecionados || []).includes(produto.id)
   )
@@ -95,10 +91,7 @@ export function EnfestoForm({
 
   const coresDisponiveis = materiais.flatMap((material) => material.cores || [])
 
-  // Filtrar cores que já possuem grade quando addItemPart é true
-  const coresParaSelecionar = addItemPart
-    ? coresDisponiveis.filter((cor) => !cor.gradeLote || cor.gradeLote.length === 0)
-    : coresDisponiveis
+  const coresParaSelecionar = coresDisponiveis
 
   // Auto-selecionar cor quando há apenas 1 disponível
   useEffect(() => {
@@ -148,7 +141,7 @@ export function EnfestoForm({
           <div className="flex flex-col gap-2">
             <Label htmlFor={`enfesto-${index}-corId`}>Cor</Label>
             <Select
-            disabled={!addItemPart}
+            disabled
               value={enfesto.corId || ""}
               onValueChange={(value) => {
                 // Auto-selecionar o primeiro rolo quando cor for escolhida
@@ -211,7 +204,7 @@ export function EnfestoForm({
                 <Plus className="size-4" /> Adicionar Produtos à Grade
               </Label>
               <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full uppercase font-bold">
-                {addItemPart ? "Catálogo Geral" : "Modo Edição"}
+                Modo Edição
               </span>
             </div>
 
@@ -247,23 +240,6 @@ export function EnfestoForm({
 
         <Separator />
 
-        {addItemPart && (
-          <>
-            <GradeTable
-              produtosSelecionados={enfesto.produtosSelecionados || []}
-              produtos={produtos}
-              tamanhos={tamanhos}
-              itens={enfesto.itens || []}
-              enfestoIndex={index}
-              onProdutosChange={handleProdutosChange}
-              onGradeChange={handleGradeChange}
-              onRemoveProduto={handleRemoveProduto}
-            />
-
-            <Separator />
-          </>
-        )}
-
         <GradeViewTable
           produtosSelecionados={enfesto.produtosSelecionados || []}
           produtos={produtos}
@@ -272,33 +248,32 @@ export function EnfestoForm({
           qtdFolhas={enfesto.qtdFolhas || 0}
         />
 
-        {!addItemPart && (
-          <>
-            <div className="flex justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setShowGradeEdicao((current) => !current)}
-              >
-                {showGradeEdicao ? "Ocultar grade de edição" : "Mostrar grade de edição"}
-              </Button>
-            </div>
+        <>
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowGradeEdicao((current) => !current)}
+            >
+              {showGradeEdicao ? "Ocultar grade de edição" : "Mostrar grade de edição"}
+            </Button>
+          </div>
 
-            {showGradeEdicao && (
-              <GradeTable
-                produtosSelecionados={enfesto.produtosSelecionados || []}
-                produtos={produtos}
-                tamanhos={tamanhos}
-                itens={enfesto.itens || []}
-                enfestoIndex={index}
-                onProdutosChange={handleProdutosChange}
-                onGradeChange={handleGradeChange}
-                onRemoveProduto={handleRemoveProduto}
-              />
-            )}
-          </>
-        )}
+          {showGradeEdicao && (
+            <GradeTable
+              produtosSelecionados={enfesto.produtosSelecionados || []}
+              produtos={produtos}
+              tamanhos={tamanhos}
+              itens={enfesto.itens || []}
+              enfestoIndex={index}
+              qtdFolhas={enfesto.qtdFolhas || 0}
+              onProdutosChange={handleProdutosChange}
+              onGradeChange={handleGradeChange}
+              onRemoveProduto={handleRemoveProduto}
+            />
+          )}
+        </>
 
       </CardContent>
     </Card>

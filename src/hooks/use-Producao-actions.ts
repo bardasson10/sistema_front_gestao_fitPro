@@ -57,7 +57,7 @@ export function useProducaoActions() {
         itens: value.itens?.map(g => ({
           produtoId: g.produtoId!,
           tamanhoId: g.tamanhoId!,
-          quantidadePlanejada: g.quantidadePlanejada || 0,
+          qtdMultiplicadorGrade: g.qtdMultiplicadorGrade || 0,
         })) || [],
       }))
 
@@ -125,7 +125,7 @@ export function useProducaoActions() {
             itens: e.itens?.map(g => ({
               produtoId: g.produtoId!,
               tamanhoId: g.tamanhoId!,
-              quantidadePlanejada: g.quantidadePlanejada || 0,
+              qtdMultiplicadorGrade: g.qtdMultiplicadorGrade || 0,
             })) || []
           })) || []
       };

@@ -232,7 +232,10 @@ export function ResumoGradePorCorTabs({ lotes }: ResumoGradePorCorTabsProps) {
             const sizeNome = item.tamanhoNome || item.tamanho?.nome || "Tamanho";
             const sizeOrdem = Number(item.tamanho?.ordem || 999);
             const quantidadePlanejada = Number(item.quantidadePlanejada || 0);
-            const quantidadeReal = qtdFolhas * quantidadePlanejada;
+            const qtdMultiplicadorGrade = Number(item.qtdMultiplicadorGrade || 0);
+            const quantidadeReal = quantidadePlanejada > 0
+              ? quantidadePlanejada
+              : qtdFolhas * qtdMultiplicadorGrade;
 
             if (!productId || !sizeId) return;
 
@@ -290,7 +293,7 @@ export function ResumoGradePorCorTabs({ lotes }: ResumoGradePorCorTabsProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <Badge variant="outline">Quantidade real = qtdFolhas x quantidadePlanejada</Badge>
+      <Badge variant="outline">Quantidade planejada = qtdFolhas x qtdMultiplicadorGrade</Badge>
 
       <div className="space-y-6">
         <section className="space-y-3">

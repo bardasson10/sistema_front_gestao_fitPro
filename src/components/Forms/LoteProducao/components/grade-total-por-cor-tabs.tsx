@@ -212,7 +212,10 @@ export function GradeTotalPorCorTabs({ form }: GradeTotalPorCorTabsProps) {
           const sizeId = item.tamanhoId || "";
           const sizeNome = item.tamanhoNome || "Tamanho";
           const quantidadePlanejada = Number(item.quantidadePlanejada || 0);
-          const quantidadeReal = qtdFolhas * quantidadePlanejada;
+          const qtdMultiplicadorGrade = Number(item.qtdMultiplicadorGrade || 0);
+          const quantidadeReal = qtdMultiplicadorGrade > 0
+            ? qtdFolhas * qtdMultiplicadorGrade
+            : quantidadePlanejada;
 
           if (!productId || !sizeId) return;
 
@@ -262,7 +265,7 @@ export function GradeTotalPorCorTabs({ form }: GradeTotalPorCorTabsProps) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="outline">Quantidade real = qtdFolhas x quantidadePlanejada</Badge>
+        <Badge variant="outline">Quantidade real = qtdFolhas x qtdMultiplicadorGrade</Badge>
       </div>
 
       <Tabs defaultValue="total-geral" className="w-full">

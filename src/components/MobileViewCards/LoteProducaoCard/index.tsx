@@ -47,7 +47,18 @@ export const MobileViewLoteProducao = ({
       {Array.isArray(lotesProducao) && lotesProducao.map((lote) => {
         const statusInfo = statusMap[lote.status as keyof typeof statusMap] || statusMap.planejado;
         const totalPecas = (lote.materiais || []).reduce(
-          (acc, mat) => acc + (mat.cores?.flatMap((c) => c.gradeLote || []).reduce((gAcc, gItem) => gAcc + (gItem.quantidadePlanejada || 0), 0) || 0),
+          (acc, mat) => acc + (mat.cores?.reduce((corAcc, cor) => {
+            const qtdFolhas = Number(cor.qtdFolhas || 0);
+            const totalCor = (cor.gradeLote || []).reduce((gAcc, gItem) => {
+              const quantidadePlanejada = Number(gItem.quantidadePlanejada || 0);
+              const qtdMultiplicadorGrade = Number(gItem.qtdMultiplicadorGrade || 0);
+              return gAcc + (quantidadePlanejada > 0
+                ? quantidadePlanejada
+                : qtdFolhas * qtdMultiplicadorGrade);
+            }, 0);
+
+            return corAcc + totalCor;
+          }, 0) || 0),
           0,
         );
 

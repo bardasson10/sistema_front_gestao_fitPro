@@ -27,6 +27,7 @@ interface GradeTableProps {
   tamanhos: { id: string; label: string; ordem: number }[]
   produtos: { id: string; label: string; sku: string }[]
   enfestoIndex: number
+  qtdFolhas: number
   onProdutosChange: (produtos: string[]) => void
   onGradeChange: (grade: GradeLote[]) => void
   onRemoveProduto: (produtoId: string) => void
@@ -38,6 +39,7 @@ export function GradeTable({
 
   tamanhos: TAMANHOS,
   produtos: PRODUTOS,
+  qtdFolhas,
   onProdutosChange,
   onGradeChange,
   onRemoveProduto,
@@ -58,14 +60,21 @@ export function GradeTable({
     onProdutosChange([...produtosSelecionadosUnicos, produtoId])
   }
 
-  function updateQuantidade(produtoId: string, tamanhoId: string, value: number) {
+  function updateQtdMultiplicador(produtoId: string, tamanhoId: string, value: number) {
+    const qtdFolhasValidada = Math.max(0, Number(qtdFolhas) || 0)
+    const quantidadePlanejada = value * qtdFolhasValidada
+
     const existing = itens.find((grade) => grade.produtoId === produtoId && grade.tamanhoId === tamanhoId)
 
     if (existing) {
       onGradeChange(
         itens.map((grade) =>
           grade.produtoId === produtoId && grade.tamanhoId === tamanhoId
-            ? { ...grade, quantidadePlanejada: value }
+            ? {
+              ...grade,
+              qtdMultiplicadorGrade: value,
+              quantidadePlanejada,
+            }
             : grade
         )
       )
@@ -79,7 +88,8 @@ export function GradeTable({
       id: crypto.randomUUID(),
       produtoId,
       tamanhoId,
-      quantidadePlanejada: value,
+      qtdMultiplicadorGrade: value,
+      quantidadePlanejada,
       produtoNome: produto?.label || "",
       sku: produto?.sku || "",
       tamanhoNome: tamanho?.label || "",
@@ -88,27 +98,27 @@ export function GradeTable({
     onGradeChange([...itens, novoItem])
   }
 
-  function getQuantidade(produtoId: string, tamanhoId: string): number {
+  function getQtdMultiplicador(produtoId: string, tamanhoId: string): number {
     const grade = itens.find(g => g.produtoId === produtoId && g.tamanhoId === tamanhoId)
-    return grade ? grade.quantidadePlanejada : 0
+    return grade ? grade.qtdMultiplicadorGrade : 0
   }
 
   function getTotalProduto(produtoId: string): number {
     return tamanhosOrdenados.reduce(
-      (sum, t) => sum + getQuantidade(produtoId, t.id),
+      (sum, t) => sum + getQtdMultiplicador(produtoId, t.id),
       0
     )
   }
 
   function getTotalTamanho(tamanhoId: string): number {
     return produtosSelecionadosUnicos.reduce(
-      (sum, pId) => sum + getQuantidade(pId, tamanhoId),
+      (sum, pId) => sum + getQtdMultiplicador(pId, tamanhoId),
       0
     )
   }
 
   function getTotalGeral(): number {
-    return itens.reduce((sum, g) => sum + g.quantidadePlanejada, 0)
+    return itens.reduce((sum, g) => sum + g.qtdMultiplicadorGrade, 0)
   }
 
 
@@ -116,7 +126,7 @@ export function GradeTable({
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-medium text-muted-foreground">
-          Grade de Tamanhos
+          Grade de Multiplicadores
         </h4>
       
       </div>
@@ -164,10 +174,10 @@ export function GradeTable({
                           type="number"
                           min={0}
                           className="h-8 w-full text-center text-sm"
-                          value={getQuantidade(produtoId, t.id) || ""}
+                          value={getQtdMultiplicador(produtoId, t.id) || ""}
                           placeholder="0"
                           onChange={(e) =>
-                            updateQuantidade(
+                            updateQtdMultiplicador(
                               produtoId,
                               t.id,
                               Number(e.target.value) || 0

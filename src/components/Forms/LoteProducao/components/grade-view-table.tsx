@@ -39,11 +39,32 @@ export function GradeViewTable({
 
   function getQuantidadePlanejada(produtoId: string, tamanhoId: string): number {
     const grade = itens.find((g) => g.produtoId === produtoId && g.tamanhoId === tamanhoId)
-    return grade ? grade.quantidadePlanejada : 0
+    if (!grade) return 0
+
+    const quantidadePlanejada = Number(grade.quantidadePlanejada || 0)
+    if (quantidadePlanejada > 0) return quantidadePlanejada
+
+    const qtdMultiplicador = Number(grade.qtdMultiplicadorGrade || 0)
+    return qtdMultiplicador * qtdFolhasValidada
+  }
+
+  function getQtdMultiplicador(produtoId: string, tamanhoId: string): number {
+    const grade = itens.find((g) => g.produtoId === produtoId && g.tamanhoId === tamanhoId)
+    if (!grade) return 0
+
+    const qtdMultiplicador = Number(grade.qtdMultiplicadorGrade || 0)
+    if (qtdMultiplicador > 0) return qtdMultiplicador
+
+    const quantidadePlanejada = Number(grade.quantidadePlanejada || 0)
+    if (qtdFolhasValidada > 0 && quantidadePlanejada > 0) {
+      return quantidadePlanejada / qtdFolhasValidada
+    }
+
+    return 0
   }
 
   function getQuantidadeCalculada(produtoId: string, tamanhoId: string): number {
-    return getQuantidadePlanejada(produtoId, tamanhoId) * qtdFolhasValidada
+    return getQuantidadePlanejada(produtoId, tamanhoId)
   }
 
   function getTotalProduto(produtoId: string): number {
@@ -115,15 +136,15 @@ export function GradeViewTable({
                     </TableCell>
 
                     {tamanhosComValor.map((tamanho) => {
-                      const planejado = getQuantidadePlanejada(produtoId, tamanho.id)
-                      const calculado = planejado * qtdFolhasValidada
+                      const multiplicador = getQtdMultiplicador(produtoId, tamanho.id)
+                      const quantidadePlanejada = getQuantidadePlanejada(produtoId, tamanho.id)
 
                       return (
                         <TableCell key={tamanho.id} className="text-center">
                           <div className="flex flex-col leading-tight">
-                            <span className="text-sm font-medium tabular-nums">{calculado}</span>
+                            <span className="text-sm font-medium tabular-nums">{quantidadePlanejada}</span>
                             <span className="text-[11px] text-muted-foreground tabular-nums">
-                              {qtdFolhasValidada}×{planejado}
+                              {qtdFolhasValidada}×{multiplicador}
                             </span>
                           </div>
                         </TableCell>

@@ -188,6 +188,7 @@ interface ApiGradeItem {
     produtoId?: string;
     tamanhoId?: string;
     quantidadePlanejada?: number;
+    qtdMultiplicadorGrade?: number;
     produtoNome?: string;
     sku?: string;
     tamanhoNome?: string;
@@ -419,7 +420,7 @@ export interface AdicionarItensLoteProducaoPayload {
     itens: Array<{
         produtoId: string;
         tamanhoId: string;
-        quantidadePlanejada: number;
+        qtdMultiplicadorGrade: number;
     }>;
 }
 
@@ -512,7 +513,7 @@ export interface AtualizarLoteProducaoPayload {
         itens?: Array<{
             produtoId: string;
             tamanhoId: string;
-            quantidadePlanejada: number;
+            qtdMultiplicadorGrade: number;
         }>;
     }>
 }

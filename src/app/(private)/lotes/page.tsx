@@ -95,28 +95,40 @@ export default function Lotes() {
         gramatura: Number(material.gramatura || 0),
         valorPorKg: Number(material.valorPorKg || 0),
         pesoTotal: Number(material.pesoTotal || 0),
-        cores: (material.cores || []).map((cor) => ({
-          id: cor.corId ,
-          nome: cor.nome ,
-          codigoHex: cor.codigoHex ,
-          qtdFolhas: Number(cor.qtdFolhas || 0),
-          rolos: (cor.rolos || []).map((rolo) => ({
-            id: rolo.id ,
-            codigoBarraRolo: rolo.codigoBarraRolo ,
-            pesoAtualKg: Number(rolo.pesoAtualKg || 0),
-            pesoReservado: Number(rolo.pesoReservado || 0),
-            situacao: rolo.situacao ,
-          })),
-          gradeLote: (cor.gradeLote || []).map((grade) => ({
-            id: grade.id ,
-            produtoId: grade.produtoId ,
-            tamanhoId: grade.tamanhoId ,
-            quantidadePlanejada: Number(grade.quantidadePlanejada || 0),
-            produtoNome: grade.produtoNome || grade.produto?.nome || "" ,
-            sku: grade.sku || grade.produto?.sku || "" ,
-            tamanhoNome: grade.tamanhoNome || grade.tamanho?.nome || "" ,
-          })),
-        })),
+        cores: (material.cores || []).map((cor) => {
+          const qtdFolhas = Number(cor.qtdFolhas || 0)
+
+          return {
+            id: cor.corId ,
+            nome: cor.nome ,
+            codigoHex: cor.codigoHex ,
+            qtdFolhas,
+            rolos: (cor.rolos || []).map((rolo) => ({
+              id: rolo.id ,
+              codigoBarraRolo: rolo.codigoBarraRolo ,
+              pesoAtualKg: Number(rolo.pesoAtualKg || 0),
+              pesoReservado: Number(rolo.pesoReservado || 0),
+              situacao: rolo.situacao ,
+            })),
+            gradeLote: (cor.gradeLote || []).map((grade) => {
+              const quantidadePlanejada = Number(grade.quantidadePlanejada || 0)
+              const qtdMultiplicadorGrade = Number(
+                grade.qtdMultiplicadorGrade ?? (qtdFolhas > 0 ? quantidadePlanejada / qtdFolhas : 0),
+              )
+
+              return {
+                id: grade.id ,
+                produtoId: grade.produtoId ,
+                tamanhoId: grade.tamanhoId ,
+                qtdMultiplicadorGrade,
+                quantidadePlanejada,
+                produtoNome: grade.produtoNome || grade.produto?.nome || "" ,
+                sku: grade.sku || grade.produto?.sku || "" ,
+                tamanhoNome: grade.tamanhoNome || grade.tamanho?.nome || "" ,
+              }
+            }),
+          }
+        }),
       })),
       direcionamento: (editingItem.direcionamentos || []).map((direcionamento) => ({
         id: direcionamento.id ,
