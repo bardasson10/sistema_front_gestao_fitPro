@@ -23,6 +23,7 @@ export const StockTable = ({ rolos, tecidos, cores, isLoading, onEdit }: StockTa
         data={data}
         isLoading={isLoading}
         getRowId={(row) => row.id}
+        showPagination={false}
       />)}
     </div>
   )

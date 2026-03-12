@@ -35,6 +35,7 @@ interface TabelaProps<TData, TValue> {
   getRowId?: (row: TData) => string
   tabelaRepeticoes?: boolean
   columnVisibility?: VisibilityState
+  showPagination?: boolean
 
 }
 
@@ -48,7 +49,8 @@ export function DataTable<TData, TValue>({
   setRowSelection,
   getRowId,
   tabelaRepeticoes,
-  columnVisibility
+  columnVisibility,
+  showPagination = true,
 }: TabelaProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -138,7 +140,7 @@ export function DataTable<TData, TValue>({
         </TableBody>
         </Table>
       </div>
-      {table.getPrePaginationRowModel().rows.length > 9 && !isLoading &&
+      {showPagination && table.getPrePaginationRowModel().rows.length > 9 && !isLoading &&
         <TablePagination table={table} tabelaRepeticoes={tabelaRepeticoes} />
       }
     </div>

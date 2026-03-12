@@ -21,7 +21,7 @@ interface RelatorioEstoque {
 type SituacaoRolo = 'disponivel' | 'reservado' | 'em_uso' | 'descartado' | 'esgotado';
 
 interface EstoqueTecidoListResponse {
-    data: EstoqueTecido[];
+    data: EstoqueRolo[];
     pagination: PaginatedResponse;
 }
 
@@ -104,19 +104,45 @@ interface CriarEstoqueLotePayload {
 
 // ============ ESTOQUE ROLOS ============
 
-export const useEstoqueTecidos = (filtros?: { tecidoId?: string; situacao?: string }) => {
+export const useEstoqueTecidos = (filtros?: { tecidoId?: string; situacao?: string; limit?: number }) => {
     return useQuery({
         queryKey: ['estoque-rolos', filtros],
         queryFn: async () => {
             const params = new URLSearchParams();
             if (filtros?.tecidoId) params.append('tecidoId', filtros.tecidoId);
             if (filtros?.situacao) params.append('situacao', filtros.situacao);
+            params.append('limit', String(filtros?.limit ?? 1000));
 
             const queryString = params.toString();
             const { data } = await apiClient.get< {data: EstoqueRolo[], pagination: PaginatedResponse} >(
                 `/estoque-rolos${queryString ? `?${queryString}` : ''}`
             );
             return data.data;
+        },
+    });
+};
+
+export const useEstoqueTecidosPaginado = (filtros?: {
+    tecidoId?: string;
+    situacao?: string;
+    page?: number;
+    limit?: number;
+}) => {
+    return useQuery({
+        queryKey: ['estoque-rolos-paginado', filtros],
+        queryFn: async () => {
+            const params = new URLSearchParams();
+            if (filtros?.tecidoId) params.append('tecidoId', filtros.tecidoId);
+            if (filtros?.situacao) params.append('situacao', filtros.situacao);
+            params.append('page', String(filtros?.page ?? 1));
+            params.append('limit', String(filtros?.limit ?? 10));
+
+            const queryString = params.toString();
+            const { data } = await apiClient.get<EstoqueTecidoListResponse>(
+                `/estoque-rolos${queryString ? `?${queryString}` : ''}`
+            );
+
+            return data;
         },
     });
 };

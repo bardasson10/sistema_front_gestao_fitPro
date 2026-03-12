@@ -1,6 +1,6 @@
 'use client';
 import { MetricCard } from "@/components/ui/metric-card";
-import { Layers, Package, Plus, Weight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Layers, Package, Plus, Weight } from "lucide-react";
 import { StockTable } from "@/components/DataTable/Tables/Estoque/table";
 import { useFormModal } from "@/hooks/use-form-modal";
 import { RoloTecidoFormValues, roloTecidoSchema } from "@/schemas/rolo-tecido-schema";
@@ -14,11 +14,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResumeStockTable } from "@/components/DataTable/Tables/Estoque/resume-table";
 import { MobileViewStock } from "@/components/MobileViewCards/StockCard/stock-card";
 import { MobileViewStockResume } from "@/components/MobileViewCards/StockCard/stock-card-resume";
-import { EstoqueRolo, useAtualizarEstoqueTecido, useCriarEstoqueTecido, useEstoqueTecidos, useMovimentacoesEstoque, useRelatorioEstoque } from "@/hooks/queries/useEstoque";
+import { EstoqueRolo, useAtualizarEstoqueTecido, useCriarEstoqueTecido, useEstoqueTecidos, useEstoqueTecidosPaginado, useMovimentacoesEstoque, useRelatorioEstoque } from "@/hooks/queries/useEstoque";
 import { useCores, useTecidos } from "@/hooks/queries/useMateriais";
 import { MovementStockTable } from "@/components/DataTable/Tables/Estoque/MovimentacaoEstoque/table";
 import { MobileViewStockMovement } from "@/components/MobileViewCards/StockCard/stock-card-movement";
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
 
 const getTodayDate = () => new Date().toISOString().split("T")[0];
 
@@ -48,14 +50,26 @@ const initialValues: RoloTecidoFormValues = {
 
 export default function Estoque() {
 
+  const [paginaRolos, setPaginaRolos] = useState(1);
+  const [limiteRolos, setLimiteRolos] = useState(10);
+
   const { data: tecidosData } = useTecidos();
   const tecidos = tecidosData || [];
 
   const { data: coresData } = useCores();
   const cores = coresData || [];
 
-  const { data: rolosData, isLoading } = useEstoqueTecidos();
-  const rolos = rolosData || [];
+  const { data: rolosPaginadosData, isLoading } = useEstoqueTecidosPaginado({
+    page: paginaRolos,
+    limit: limiteRolos,
+  });
+  const rolosPaginados = rolosPaginadosData?.data || [];
+  const { data: rolosCompletosData } = useEstoqueTecidos();
+  const rolosCompletos = rolosCompletosData || [];
+  const paginacaoRolos = rolosPaginadosData?.pagination;
+  const totalPaginasRolos = paginacaoRolos?.pages || 1;
+  const paginaAtualRolos = paginacaoRolos?.page || paginaRolos;
+  const totalRolos = paginacaoRolos?.total || rolosPaginados.length;
 
   const { data: estoqueAgrupadoData } = useRelatorioEstoque();
 
@@ -165,7 +179,7 @@ export default function Estoque() {
             <StockTable
               isLoading={isLoading}
               cores={cores}
-              rolos={rolos}
+              rolos={rolosPaginados}
               tecidos={tecidos}
               onEdit={handleEdit}
             />
@@ -173,31 +187,83 @@ export default function Estoque() {
           <div className="block md:hidden">
             <MobileViewStock
               isLoading={isLoading}
-              rolos={rolos}
+              rolos={rolosPaginados}
               tecidos={tecidos}
               cores={cores}
               onEdit={handleEdit}
             />
+          </div>
+
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-muted-foreground">
+              Mostrando {rolosPaginados.length} de {totalRolos} rolos
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-muted-foreground">Linhas por pagina</span>
+              <Select
+                value={String(limiteRolos)}
+                onValueChange={(value) => {
+                  setLimiteRolos(Number(value));
+                  setPaginaRolos(1);
+                }}
+              >
+                <SelectTrigger className="h-8 w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[5, 10, 20, 30, 50].map((pageSize) => (
+                    <SelectItem key={pageSize} value={String(pageSize)}>
+                      {pageSize}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPaginaRolos((current) => Math.max(1, current - 1))}
+                disabled={isLoading || paginaAtualRolos <= 1}
+              >
+                <ChevronLeft className="mr-1 h-4 w-4" />
+                Anterior
+              </Button>
+
+              <span className="text-sm text-muted-foreground px-1">
+                Pagina {paginaAtualRolos} de {totalPaginasRolos}
+              </span>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPaginaRolos((current) => Math.min(totalPaginasRolos, current + 1))}
+                disabled={isLoading || paginaAtualRolos >= totalPaginasRolos}
+              >
+                Proxima
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </TabsContent>
         <TabsContent value="resumo-por-tecido">
           <div className="hidden md:block">
             <ResumeStockTable
               isLoading={isLoading}
-              rolos={rolos}
+              rolos={rolosCompletos}
               cores={cores}
               tecidos={tecidos}
             />
           </div>
           <div className="block md:hidden">
-            <MobileViewStockResume isLoading={isLoading} rolos={rolos} tecidos={tecidos} cores={cores} />
+            <MobileViewStockResume isLoading={isLoading} rolos={rolosCompletos} tecidos={tecidos} cores={cores} />
           </div>
         </TabsContent>
         <TabsContent value="movimentacao-do-estoque">
           <div className="hidden md:block">
             <MovementStockTable
               movimentacoes={movimentacoes}
-              rolos={rolos}
+              rolos={rolosCompletos}
               tecidos={tecidos}
               cores={cores}
               isLoading={isLoading}
@@ -206,7 +272,7 @@ export default function Estoque() {
           <div className="block md:hidden">
             <MobileViewStockMovement
               movimentacoes={movimentacoes}
-              rolos={rolos}
+              rolos={rolosCompletos}
               tecidos={tecidos}
               cores={cores}
               isLoading={isLoading}
