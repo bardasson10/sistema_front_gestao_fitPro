@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { direcionamentoSchema, DirecionamentoFormValues } from "@/schemas/direcionamento-schema";
-import { DirecionamentoForm } from "@/components/Forms/direcionamento-form";
+import { DirecionamentoForm } from "@/components/Forms/DirecionamentoProducao/direcionamento-form";
 import { FormModal } from "@/components/Modal/base-modal-form";
 import { Form } from "@/components/ui/form";
 import { useFormModal } from "@/hooks/use-form-modal";
@@ -18,6 +18,7 @@ import { ProducaoDirecionamentoItem } from "@/components/DataTable/Tables/Produc
 import { ProducaoDirecionamentoTable } from "@/components/DataTable/Tables/ProducaoDirecionamento/table";
 import { MobileViewProducaoDirecionamento } from "@/components/MobileViewCards/ProducaoDirecionamentoCard";
 import {
+  ApiLoteProducaoResponse,
   CreateDirecionamentoPayload,
   useDirecionamentos,
   useLotesProducao,
@@ -26,7 +27,6 @@ import {
   useDeletarDirecionamento,
   useFaccoes,
 } from "@/hooks/queries/useProducao";
-import { DirecionamentoSchema } from "@/types/ProducaoDirecionamento/producao-direcionamento-type";
 
 const initialValues: DirecionamentoFormValues = {
   tipoServico: "costura",
@@ -39,12 +39,6 @@ const initialValues: DirecionamentoFormValues = {
     },
   ],
   produtos: [],
-};
-
-type LoteProdutos = {
-  id: string;
-  codigoLote?: string;
-  items?: Array<{ produto?: { nome?: string }; quantidadePlanejada: number }>;
 };
 
 export default function Producao() {
@@ -62,7 +56,7 @@ export default function Producao() {
   const { mutate: atualizarDirecionamento } = useAtualizarDirecionamento();
   const { mutate: deletarDirecionamento } = useDeletarDirecionamento();
 
-  const [selectedLote, setSelectedLote] = useState<LoteProdutos | null>(null);
+  const [selectedLote, setSelectedLote] = useState<ApiLoteProducaoResponse | undefined>(undefined);
 
   const form = useForm<DirecionamentoFormValues>({
     resolver: zodResolver(direcionamentoSchema),
@@ -91,13 +85,6 @@ export default function Producao() {
 
     return { label: "Em Produção", type: "info" as const };
   };
-
-  const direcionamentosMap = useMemo(() => {
-    return direcionamentos.reduce<Record<string, DirecionamentoSchema>>((acc, item) => {
-      acc[item.id] = item;
-      return acc;
-    }, {});
-  }, [direcionamentos]);
 
   const producaoAtiva = useMemo<ProducaoDirecionamentoItem[]>(() => {
     return direcionamentos
@@ -160,16 +147,33 @@ export default function Producao() {
       .filter((item) => item.totalProdutos > 0 && item.totalPecas > 0);
   }, [dataLote]);
 
-  const getProdutosDisponiveis = (lote: LoteProdutos | null) => {
-    if (!lote) return [];
-    const produtosMap = new Map<string, { produto: string; total: number }>();
+  const getProdutosDisponiveis = (lote?: ApiLoteProducaoResponse) => {
+    if (!lote?.materiais?.length) return [];
 
-    (lote.items || []).forEach((item) => {
-      const nomeProduto = item.produto?.nome || "Produto";
-      const current = produtosMap.get(nomeProduto) || { produto: nomeProduto, total: 0 };
-      produtosMap.set(nomeProduto, {
-        produto: nomeProduto,
-        total: current.total + (item.quantidadePlanejada || 0),
+    const produtosMap = new Map<string, { id?: string; produto?: string; total: number }>();
+
+    lote.materiais.forEach((material) => {
+      (material.cores || []).forEach((cor) => {
+        (cor.gradeLote || []).forEach((gradeItem) => {
+          const produtoId = gradeItem.produtoId || gradeItem.produto?.id;
+          const produtoNome =
+            gradeItem.produto?.tipoProdutoId || gradeItem.produtoNome || gradeItem.produto?.nome;
+
+          if (!produtoNome) return;
+
+          const mapKey = produtoId || produtoNome;
+          const current = produtosMap.get(mapKey) || {
+            id: produtoId,
+            produto: produtoNome,
+            total: 0,
+          };
+
+          produtosMap.set(mapKey, {
+            id: current.id || produtoId,
+            produto: current.produto || produtoNome,
+            total: current.total + (gradeItem.quantidadePlanejada || 0),
+          });
+        });
       });
     });
 
@@ -201,9 +205,9 @@ export default function Producao() {
           quantidade: item.totalPecas || 1,
         },
       ],
-      produtos: getProdutosDisponiveis((direcionamentosMap[item.id]?.lote as LoteProdutos) || null).map((produto) => ({
+      produtos: (item.produtos || []).map((produto) => ({
         produto: produto.produto,
-        quantidade: produto.total,
+        quantidade: produto.quantidade,
       })),
     }),
     onInvalid: () => {
@@ -260,7 +264,7 @@ export default function Producao() {
   });
 
   const handleOpenDirecionar = (item: LoteProntoDirecionamentoItem) => {
-    const loteSelecionado = (dataLote.find((lote) => lote.id === item.loteId) as LoteProdutos) || null;
+    const loteSelecionado = dataLote.find((lote) => lote.id === item.loteId);
     setSelectedLote(loteSelecionado);
 
     const quantidadeTotalLote = getProdutosDisponiveis(loteSelecionado).reduce(
@@ -288,7 +292,7 @@ export default function Producao() {
   };
 
   const handleEditDirecionamento = (item: ProducaoDirecionamentoItem) => {
-    const lote = (direcionamentosMap[item.id]?.lote as LoteProdutos) || null;
+    const lote = dataLote.find((loteItem) => loteItem.id === item.loteId);
     setSelectedLote(lote);
     handleEdit(item);
   };
@@ -350,7 +354,7 @@ export default function Producao() {
       >
         <Form {...form}>
           <DirecionamentoForm
-            selectedLote={null}
+            selectedLote={selectedLote}
             produtosDisponiveis={getProdutosDisponiveis(selectedLote)}
             faccoes={faccoes}
             isCreateMode={!editingItem}

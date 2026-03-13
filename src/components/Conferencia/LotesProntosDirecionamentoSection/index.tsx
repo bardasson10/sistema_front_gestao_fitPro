@@ -99,6 +99,7 @@ export function LotesProntosDirecionamentoSection({
                         {item.dataCriacao ? dataFormatter(new Date(item.dataCriacao)) : '-'}
                       </span>
                     </div>
+  
                   </div>
                 }
                 footer={
