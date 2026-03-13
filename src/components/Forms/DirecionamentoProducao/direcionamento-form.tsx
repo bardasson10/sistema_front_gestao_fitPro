@@ -20,9 +20,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
-import { Faccao, LoteProducao } from '@/types/production';
+import { Faccao } from '@/types/production';
 import { useProduction } from '@/providers/PrivateContexts/ProductionProvider';
 import { Plus, Trash2 } from 'lucide-react';
+import { DirecionamentoGradeEditavel } from '@/components/Forms/DirecionamentoProducao/direcionamento-gradeEdit';
 import { DirecionamentoGradeView } from './direcionamento-gradeView';
 import { ApiLoteProducaoResponse } from '@/hooks/queries/useProducao';
 
@@ -60,7 +61,6 @@ export function DirecionamentoForm({ selectedLote, produtosDisponiveis, faccoes,
   const production = useProduction();
   const faccoesDisponiveis = faccoes || production.faccoes;
 
-  const produtos = watch('produtos');
   const direcionamentos = watch('direcionamentos') || [];
 
   const { fields, append, remove } = useFieldArray({
@@ -113,6 +113,9 @@ export function DirecionamentoForm({ selectedLote, produtosDisponiveis, faccoes,
                   faccaoId: '',
                   tipoServico: 'costura',
                   quantidade: 1,
+                  dataSaida: new Date().toISOString(),
+                  dataPrevisaoRetorno: new Date().toISOString(),
+                  items: [],
                 })
               }
             >
@@ -188,7 +191,7 @@ export function DirecionamentoForm({ selectedLote, produtosDisponiveis, faccoes,
                   name={`direcionamentos.${index}.quantidade`}
                   render={({ field: formField }) => (
                     <FormItem>
-                      <FormLabel>Quantidade</FormLabel>
+                      <FormLabel>Quantidade total</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -212,6 +215,15 @@ export function DirecionamentoForm({ selectedLote, produtosDisponiveis, faccoes,
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
+
+                {selectedLote?.materiais ? (
+                  <div className="md:col-span-4">
+                    <DirecionamentoGradeEditavel
+                      materiais={selectedLote.materiais}
+                      direcionamentoIndex={index}
+                    />
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
@@ -279,7 +291,7 @@ export function DirecionamentoForm({ selectedLote, produtosDisponiveis, faccoes,
         </>
       )}
 
-      {selectedLote?.materiais && (
+      {!isCreateMode && selectedLote?.materiais && (
         <div className="pt-4 border-t">
           <DirecionamentoGradeView materiais={selectedLote.materiais} />
         </div>

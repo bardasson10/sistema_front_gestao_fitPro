@@ -598,7 +598,14 @@ export interface CreateDirecionamentoPayload {
     direcionamentos: Array<{
         faccaoId: string;
         tipoServico: TypeOfServico;
-        quantidade: number;
+        dataSaida?: string;
+        dataPrevisaoRetorno?: string;
+        items: Array<{
+            corId: string;
+            produtoId: string;
+            tamanhoId: string;
+            quantidade: number;
+        }>;
     }>;
 }
 

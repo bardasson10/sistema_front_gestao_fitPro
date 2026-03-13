@@ -28,6 +28,8 @@ import {
   useFaccoes,
 } from "@/hooks/queries/useProducao";
 
+const getNowISO = () => new Date().toISOString();
+
 const initialValues: DirecionamentoFormValues = {
   tipoServico: "costura",
   faccaoId: "",
@@ -36,6 +38,9 @@ const initialValues: DirecionamentoFormValues = {
       faccaoId: "",
       tipoServico: "costura",
       quantidade: 1,
+      dataSaida: getNowISO(),
+      dataPrevisaoRetorno: getNowISO(),
+      items: [],
     },
   ],
   produtos: [],
@@ -180,6 +185,36 @@ export default function Producao() {
     return Array.from(produtosMap.values());
   };
 
+  const addDaysISO = (baseDateISO: string, days: number) => {
+    const data = new Date(baseDateISO);
+    data.setDate(data.getDate() + days);
+    return data.toISOString();
+  };
+
+  const getPrazoMedioDias = (faccaoId?: string) => {
+    if (!faccaoId) return 7;
+    const faccao = faccoes.find((item) => item.id === faccaoId);
+    return faccao?.prazoMedioDias || faccao?.prazoMedio || 7;
+  };
+
+  const getSaldoDisponivelPorGrade = (lote: ApiLoteProducaoResponse) => {
+    const saldoMap = new Map<string, number>();
+
+    (lote.materiais || []).forEach((material) => {
+      (material.cores || []).forEach((cor) => {
+        if (!cor.corId) return;
+        (cor.gradeLote || []).forEach((item) => {
+          if (!item.produtoId || !item.tamanhoId) return;
+
+          const key = `${cor.corId}:${item.produtoId}:${item.tamanhoId}`;
+          saldoMap.set(key, (saldoMap.get(key) || 0) + (item.quantidadePlanejada || 0));
+        });
+      });
+    });
+
+    return saldoMap;
+  };
+
   const {
     isOpen,
     handleOpen,
@@ -203,6 +238,12 @@ export default function Producao() {
           faccaoId: item.faccaoId || "",
           tipoServico: (item.tipoServico as DirecionamentoFormValues["tipoServico"]) || "costura",
           quantidade: item.totalPecas || 1,
+          dataSaida: item.dataSaida || getNowISO(),
+          dataPrevisaoRetorno: addDaysISO(
+            item.dataSaida || getNowISO(),
+            item.prazoMedio || getPrazoMedioDias(item.faccaoId),
+          ),
+          items: [],
         },
       ],
       produtos: (item.produtos || []).map((produto) => ({
@@ -238,19 +279,55 @@ export default function Producao() {
         return;
       }
 
+      const saldoDisponivelMap = getSaldoDisponivelPorGrade(selectedLote);
+
       const direcionamentosPayload = (values.direcionamentos || [])
-        .filter((direcionamento) => direcionamento.faccaoId && direcionamento.quantidade > 0)
-        .map((direcionamento) => ({
-          faccaoId: direcionamento.faccaoId,
-          tipoServico: direcionamento.tipoServico,
-          quantidade: direcionamento.quantidade,
-        }));
+        .map((direcionamento) => {
+          const prazoMedio = getPrazoMedioDias(direcionamento.faccaoId);
+          const dataSaida = direcionamento.dataSaida || getNowISO();
+          const dataPrevisaoRetorno =
+            direcionamento.dataPrevisaoRetorno || addDaysISO(dataSaida, prazoMedio);
 
+          const items = (direcionamento.items || [])
+            .filter((item) => item.quantidade > 0)
+            .map((item) => ({
+              corId: item.corId,
+              produtoId: item.produtoId,
+              tamanhoId: item.tamanhoId,
+              quantidade: item.quantidade,
+            }));
 
+          return {
+            faccaoId: direcionamento.faccaoId,
+            tipoServico: direcionamento.tipoServico,
+            dataSaida,
+            dataPrevisaoRetorno,
+            items,
+          };
+        })
+        .filter((direcionamento) =>
+          Boolean(direcionamento.faccaoId && direcionamento.tipoServico && direcionamento.items.length > 0),
+        );
 
       if (!direcionamentosPayload.length) {
-        toast.error("Adicione ao menos um direcionamento válido.");
+        toast.error("Adicione ao menos um direcionamento válido com itens selecionados.");
         return;
+      }
+
+      const totalEnviadoMap = new Map<string, number>();
+      direcionamentosPayload.forEach((direcionamento) => {
+        direcionamento.items.forEach((item) => {
+          const key = `${item.corId}:${item.produtoId}:${item.tamanhoId}`;
+          totalEnviadoMap.set(key, (totalEnviadoMap.get(key) || 0) + item.quantidade);
+        });
+      });
+
+      for (const [key, quantidadeTotal] of totalEnviadoMap.entries()) {
+        const disponivel = saldoDisponivelMap.get(key) || 0;
+        if (quantidadeTotal > disponivel) {
+          toast.error("A soma das quantidades por produto/tamanho não pode ultrapassar o disponível do lote.");
+          return;
+        }
       }
 
       const createPayload: CreateDirecionamentoPayload = {
@@ -280,6 +357,9 @@ export default function Producao() {
           faccaoId: "",
           tipoServico: "costura",
           quantidade: quantidadeTotalLote > 0 ? quantidadeTotalLote : 1,
+          dataSaida: getNowISO(),
+          dataPrevisaoRetorno: addDaysISO(getNowISO(), 7),
+          items: [],
         },
       ],
       produtos: getProdutosDisponiveis(loteSelecionado).map((produto) => ({

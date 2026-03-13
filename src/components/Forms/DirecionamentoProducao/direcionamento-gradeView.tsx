@@ -89,7 +89,7 @@ export function DirecionamentoGradeView({ materiais }: DirecionamentoGradeViewPr
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="w-[200px]">Produto</TableHead>
+                          <TableHead className="w-50">Produto</TableHead>
                           {gradesPorCor.tamanhosUnicos.map((tam) => (
                             <TableHead key={tam} className="text-center">{tam}</TableHead>
                           ))}
