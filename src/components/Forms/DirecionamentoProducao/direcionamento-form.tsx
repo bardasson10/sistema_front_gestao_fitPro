@@ -186,7 +186,7 @@ export function DirecionamentoForm({ selectedLote, produtosDisponiveis, faccoes,
                   )}
                 />
 
-                <FormField
+                {/* <FormField
                   control={control}
                   name={`direcionamentos.${index}.quantidade`}
                   render={({ field: formField }) => (
@@ -203,7 +203,7 @@ export function DirecionamentoForm({ selectedLote, produtosDisponiveis, faccoes,
                       <FormMessage />
                     </FormItem>
                   )}
-                />
+                /> */}
 
                 <Button
                   type="button"
