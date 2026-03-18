@@ -6,7 +6,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { BookType, Cable, CirclePile, House, LayoutDashboard, NotebookPen, PackageOpen, PackageSearch, PaintBucket, Shirt, SquareChartGantt, User } from "lucide-react"
+import { BookType, Cable, CirclePile, House, LayoutDashboard, NotebookPen, PackageOpen, PackageSearch, PaintBucket, Scissors, Shirt, SquareChartGantt, User } from "lucide-react"
 import { NavMain } from "./components/nav-main"
 import { NavUser } from "./components/nav-user"
 
@@ -76,7 +76,7 @@ const data = {
           icon: PackageOpen,
         },
         {
-          title: "Estoque",
+          title: "Estoque de Rolos",
           url: "/estoque",
           icon: CirclePile,
         },
@@ -88,6 +88,11 @@ const data = {
         {
           title: "Lotes",
           url: "/lotes",
+          icon: Scissors,
+        },
+        {
+          title: "Estoque Peças",
+          url: "/estoque-corte",
           icon: PackageSearch,
         },
         {
