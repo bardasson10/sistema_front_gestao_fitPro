@@ -1,19 +1,27 @@
 'use client'
 import { useState, useMemo, Suspense } from 'react';
-import { useGetEstoqueCorte, EstoqueCorteFiltros, EstoqueCorteItem } from '@/hooks/queries/Estoque/useEstoque-Corte';
+import { useGetEstoqueCorte, EstoqueCorteFiltros } from '@/hooks/queries/Estoque/useEstoque-Corte';
 import { GroupedProduct, InventoryDashBoard, ProductVariation } from '@/components/PageComponent/estoque-corte/InventoryDashboardContent';
 import { Spinner } from '@/components/ui/spinner';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CriarRemessaComponent } from '@/components/PageComponent/DirecionamentoProducao/criar-remessa-component';
+import { EstoqueCorte } from '@/types/EstoqueCorte';
+import { useGetFaccoes } from '@/hooks/queries/Faccao/useFaccao';
+import { usePostCriarDirecionamentoRemessa } from '@/hooks/queries/Direcionamento/useDirecionamento';
 
 const InventoryDashboardContent = () => {
-    const [filters, setFilters] = useState<EstoqueCorteFiltros>({});
 
-    const { data, isFetching } = useGetEstoqueCorte(filters);
-    const typedData: EstoqueCorteItem[] = data;
+
+    const [filters, setFilters] = useState<EstoqueCorteFiltros>({});
+    const [activeTab, setActiveTab] = useState<'estoque' | 'remessa'>('estoque');
+
+    const { data: dataEstoqueCorte, isFetching: isFetchingEstoque, refetch: refetchEstoqueCorte } = useGetEstoqueCorte(filters);
+    const typedData: EstoqueCorte[] = dataEstoqueCorte;
 
     const filterOptions = useMemo(() => {
         return {
-            produtos: Array.from(new Map(typedData.map(item => [item.produtoId, item.produto.nome])).entries()),
+            produtos: Array.from(new Map(typedData.map(item => [item.produto.id, item.produto.nome])).entries()),
             lotes: Array.from(new Map(typedData.map(item => [item.lote.id, item.lote])).values()),
             cores: Array.from(new Map(typedData.map(item => [item.cor.id, item.cor.nome])).entries()),
             tamanhos: Array.from(new Set(typedData.map(item => item.tamanho.nome))).sort()
@@ -22,7 +30,7 @@ const InventoryDashboardContent = () => {
 
     const groupedInventory = useMemo<Record<string, GroupedProduct>>(() => {
         return typedData.reduce<Record<string, GroupedProduct>>((acc, item) => {
-            const groupKey = `${item.produtoId}-${item.cor.id}`;
+            const groupKey = `${item.produto.id}-${item.cor.id}`;
             if (!acc[groupKey]) {
                 acc[groupKey] = {
                     produtoNome: item.produto.nome,
@@ -59,19 +67,65 @@ const InventoryDashboardContent = () => {
             .filter((variacao): variacao is ProductVariation => Boolean(variacao));
     };
 
+    //Faccao
+    const { data: dataFaccoes, isFetching: isFetchingFaccoes } = useGetFaccoes();
+
+    //Remessa
+    const criarDirecionamentoRemessaMutation = usePostCriarDirecionamentoRemessa();
+
+    const handleRemessaCriada = async () => {
+        await refetchEstoqueCorte();
+        setActiveTab('remessa');
+    }
+
+    
+
+
     return (
-        <InventoryDashBoard 
-            filters={filters}
-            data={typedData}
-            clearFilters={clearFilters}
-            filterOptions={filterOptions}
-            handleFilterChange={handleFilterChange}
-            isLoading={isFetching}
-            groupedItems={groupedItems}
-            getSortedVariations={getSortedVariations}
-        />
+        <main>
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'estoque' | 'remessa')} className="w-full">
+                <div className="  gap-3 mb-6 sm:flex-row sm:justify-between sm:items-center">
+
+                    <TabsList className="w-full  h-auto sm:w-auto sm:flex-row sm:h-10">
+                        <TabsTrigger value="estoque" className="w-full justify-center sm:w-auto text-xs sm:text-sm">
+                            Estoque 
+                        </TabsTrigger>
+                        <TabsTrigger value="remessa" className="w-full justify-center sm:w-auto text-xs sm:text-sm">
+                            Remessa
+                        </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="estoque">
+                        <InventoryDashBoard
+                            filters={filters}
+                            data={typedData}
+                            clearFilters={clearFilters}
+                            filterOptions={filterOptions}
+                            handleFilterChange={handleFilterChange}
+                            isLoading={isFetchingEstoque}
+                            groupedItems={groupedItems}
+                            getSortedVariations={getSortedVariations}
+                        />
+                    </TabsContent>
+
+                    <TabsContent value="remessa">
+                        <CriarRemessaComponent 
+                        dataFaccoes={dataFaccoes ?? []} 
+                        dataEstoqueCorte={dataEstoqueCorte} 
+                        usePostCriarDirecionamentoRemessa={() => criarDirecionamentoRemessaMutation}
+                        onRemessaCriada={handleRemessaCriada}
+                        />
+                    </TabsContent>
+
+                </div>
+            </Tabs>
+        </main>
+
     );
 };
+
+
+
 
 const InventoryDashboard = () => {
     return (

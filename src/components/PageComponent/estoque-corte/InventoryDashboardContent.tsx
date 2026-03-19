@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Package, Droplets, Search, X } from 'lucide-react';
-import { EstoqueCorteFiltros, EstoqueCorteItem } from '@/hooks/queries/Estoque/useEstoque-Corte';
+import { EstoqueCorteFiltros } from '@/hooks/queries/Estoque/useEstoque-Corte';
+import { EstoqueCorte } from '@/types/EstoqueCorte';
 
 
 export interface GroupedProduct {
@@ -28,7 +29,7 @@ export type ProductVariation = {
 
 interface InventoryDashboardContentProps {
     filters: EstoqueCorteFiltros;
-    data: EstoqueCorteItem[];
+    data: EstoqueCorte[];
     clearFilters: () => void
     filterOptions: {
         produtos: [string, string][];

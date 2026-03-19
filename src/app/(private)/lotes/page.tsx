@@ -14,7 +14,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useColaboradores } from "@/hooks/queries/useColaboradores";
 import {
   ApiLoteProducaoResponse,
-  useCriarDirecionamento,
   useDeletarLoteProducao,
   useFaccoes,
   useLotesProducao,
@@ -37,7 +36,7 @@ export default function Lotes() {
   const dataLote = lotesData.data || [];
   const { data: faccoesData } = useFaccoes("ativo");
   const faccoes = faccoesData || [];
-  const { mutate: criarDirecionamento, isPending: isCreatingDirecionamento } = useCriarDirecionamento();
+
   const { mutate: deletarLote, isPending: isDeleting } = useDeletarLoteProducao();
 
   const {

@@ -96,8 +96,8 @@ const data = {
           icon: PackageSearch,
         },
         {
-          title: "Produção",
-          url: "/producao",
+          title: "Produção das Remessas",
+          url: "/remessas-direcionadas",
           icon: SquareChartGantt,
         },
         {

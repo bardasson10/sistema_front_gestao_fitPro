@@ -2,33 +2,9 @@ import { useMutation, useSuspenseQuery, useQueryClient } from '@tanstack/react-q
 import { apiClient } from '@/services/api/api-client';
 import { toast } from 'sonner';
 import { PaginatedResponse } from '@/types/production';
+import { EstoqueCorte } from '@/types/EstoqueCorte';
 
 
-
-export interface EstoqueCorteItem {
-    id: string;
-    produtoId: string;
-    quantidadeDisponivel: number;
-    produto: {
-        nome: string;
-        sku: string;
-    };
-    tamanho: {
-        nome: string;
-    };
-    cor: {
-        id: string;
-        nome: string;
-        codigoHex: string;
-    };
-    lote: {
-        id: string;
-        codigoLote: string;
-        tecido: {
-            nome: string;
-        };
-    };
-}
 
 export type EstoqueCorteFiltros = {
     produtoId?: string;
@@ -59,7 +35,7 @@ export const useGetEstoqueCorte = (filtros?: EstoqueCorteFiltros) => {
 
             try {
                 const { data } = await apiClient
-                    .get<{ data: EstoqueCorteItem[]; pagination: PaginatedResponse }>(
+                    .get<{ data: EstoqueCorte[]; pagination: PaginatedResponse }>(
                         `/estoque-corte${queryString ? `?${queryString}` : ''}`
                     );
                 return data.data;

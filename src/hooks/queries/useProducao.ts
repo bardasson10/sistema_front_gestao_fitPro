@@ -267,7 +267,7 @@ export const useFaccoes = (status?: 'ativo' | 'inativo') => {
         queryKey: ['faccoes', status],
         queryFn: async () => {
             const queryString = status ? `?status=${status}` : '';
-            const response = await apiClient.get<{ data: Faccao[], pagination: any }>(`/faccoes${queryString}`);
+            const response = await apiClient.get<{ data: Faccao[], pagination: PaginatedResponse }>(`/faccoes${queryString}`);
             return response.data.data;
         },
     });
@@ -558,133 +558,8 @@ export const useDeletarLoteProducao = () => {
     });
 };
 
-// ============ DIRECIONAMENTOS ============
 
-export const useDirecionamentos = (filtros?: {
-    status?: string;
-    faccaoId?: string;
-}) => {
-    return useQuery({
-        queryKey: ['direcionamentos', filtros],
-        queryFn: async () => {
-            const params = new URLSearchParams();
-            if (filtros?.status) params.append('status', filtros.status);
-            if (filtros?.faccaoId) params.append('faccaoId', filtros.faccaoId);
 
-            const queryString = params.toString();
-            const { data } = await apiClient.get<{ data: DirecionamentoSchema[], pagination: PaginatedResponse }>(
-                `/direcionamentos${queryString ? `?${queryString}` : ''}`
-            );
-            return data;
-        },
-    });
-};
-
-export const useDirecionamento = (id: string) => {
-    return useQuery({
-        queryKey: ['direcionamentos', id],
-        queryFn: async () => {
-            const { data } = await apiClient.get<{ data: DirecionamentoSchema[], pagination: PaginatedResponse }>(`/direcionamentos/${id}`);
-            return data;
-        },
-        enabled: !!id,
-    });
-};
-
-type TypeOfServico = 'costura' | 'estampa' | 'tingimento' | 'acabamento' | 'corte' | 'outro';
-
-export interface CreateDirecionamentoPayload {
-    loteProducaoId: string;
-    direcionamentos: Array<{
-        faccaoId: string;
-        tipoServico: TypeOfServico;
-        dataSaida?: string;
-        dataPrevisaoRetorno?: string;
-        items: Array<{
-            corId: string;
-            produtoId: string;
-            tamanhoId: string;
-            quantidade: number;
-        }>;
-    }>;
-}
-
-export const useCriarDirecionamento = () => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: async (dados: CreateDirecionamentoPayload) => {
-            const { data } = await apiClient.post<{ data: DirecionamentoSchema[], pagination: PaginatedResponse }>('/direcionamentos', dados);
-            return data;
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['direcionamentos'] });
-            queryClient.invalidateQueries({ queryKey: ['lotes-producao'] });
-            toast.success('Direcionamento criado com sucesso!');
-        },
-        onError: (error: any) => {
-            const mensagem = error.response?.data?.details?.[0]?.mensage ||
-                error.response?.data?.error
-            toast.error(mensagem);
-        },
-    });
-};
-
-export const useAtualizarDirecionamento = () => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: async ({ id, ...dados }: {
-            id: string;
-            faccaoId?: string;
-            tipoServico?:
-            | 'costura'
-            | 'estampa'
-            | 'tingimento'
-            | 'acabamento'
-            | 'corte'
-            | 'outro';
-            status?: string;
-            dataSaida?: string;
-            dataPrevisaoRetorno?: string;
-        }) => {
-            const { data } = await apiClient.put<Direcionamento>(
-                `/direcionamentos/${id}`,
-                dados
-            );
-            return data;
-        },
-        onSuccess: (data: Direcionamento) => {
-            queryClient.invalidateQueries({ queryKey: ['direcionamentos'] });
-            queryClient.invalidateQueries({ queryKey: ['direcionamentos', data.id] });
-            toast.success('Direcionamento atualizado com sucesso!');
-        },
-        onError: (error: any) => {
-            const mensagem = error.response?.data?.details?.[0]?.mensage ||
-                error.response?.data?.error
-            toast.error(mensagem);
-        },
-    });
-};
-
-export const useDeletarDirecionamento = () => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: async (id: string) => {
-            await apiClient.delete(`/direcionamentos/${id}`);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['direcionamentos'] });
-            toast.success('Direcionamento deletado com sucesso!');
-        },
-        onError: (error: any) => {
-            const mensagem = error.response?.data?.details?.[0]?.mensage ||
-                error.response?.data?.error
-            toast.error(mensagem);
-        },
-    });
-};
 
 // ============ CONFERÊNCIAS ============
 
