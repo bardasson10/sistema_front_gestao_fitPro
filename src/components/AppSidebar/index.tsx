@@ -96,7 +96,7 @@ const data = {
           icon: PackageSearch,
         },
         {
-          title: "Produção das Remessas",
+          title: "Remessas",
           url: "/remessas-direcionadas",
           icon: SquareChartGantt,
         },
