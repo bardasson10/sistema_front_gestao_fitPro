@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { UseFormReturn } from "react-hook-form";
+import { UseFormReturn, useWatch } from "react-hook-form";
 import { LoteProducaoFormValues } from "@/schemas/LoteProducao/lote-producao-schemas";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CircleColorView } from "@/components/ui/circle-color-view";
@@ -43,7 +43,10 @@ interface DadosTecidoProps {
 export const DadosTecido = ({ form }: DadosTecidoProps) => {
   const { data: roloTecidoData } = useEstoqueTecidos();
   const rolosTecido = roloTecidoData || [];
-  const materiaisDoLote = form.watch("materiais") || [];
+  const materiaisDoLote = useWatch({
+    control: form.control,
+    name: "materiais",
+  }) || [];
 
   const { handleAdicionarRolos, isSubmitting } = useProducaoActions();
 
@@ -74,14 +77,20 @@ export const DadosTecido = ({ form }: DadosTecidoProps) => {
 
   // Se um rolo virar "existente" apos salvar/refetch, remove da lista de "novos".
   useEffect(() => {
-    setRolosSelecionados((prev) =>
-      prev.filter(
+    setRolosSelecionados((prev) => {
+      const next = prev.filter(
         (roloNovo) =>
           !rolosExistentes.some(
             (roloExistente) => roloExistente.estoqueRoloId === roloNovo.estoqueRoloId
           )
-      )
-    );
+      );
+
+      if (next.length === prev.length) {
+        return prev;
+      }
+
+      return next;
+    });
   }, [rolosExistentes]);
 
   const formatKg = (value: number) =>
