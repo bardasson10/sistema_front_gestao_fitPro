@@ -32,11 +32,16 @@ export const ConferenciaRow = ({ conferencia }: { conferencia: Conferencia }) =>
   const [isOpen, setIsOpen] = useState(false)
 
   const handleToggle = () => setIsOpen((prev) => !prev)
+  const getQuebraItem = (quantidadeEnviada: number, qtdRecebida: number) =>
+    Math.max(0, quantidadeEnviada - qtdRecebida)
 
   const totalEnviado = conferencia.items.reduce((acc, item) => acc + item.quantidadeEnviada, 0)
   const totalRecebido = conferencia.items.reduce((acc, item) => acc + item.qtdRecebida, 0)
   const totalDefeito = conferencia.items.reduce((acc, item) => acc + item.qtdDefeito, 0)
-  const totalQuebra = conferencia.items.reduce((acc, item) => acc + item.quebra, 0)
+  const totalQuebra = conferencia.items.reduce(
+    (acc, item) => acc + getQuebraItem(item.quantidadeEnviada, item.qtdRecebida),
+    0
+  )
 
   return (
     <>
@@ -169,8 +174,10 @@ export const ConferenciaRow = ({ conferencia }: { conferencia: Conferencia }) =>
                           )}
                         </TableCell>
                         <TableCell className="text-right">
-                          {item.quebra > 0 ? (
-                            <span className="text-destructive font-medium">{item.quebra}</span>
+                          {getQuebraItem(item.quantidadeEnviada, item.qtdRecebida) > 0 ? (
+                            <span className="text-destructive font-medium">
+                              {getQuebraItem(item.quantidadeEnviada, item.qtdRecebida)}
+                            </span>
                           ) : (
                             <span className="text-muted-foreground">0</span>
                           )}
