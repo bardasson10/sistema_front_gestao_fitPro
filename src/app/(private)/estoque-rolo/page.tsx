@@ -21,6 +21,7 @@ import { MobileViewStockMovement } from "@/components/MobileViewCards/StockCard/
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
+import { formatNumberToBRL } from "@/utils/Formatter/moeda-brasil-format";
 
 const getTodayDate = () => new Date().toISOString().split("T")[0];
 
@@ -130,10 +131,10 @@ export default function Estoque() {
     <main>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <MetricCard
-          title="Total de Rolos"
-          value={`${estoqueAgrupadoData?.totalRolos} rolos`}
-          icon={Package}
-          variant="primary"
+          title="Rolos Disponíveis"
+          value={`${estoqueAgrupadoData?.rolosDisponiveis} Disponíveis`}
+          icon={Layers}
+          variant="default"
         />
         <MetricCard
           title="Peso Total"
@@ -142,10 +143,10 @@ export default function Estoque() {
           variant="success"
         />
         <MetricCard
-          title="Rolos Disponíveis"
-          value={`${estoqueAgrupadoData?.rolosDisponíveis} Disponíveis`}
-          icon={Layers}
-          variant="default"
+          title="Total de Rolos"
+          value={`${formatNumberToBRL(estoqueAgrupadoData?.valorTotalEstoque || 0)}`}
+          icon={Package}
+          variant="primary"
         />
       </div>
       <Tabs defaultValue="rolos-individuais" className="w-full">

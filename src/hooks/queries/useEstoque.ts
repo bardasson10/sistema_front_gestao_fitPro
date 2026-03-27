@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/services/api/api-client';
 import { toast } from 'sonner';
 import { EstoqueTecido, MovimentacaoEstoque, PaginatedResponse } from '@/types/production';
+import { EstoqueRolo } from '@/types/EstoqueRolo';
 
 // ============ TIPOS ============
 
@@ -11,8 +12,9 @@ import { EstoqueTecido, MovimentacaoEstoque, PaginatedResponse } from '@/types/p
 interface RelatorioEstoque {
     totalRolos: number;
     pesoTotal: number;
+    valorTotalEstoque: number;
     tecidoComMaiorEstoque: string;
-    rolosDisponíveis: number;
+    rolosDisponiveis: number;
     rolosReservados: number;
     rolosEmUso: number;
     movimentacoesMes: number;
@@ -48,49 +50,7 @@ interface Movimentacao {
     usuario: Usuario;
 }
 
-interface Cor {
-    id: string;
-    nome: string;
-    codigoHex: string;
-}
 
-interface Fornecedor {
-    id: string;
-    nome: string;
-    tipo: string;
-    contato: string;
-    createdAt: string;
-    updatedAt: string;
-}
-
-interface Tecido {
-    id: string;
-    fornecedorId: string;
-    corId: string;
-    nome: string;
-    codigoReferencia: string;
-    rendimentoMetroKg: string;
-    larguraMetros: string;
-    valorPorKg: string;
-    gramatura: string;
-    createdAt: string;
-    updatedAt: string;
-    fornecedor?: Fornecedor;
-    cor?: Cor;
-}
-
-export interface EstoqueRolo {
-    id: string;
-    tecidoId: string;
-    codigoBarraRolo: string;
-    pesoInicialKg: string;
-    pesoAtualKg: string;
-    situacao: SituacaoRolo | string;
-    createdAt: string;
-    updatedAt: string;
-    tecido: Tecido;
-    movimentacoes: Movimentacao[];
-}
 
 interface CriarEstoqueLotePayload {
     tecidoId: string;
