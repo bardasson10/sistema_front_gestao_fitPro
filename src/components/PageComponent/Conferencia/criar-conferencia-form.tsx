@@ -70,8 +70,9 @@ interface ItemConferencia {
 
 const statusQualidadeOptions = [
   { value: "validando", label: "Validando" },
-  { value: "aprovado", label: "Aprovado" },
-  { value: "reprovado", label: "Reprovado" },
+  { value: "conforme", label: "Aprovado" },
+  { value: "nao_conforme", label: "Reprovado" },
+  { value: "com_defeito", label: "Com Defeito" },
 ]
 
 const tipoServicoLabels: Record<string, string> = {

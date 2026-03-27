@@ -7,6 +7,8 @@ import { parseNumber } from "@/utils/Formatter/parse-number-format";
 import { RoloTecidoFormValues } from "@/schemas/rolo-tecido-schema";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
+import { IFornecedor, useGetListAllFornecedores } from "@/hooks/queries/Fornecedores/useFornecedores";
+import React from "react";
 
 interface StockFabricFormProps {
   tecidos: Tecido[];
@@ -22,34 +24,74 @@ export function StockFabricForm({ tecidos, cores, isEditing = false }: StockFabr
     name: "rolos",
   });
 
+  const [selectedFornecedor, setSelectedFornecedor] = React.useState<string | null>(null);
+
+  const { data: fornecedores } = useGetListAllFornecedores();
+
+
+  // Filtrar tecidos baseado no fornecedor selecionado
+  const tecidosFiltrados = selectedFornecedor && fornecedores
+    ? fornecedores
+      .find((f) => f.id === selectedFornecedor)
+      ?.tecidos.map((tecidoFornecedor) =>
+        tecidos.find((t) => t.id === tecidoFornecedor.id)
+      )
+      .filter((t) => t !== undefined) as Tecido[]
+    : tecidos;
+
+
+
   return (
     <div className="space-y-4">
       {!isEditing && (
         <>
-          <FormField
-            control={control}
-            name="tecidoId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tecido</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {tecidos.map((tecido) => (
-                      <SelectItem key={tecido.id} value={tecido.id}>
-                        {tecido.codigoReferencia} - {cores.find((cor) => cor.id === tecido.corId)?.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
+
+          <div className="flex w-fullgap-8 justify-between">
+            <FormItem className="w-full">
+              <FormLabel>Fornecedor</FormLabel>
+              <Select onValueChange={(value) => setSelectedFornecedor(value)} value={selectedFornecedor || ""}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um fornecedor" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {fornecedores?.map((fornecedor) => (
+                    <SelectItem key={fornecedor.id} value={fornecedor.id || ""}>
+                      {fornecedor.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormItem>
+
+            {selectedFornecedor && (
+              <FormField
+                control={control}
+                name="tecidoId"
+                render={({ field }) => (
+                  <FormItem className="w-full">
+                    <FormLabel>Tecido</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {tecidosFiltrados.map((tecido) => (
+                          <SelectItem key={tecido.id} value={tecido.id}>
+                            {tecido.codigoReferencia} - {cores.find((cor) => cor.id === tecido.corId)?.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
-          />
+          </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <FormField

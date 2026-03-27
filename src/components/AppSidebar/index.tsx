@@ -77,7 +77,7 @@ const data = {
         },
         {
           title: "Estoque de Rolos",
-          url: "/estoque",
+          url: "/estoque-rolo",
           icon: CirclePile,
         },
       ],
