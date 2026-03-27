@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResumeStockTable } from "@/components/DataTable/Tables/Estoque/resume-table";
 import { MobileViewStock } from "@/components/MobileViewCards/StockCard/stock-card";
 import { MobileViewStockResume } from "@/components/MobileViewCards/StockCard/stock-card-resume";
-import { useAtualizarEstoqueTecido, useCriarEstoqueTecido, useEstoqueTecidos, useEstoqueTecidosPaginado, useMovimentacoesEstoque, useRelatorioEstoque } from "@/hooks/queries/useEstoque";
+import { useAtualizarEstoqueTecido, useCriarEstoqueTecido } from "@/hooks/queries/useEstoque";
 import { useCores, useTecidos } from "@/hooks/queries/useMateriais";
 import { MovementStockTable } from "@/components/DataTable/Tables/Estoque/MovimentacaoEstoque/table";
 import { MobileViewStockMovement } from "@/components/MobileViewCards/StockCard/stock-card-movement";
@@ -23,6 +23,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { formatNumberToBRL } from "@/utils/Formatter/moeda-brasil-format";
 import { usePagination } from "@/hooks/use-pagination";
 import { EstoqueRolo } from "@/types/EstoqueRolo";
+import { useGetKPIsEstoqueRolo, useGetListAllEstoqueRolo, useGetResumeEstoqueRolo } from "@/hooks/queries/Estoque/useEstoque-Rolo";
+import { useGetListAllMovimentacoesEstoque } from "@/hooks/queries/Estoque/useEstoque-Rolo-Movimentacao";
+import { MovimentacaoEstoque } from "@/types/production";
+import { useState } from "react";
 
 const getTodayDate = () => new Date().toISOString().split("T")[0];
 
@@ -51,6 +55,11 @@ const initialValues: RoloTecidoFormValues = {
 };
 
 export default function Estoque() {
+  const [activeTab, setActiveTab] = useState("rolos-individuais");
+  const isTabRolos = activeTab === "rolos-individuais";
+  const isTabResumo = activeTab === "resumo-por-tecido";
+  const isTabMovimentacao = activeTab === "movimentacao-do-estoque";
+
   const paginacaoRolosHook = usePagination({
     initialPage: 1,
     initialLimit: 10,
@@ -62,24 +71,66 @@ export default function Estoque() {
   const { data: coresData } = useCores();
   const cores = coresData || [];
 
-  const { data: rolosPaginadosData, isLoading } = useEstoqueTecidosPaginado({
+  const { data: rolosPaginadosData, isFetching: isFetchingRolosPaginados } = useGetListAllEstoqueRolo({
     page: paginacaoRolosHook.page,
     limit: paginacaoRolosHook.limit,
+  }, {
+    enabled: isTabRolos,
   });
   const rolosPaginados = rolosPaginadosData?.data || [];
-  const { data: rolosCompletosData } = useEstoqueTecidos();
-  const rolosCompletos = rolosCompletosData || [];
-  const paginacaoRolos = rolosPaginadosData?.pagination;
-  const paginaAtualRolos = paginacaoRolos?.page ?? paginacaoRolosHook.page;
-  const totalPaginasRolos = Math.max(paginacaoRolos?.pages ?? 1, 1);
-  const totalRolos = paginacaoRolos?.total ?? rolosPaginados.length;
+
+  const { data: rolosCompletosData, isFetching: isFetchingRolosCompletos } = useGetListAllEstoqueRolo({
+    page: 1,
+    limit: 1000,
+  }, {
+    enabled: isTabResumo || isTabMovimentacao,
+  });
+  const rolosCompletos = rolosCompletosData?.data || [];
+
+  const { data: resumoEstoqueData, isFetching: isFetchingResumo } = useGetResumeEstoqueRolo({
+    page: 1,
+    limit: 1,
+  }, {
+    enabled: isTabRolos,
+  });
+
+  const { data: kpisEstoqueData, isFetching: isFetchingKPIs } = useGetKPIsEstoqueRolo();
+
+  const paginaAtualRolos = paginacaoRolosHook.page;
+  const totalRolos =
+    rolosPaginadosData?.pagination?.total ??
+    kpisEstoqueData?.totalRolos ??
+    resumoEstoqueData?.pagination?.total ??
+    rolosPaginados.length;
+  const totalPaginasRolos = Math.max(Math.ceil(totalRolos / paginacaoRolosHook.limit), 1);
   const canPreviousPage = paginaAtualRolos > 1;
   const canNextPage = paginaAtualRolos < totalPaginasRolos;
 
-  const { data: estoqueAgrupadoData } = useRelatorioEstoque();
+  const { data: movimentacoesData, isFetching: isFetchingMovimentacoes } = useGetListAllMovimentacoesEstoque({
+    page: 1,
+    limit: 1000,
+  }, {
+    enabled: isTabMovimentacao,
+  });
+  const movimentacoes: MovimentacaoEstoque[] = (movimentacoesData || []).map((mov: any) => ({
+    id: mov.id,
+    estoqueRoloId: mov.estoqueRoloId ?? mov.rolo?.id ?? "",
+    tipoMovimentacao: mov.tipoMovimentacao,
+    pesoMovimentado: parseNumber(mov.pesoMovimentado),
+    createdAt: mov.createdAt ?? new Date().toISOString(),
+    usuario: {
+      id: mov.usuario?.id ?? mov.reponsavel?.id ?? "",
+      nome: mov.usuario?.nome ?? mov.reponsavel?.nome ?? "-",
+      funcaoSetor: mov.usuario?.funcaoSetor ?? "",
+    },
+  }));
 
-  const { data: movimentacoesData } = useMovimentacoesEstoque();
-  const movimentacoes = movimentacoesData || [];
+  const isLoading =
+    isFetchingRolosPaginados ||
+    isFetchingRolosCompletos ||
+    isFetchingResumo ||
+    isFetchingKPIs ||
+    isFetchingMovimentacoes;
 
   const { mutate: criar, isPending: isCreating } = useCriarEstoqueTecido();
   const { mutate: atualizar, isPending: isUpdating } = useAtualizarEstoqueTecido();
@@ -136,24 +187,24 @@ export default function Estoque() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <MetricCard
           title="Rolos Disponíveis"
-          value={`${estoqueAgrupadoData?.rolosDisponiveis} Disponíveis`}
+          value={`${kpisEstoqueData?.rolosDisponiveis ?? 0} Disponíveis`}
           icon={Layers}
           variant="default"
         />
         <MetricCard
           title="Peso Total"
-          value={`${estoqueAgrupadoData?.pesoTotal} kg`}
+          value={`${kpisEstoqueData?.pesoTotal ?? 0} kg`}
           icon={Weight}
           variant="success"
         />
         <MetricCard
           title="Total de Rolos"
-          value={`${formatNumberToBRL(estoqueAgrupadoData?.valorTotalEstoque || 0)}`}
+          value={`${formatNumberToBRL(kpisEstoqueData?.valorTotalEstoque || 0)}`}
           icon={Package}
           variant="primary"
         />
       </div>
-      <Tabs defaultValue="rolos-individuais" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:justify-between sm:items-center">
           <TabsList className="w-full flex-col h-auto sm:w-auto sm:flex-row sm:h-10">
             <TabsTrigger value="rolos-individuais" className="w-full justify-center sm:w-auto text-xs sm:text-sm">Rolos Individuais</TabsTrigger>

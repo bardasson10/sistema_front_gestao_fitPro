@@ -1,4 +1,4 @@
-import { useMutation, useSuspenseQuery, useQueryClient, useQuery } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/services/api/api-client';
 import { toast } from 'sonner';
 import { PaginatedResponse } from '@/types/production';
@@ -8,21 +8,24 @@ import { EstoqueRolo, IFiltroEstoqueRolo, IKPIEstoqueRolo, IResumoEstoqueRolo, S
 
 
 export const useGetListAllEstoqueRolo = (
-    filtros?: IFiltroEstoqueRolo) => {
-    return useSuspenseQuery({
+    filtros?: IFiltroEstoqueRolo,
+    options?: { enabled?: boolean }
+) => {
+    return useQuery({
         queryKey: ['estoque-rolos', 'list', filtros],
         queryFn: async () => {
             const { data } = await apiClient.get<{ data: EstoqueRolo[], pagination: PaginatedResponse }>(
                 '/estoque-rolos',
                 { params: filtros }
             );
-            return data.data;
+            return data;
         },
+        enabled: options?.enabled ?? true,
     });
 };
 
-export const useGetResumeEstoqueRolo = (filtros?: IFiltroEstoqueRolo) => {
-    return useSuspenseQuery({
+export const useGetResumeEstoqueRolo = (filtros?: IFiltroEstoqueRolo, options?: { enabled?: boolean }) => {
+    return useQuery({
         queryKey: ['estoque-rolos', 'resumo', filtros],
         queryFn: async () => {
             const { data } = await apiClient.get<{ data: IResumoEstoqueRolo, pagination: PaginatedResponse }>(
@@ -31,11 +34,12 @@ export const useGetResumeEstoqueRolo = (filtros?: IFiltroEstoqueRolo) => {
             );
             return data;
         },
+        enabled: options?.enabled ?? true,
     });
 };
 
-export const useGetKPIsEstoqueRolo = (filtros?: IFiltroEstoqueRolo) => {
-    return useSuspenseQuery({
+export const useGetKPIsEstoqueRolo = (filtros?: IFiltroEstoqueRolo, options?: { enabled?: boolean }) => {
+    return useQuery({
         queryKey: ['estoque-rolos', 'kpi', filtros],
         queryFn: async () => {
             const { data } = await apiClient.get<IKPIEstoqueRolo>(
@@ -44,6 +48,7 @@ export const useGetKPIsEstoqueRolo = (filtros?: IFiltroEstoqueRolo) => {
             );
             return data;
         },
+        enabled: options?.enabled ?? true,
     });
 };
 

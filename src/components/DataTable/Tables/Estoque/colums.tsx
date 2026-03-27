@@ -35,6 +35,7 @@ export const getStockColumns = (
       },
     },
     {
+      id: 'fornecedor',
       accessorKey: 'tecido',
       header: 'Fornecedor',
       cell: ({ row }) => <span className="text-muted-foreground">{row.original.tecido.fornecedor.nome}</span>,
@@ -61,6 +62,7 @@ export const getStockColumns = (
       }
     },
     {
+      id: 'valorTecidoKg',
       accessorKey: 'tecido',
       header: 'Valor do tecido',
       cell: ({ row }) => <span className="text-muted-foreground">{formatNumberToBRL(row.original.tecido.valorPorKg)}</span>,
