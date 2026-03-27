@@ -14,14 +14,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResumeStockTable } from "@/components/DataTable/Tables/Estoque/resume-table";
 import { MobileViewStock } from "@/components/MobileViewCards/StockCard/stock-card";
 import { MobileViewStockResume } from "@/components/MobileViewCards/StockCard/stock-card-resume";
-import { EstoqueRolo, useAtualizarEstoqueTecido, useCriarEstoqueTecido, useEstoqueTecidos, useEstoqueTecidosPaginado, useMovimentacoesEstoque, useRelatorioEstoque } from "@/hooks/queries/useEstoque";
+import { useAtualizarEstoqueTecido, useCriarEstoqueTecido, useEstoqueTecidos, useEstoqueTecidosPaginado, useMovimentacoesEstoque, useRelatorioEstoque } from "@/hooks/queries/useEstoque";
 import { useCores, useTecidos } from "@/hooks/queries/useMateriais";
 import { MovementStockTable } from "@/components/DataTable/Tables/Estoque/MovimentacaoEstoque/table";
 import { MobileViewStockMovement } from "@/components/MobileViewCards/StockCard/stock-card-movement";
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
 import { formatNumberToBRL } from "@/utils/Formatter/moeda-brasil-format";
+import { usePagination } from "@/hooks/use-pagination";
+import { EstoqueRolo } from "@/types/EstoqueRolo";
 
 const getTodayDate = () => new Date().toISOString().split("T")[0];
 
@@ -50,9 +51,10 @@ const initialValues: RoloTecidoFormValues = {
 };
 
 export default function Estoque() {
-
-  const [paginaRolos, setPaginaRolos] = useState(1);
-  const [limiteRolos, setLimiteRolos] = useState(10);
+  const paginacaoRolosHook = usePagination({
+    initialPage: 1,
+    initialLimit: 10,
+  });
 
   const { data: tecidosData } = useTecidos();
   const tecidos = tecidosData || [];
@@ -61,16 +63,18 @@ export default function Estoque() {
   const cores = coresData || [];
 
   const { data: rolosPaginadosData, isLoading } = useEstoqueTecidosPaginado({
-    page: paginaRolos,
-    limit: limiteRolos,
+    page: paginacaoRolosHook.page,
+    limit: paginacaoRolosHook.limit,
   });
   const rolosPaginados = rolosPaginadosData?.data || [];
   const { data: rolosCompletosData } = useEstoqueTecidos();
   const rolosCompletos = rolosCompletosData || [];
   const paginacaoRolos = rolosPaginadosData?.pagination;
-  const totalPaginasRolos = paginacaoRolos?.pages || 1;
-  const paginaAtualRolos = paginacaoRolos?.page || paginaRolos;
-  const totalRolos = paginacaoRolos?.total || rolosPaginados.length;
+  const paginaAtualRolos = paginacaoRolos?.page ?? paginacaoRolosHook.page;
+  const totalPaginasRolos = Math.max(paginacaoRolos?.pages ?? 1, 1);
+  const totalRolos = paginacaoRolos?.total ?? rolosPaginados.length;
+  const canPreviousPage = paginaAtualRolos > 1;
+  const canNextPage = paginaAtualRolos < totalPaginasRolos;
 
   const { data: estoqueAgrupadoData } = useRelatorioEstoque();
 
@@ -203,10 +207,9 @@ export default function Estoque() {
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm text-muted-foreground">Linhas por pagina</span>
               <Select
-                value={String(limiteRolos)}
+                value={String(paginacaoRolosHook.limit)}
                 onValueChange={(value) => {
-                  setLimiteRolos(Number(value));
-                  setPaginaRolos(1);
+                  paginacaoRolosHook.setPageSize(Number(value));
                 }}
               >
                 <SelectTrigger className="h-8 w-20">
@@ -224,8 +227,8 @@ export default function Estoque() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setPaginaRolos((current) => Math.max(1, current - 1))}
-                disabled={isLoading || paginaAtualRolos <= 1}
+                onClick={paginacaoRolosHook.previousPage}
+                disabled={isLoading || !canPreviousPage}
               >
                 <ChevronLeft className="mr-1 h-4 w-4" />
                 Anterior
@@ -238,8 +241,8 @@ export default function Estoque() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setPaginaRolos((current) => Math.min(totalPaginasRolos, current + 1))}
-                disabled={isLoading || paginaAtualRolos >= totalPaginasRolos}
+                onClick={paginacaoRolosHook.nextPage}
+                disabled={isLoading || !canNextPage}
               >
                 Proxima
                 <ChevronRight className="ml-1 h-4 w-4" />

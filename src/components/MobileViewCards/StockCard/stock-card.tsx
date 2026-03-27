@@ -1,13 +1,14 @@
 import { SemDadosComponent } from "@/components/ErrorManagementComponent/AnyData"
 import { BaseCard } from "@/components/MobileViewCards/base-card"
 import { Button } from "@/components/ui/button"
+import { CircleColorView } from "@/components/ui/circle-color-view"
 import { StatusBadge } from "@/components/ui/status-badge"
-import { EstoqueRolo } from "@/hooks/queries/useEstoque"
+import { EstoqueRolo } from "@/types/EstoqueRolo"
 import { EstoqueTecido } from "@/types/production"
 import { StockProps } from "@/types/StockComponents/stock-components"
 import { formatNumberToBRL } from "@/utils/Formatter/moeda-brasil-format"
 import { parseNumber } from "@/utils/Formatter/parse-number-format"
-import { Pencil } from "lucide-react"
+import { Circle, Pencil } from "lucide-react"
 
 
 
@@ -60,20 +61,14 @@ export const MobileViewStock = ({
             cardClassName="min-h-fit"
             headerClassName="pb-2"
             action={
-              <div
-                key={tecidoDoRolo?.id}
-                className="h-5 w-5 rounded-full border shadow-sm"
-                style={{ backgroundColor: cores.find(c => c.id === tecidoDoRolo?.corId)?.codigoHex || '' }}
-                title={cores.find(c => c.id === tecidoDoRolo?.corId)?.nome || ''}
-              />
-
+              <CircleColorView color={cores.find(c => c.id === tecidoDoRolo?.corId)?.codigoHex} />
             }
             content={
               <div className="grid gap-1 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Peso Inicial:</span>
+                  <span className="text-muted-foreground">Fornecedor:</span>
                   <span className="font-medium">
-                    {item.pesoInicialKg} Kg
+                    {item.tecido.fornecedor.nome}
                   </span>
                 </div>
                 <div className="flex justify-between">

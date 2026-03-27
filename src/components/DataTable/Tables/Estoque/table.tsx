@@ -3,7 +3,8 @@ import { StockProps } from "@/types/StockComponents/stock-components"
 import React from "react";
 import { getStockColumns } from "./colums";
 import { DataTable } from "@/components/DataTable";
-import { EstoqueRolo } from "@/hooks/queries/useEstoque";
+import { EstoqueRolo } from "@/types/EstoqueRolo";
+
 
 interface StockTableProps extends StockProps {
 

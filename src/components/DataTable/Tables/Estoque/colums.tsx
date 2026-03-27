@@ -1,11 +1,13 @@
 import { Button } from "@/components/ui/button";
-import { EstoqueRolo } from "@/hooks/queries/useEstoque";
+
 import { ColumnDef } from "@tanstack/react-table";
 import { Pencil } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { dataFormatter } from "@/utils/Formatter/data-brasil-format";
 import { formatNumberToBRL } from "@/utils/Formatter/moeda-brasil-format";
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
+import { EstoqueRolo } from "@/types/EstoqueRolo";
+import { CircleColorView } from "@/components/ui/circle-color-view";
 
 
 export const getStockColumns = (
@@ -26,20 +28,17 @@ export const getStockColumns = (
         const tecido = tecidos.find(t => t.id === row.original.tecidoId);
         return (
           <div className="flex items-center gap-2">
-            <div
-              className="h-4 w-4 rounded-full border"
-              style={{ backgroundColor: cores.find(c => c.id === tecido?.corId)?.codigoHex || '' }}
-            />
+            <CircleColorView color={cores.find(c => c.id === tecido?.corId)?.codigoHex} />
             <span>{tecido?.tipo} - {cores.find(c => c.id === tecido?.corId)?.nome}</span>
           </div>
         )
       },
     },
-    // {
-    //   accessorKey: 'pesoInicialKg',
-    //   header: 'Peso Inicial (Kg)',
-    //   cell: ({ row }) => <span className="text-muted-foreground">{row.original.pesoInicialKg}</span>,
-    // },
+    {
+      accessorKey: 'tecido',
+      header: 'Fornecedor',
+      cell: ({ row }) => <span className="text-muted-foreground">{row.original.tecido.fornecedor.nome}</span>,
+    },
     {
       accessorKey: 'pesoAtualKg',
       header: 'Peso Atual (Kg)',
