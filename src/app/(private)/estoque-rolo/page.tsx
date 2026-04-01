@@ -1,6 +1,6 @@
 'use client';
 import { MetricCard } from "@/components/ui/metric-card";
-import { ChevronLeft, ChevronRight, Layers, Package, Plus, Weight } from "lucide-react";
+import { Layers, Package, Plus, Weight } from "lucide-react";
 import { StockTable } from "@/components/DataTable/Tables/Estoque/table";
 import { useFormModal } from "@/hooks/use-form-modal";
 import { RoloTecidoFormValues, roloTecidoSchema } from "@/schemas/rolo-tecido-schema";
@@ -19,11 +19,9 @@ import { useCores, useTecidos } from "@/hooks/queries/useMateriais";
 import { MovementStockTable } from "@/components/DataTable/Tables/Estoque/MovimentacaoEstoque/table";
 import { MobileViewStockMovement } from "@/components/MobileViewCards/StockCard/stock-card-movement";
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatNumberToBRL } from "@/utils/Formatter/moeda-brasil-format";
-import { usePagination } from "@/hooks/use-pagination";
 import { EstoqueRolo } from "@/types/EstoqueRolo";
-import { useGetKPIsEstoqueRolo, useGetListAllEstoqueRolo, useGetResumeEstoqueRolo } from "@/hooks/queries/Estoque/useEstoque-Rolo";
+import { useGetKPIsEstoqueRolo, useGetListAllEstoqueRoloCompleto, useGetResumeEstoqueRolo } from "@/hooks/queries/Estoque/useEstoque-Rolo";
 import { useGetListAllMovimentacoesEstoque } from "@/hooks/queries/Estoque/useEstoque-Rolo-Movimentacao";
 import { MovimentacaoEstoque } from "@/types/production";
 import { useState } from "react";
@@ -60,30 +58,17 @@ export default function Estoque() {
   const isTabResumo = activeTab === "resumo-por-tecido";
   const isTabMovimentacao = activeTab === "movimentacao-do-estoque";
 
-  const paginacaoRolosHook = usePagination({
-    initialPage: 1,
-    initialLimit: 10,
-  });
-
   const { data: tecidosData } = useTecidos();
   const tecidos = tecidosData || [];
 
   const { data: coresData } = useCores();
   const cores = coresData || [];
 
-  const { data: rolosPaginadosData, isFetching: isFetchingRolosPaginados } = useGetListAllEstoqueRolo({
-    page: paginacaoRolosHook.page,
-    limit: paginacaoRolosHook.limit,
-  }, {
-    enabled: isTabRolos,
-  });
-  const rolosPaginados = rolosPaginadosData?.data || [];
-
-  const { data: rolosCompletosData, isFetching: isFetchingRolosCompletos } = useGetListAllEstoqueRolo({
+  const { data: rolosCompletosData, isFetching: isFetchingRolosCompletos } = useGetListAllEstoqueRoloCompleto({
     page: 1,
     limit: 1000,
   }, {
-    enabled: isTabResumo || isTabMovimentacao,
+    enabled: isTabRolos || isTabResumo || isTabMovimentacao,
   });
   const rolosCompletos = rolosCompletosData?.data || [];
 
@@ -95,16 +80,6 @@ export default function Estoque() {
   });
 
   const { data: kpisEstoqueData, isFetching: isFetchingKPIs } = useGetKPIsEstoqueRolo();
-
-  const paginaAtualRolos = paginacaoRolosHook.page;
-  const totalRolos =
-    rolosPaginadosData?.pagination?.total ??
-    kpisEstoqueData?.totalRolos ??
-    resumoEstoqueData?.pagination?.total ??
-    rolosPaginados.length;
-  const totalPaginasRolos = Math.max(Math.ceil(totalRolos / paginacaoRolosHook.limit), 1);
-  const canPreviousPage = paginaAtualRolos > 1;
-  const canNextPage = paginaAtualRolos < totalPaginasRolos;
 
   const { data: movimentacoesData, isFetching: isFetchingMovimentacoes } = useGetListAllMovimentacoesEstoque({
     page: 1,
@@ -126,7 +101,6 @@ export default function Estoque() {
   }));
 
   const isLoading =
-    isFetchingRolosPaginados ||
     isFetchingRolosCompletos ||
     isFetchingResumo ||
     isFetchingKPIs ||
@@ -235,7 +209,7 @@ export default function Estoque() {
             <StockTable
               isLoading={isLoading}
               cores={cores}
-              rolos={rolosPaginados}
+              rolos={rolosCompletos}
               tecidos={tecidos}
               onEdit={handleEdit}
             />
@@ -243,62 +217,11 @@ export default function Estoque() {
           <div className="block md:hidden">
             <MobileViewStock
               isLoading={isLoading}
-              rolos={rolosPaginados}
+              rolos={rolosCompletos}
               tecidos={tecidos}
               cores={cores}
               onEdit={handleEdit}
             />
-          </div>
-
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-muted-foreground">
-              Mostrando {rolosPaginados.length} de {totalRolos} rolos
-            </p>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm text-muted-foreground">Linhas por pagina</span>
-              <Select
-                value={String(paginacaoRolosHook.limit)}
-                onValueChange={(value) => {
-                  paginacaoRolosHook.setPageSize(Number(value));
-                }}
-              >
-                <SelectTrigger className="h-8 w-20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[5, 10, 20, 30, 50].map((pageSize) => (
-                    <SelectItem key={pageSize} value={String(pageSize)}>
-                      {pageSize}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={paginacaoRolosHook.previousPage}
-                disabled={isLoading || !canPreviousPage}
-              >
-                <ChevronLeft className="mr-1 h-4 w-4" />
-                Anterior
-              </Button>
-
-              <span className="text-sm text-muted-foreground px-1">
-                Pagina {paginaAtualRolos} de {totalPaginasRolos}
-              </span>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={paginacaoRolosHook.nextPage}
-                disabled={isLoading || !canNextPage}
-              >
-                Proxima
-                <ChevronRight className="ml-1 h-4 w-4" />
-              </Button>
-            </div>
           </div>
         </TabsContent>
         <TabsContent value="resumo-por-tecido">

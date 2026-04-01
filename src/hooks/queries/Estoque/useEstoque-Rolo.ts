@@ -24,6 +24,69 @@ export const useGetListAllEstoqueRolo = (
     });
 };
 
+export const useGetListAllEstoqueRoloCompleto = (
+    filtros?: IFiltroEstoqueRolo,
+    options?: { enabled?: boolean }
+) => {
+    return useQuery({
+        queryKey: ['estoque-rolos', 'list-all', filtros],
+        queryFn: async () => {
+            const parsedLimit = Number(filtros?.limit);
+            const pageSize = parsedLimit > 0 ? parsedLimit : 100;
+
+            const { data: firstPage } = await apiClient.get<{ data: EstoqueRolo[]; pagination: PaginatedResponse }>(
+                '/estoque-rolos',
+                {
+                    params: {
+                        ...filtros,
+                        page: 1,
+                        limit: pageSize,
+                    },
+                }
+            );
+
+            const totalPages = Math.max(firstPage?.pagination?.pages || 1, 1);
+            if (totalPages === 1) {
+                return firstPage;
+            }
+
+            const pageRequests: Promise<{ data: EstoqueRolo[]; pagination: PaginatedResponse }>[] = [];
+            for (let page = 2; page <= totalPages; page += 1) {
+                pageRequests.push(
+                    apiClient
+                        .get<{ data: EstoqueRolo[]; pagination: PaginatedResponse }>('/estoque-rolos', {
+                            params: {
+                                ...filtros,
+                                page,
+                                limit: pageSize,
+                            },
+                        })
+                        .then((response) => response.data)
+                );
+            }
+
+            const remainingPages = await Promise.all(pageRequests);
+            const mergedData = [
+                ...firstPage.data,
+                ...remainingPages.flatMap((pageResult) => pageResult.data || []),
+            ];
+
+            return {
+                ...firstPage,
+                data: mergedData,
+                pagination: {
+                    ...firstPage.pagination,
+                    page: 1,
+                    pages: 1,
+                    limit: mergedData.length,
+                    total: mergedData.length,
+                },
+            };
+        },
+        enabled: options?.enabled ?? true,
+    });
+};
+
 export const useGetResumeEstoqueRolo = (filtros?: IFiltroEstoqueRolo, options?: { enabled?: boolean }) => {
     return useQuery({
         queryKey: ['estoque-rolos', 'resumo', filtros],

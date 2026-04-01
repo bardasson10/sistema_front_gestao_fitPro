@@ -3,7 +3,7 @@ import { UseFormReturn, useWatch } from "react-hook-form";
 import { LoteProducaoFormValues } from "@/schemas/LoteProducao/lote-producao-schemas";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CircleColorView } from "@/components/ui/circle-color-view";
-import { EstoqueRolo, useEstoqueTecidos } from "@/hooks/queries/useEstoque";
+import { useEstoqueTecidos } from "@/hooks/queries/useEstoque";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { useProducaoActions } from "@/hooks/use-Producao-actions";
 import { Spinner } from "@/components/ui/spinner";
 import { formatNumberToBRL } from "@/utils/Formatter/moeda-brasil-format";
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
+import { EstoqueRolo } from "@/types/EstoqueRolo";
 
 
 type RoloFormValue = {

@@ -79,7 +79,7 @@ export const initialValuesLote: LoteProducaoFormValues = {
   id: "",
   codigoLote: "",
   tecidoId: "",
-  status: "planejado",
+  status: "lote_criado",
   observacao: "",
   createdAt: "",
   updatedAt: "",

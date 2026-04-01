@@ -5,11 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Trash2, } from "lucide-react"; // Ícones para melhor UX
+import { Trash2, } from "lucide-react"; 
 import { PaginatedResponse } from "@/hooks/queries/useColaboradores";
 import { useEstoqueTecidos } from "@/hooks/queries/useEstoque";
 import { useProducaoActions } from "@/hooks/use-Producao-actions";
 import { Colaborador } from "@/types/production";
+import { STATUS_LOTE_OPTIONS, TStatusLote } from "@/types/Lote";
+
+
 
 interface CreateLoteFormProps {
   colaboradoresResponse: PaginatedResponse<Colaborador> | undefined;
@@ -24,7 +27,7 @@ export const CreateLoteForm = ({ colaboradoresResponse, fecharModal }: CreateLot
   const [formValues, setFormValues] = React.useState({
     codigoLote: '',
     responsavelId: '',
-    status: 'planejado',
+    status: 'lote_criado' as TStatusLote,
     observacao: '',
     rolos: [] as { estoqueRoloId: string; pesoReservado: number; info?: any }[],
   });
@@ -79,14 +82,18 @@ export const CreateLoteForm = ({ colaboradoresResponse, fecharModal }: CreateLot
 
       <div className="space-y-2">
         <Label>Status do Processo</Label>
-        <Select onValueChange={(v) => setFormValues({ ...formValues, status: v })} value={formValues.status}>
+        <Select onValueChange={(v) => setFormValues({ ...formValues, status: v as TStatusLote })} value={formValues.status}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="planejado">Planejado</SelectItem>
-            <SelectItem value="cortado">Cortado</SelectItem>
-            <SelectItem value="concluido">Concluído</SelectItem>
+            {
+              Object.entries(STATUS_LOTE_OPTIONS).map(([key, value]) => (
+                <SelectItem key={value} value={value}>
+                  {value}
+                </SelectItem>
+              ))
+            }
           </SelectContent>
         </Select>
       </div>

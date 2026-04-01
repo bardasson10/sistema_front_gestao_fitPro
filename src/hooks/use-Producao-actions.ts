@@ -1,32 +1,32 @@
 import { useState, useCallback } from "react";
-import { 
-  useCriarLoteProducao, 
-  useAdicionarItensLoteProducao, 
-  useAtualizarLoteProducao,
-  CriarLoteProducaoPayload,
-  AtualizarLoteProducaoPayload,
-  ApiLoteProducaoResponse,
-  AdicionarItensLoteProducaoPayload,
-  useAdicionarRolosLoteProducao,
-  AdicionarRolosLoteProducaoPayload
-} from "./queries/useProducao";
+import {
+    IRequestBodyAddItensLote,
+    IRequestBodyAddRolosLote,
+    IRequestBodyUpdateLote,
+    IRequestBodyCreateLote,
+    ILoteResponse
+}
+    from '@/types/Lote';
+import { usePostAddItensLote, usePostAddRolosLote, usePostCreateLoteProducao, usePostUpdateLote } from "./queries/Lote/useLote";
+
+
 
 export function useProducaoActions() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { mutateAsync: criarLote } = useCriarLoteProducao();
-  const { mutateAsync: adicionarItensLote } = useAdicionarItensLoteProducao();
-  const { mutateAsync: atualizarLote } = useAtualizarLoteProducao();
-  const { mutateAsync: adicionarRolosLote } = useAdicionarRolosLoteProducao();
+  const { mutateAsync: criarLote } = usePostCreateLoteProducao();
+  const { mutateAsync: adicionarItensLote } = usePostAddItensLote();
+  const { mutateAsync: atualizarLote } = usePostUpdateLote();
+  const { mutateAsync: adicionarRolosLote } = usePostAddRolosLote();
 
   /**
    * Transforma os dados brutos do formulário/interface no payload de CRIAÇÃO
    */
-  const handleCriarLote = useCallback(async (values: CriarLoteProducaoPayload) => {
+  const handleCriarLote = useCallback(async (values: IRequestBodyCreateLote) => {
     setIsSubmitting(true);
     try {
 
-      const payload: CriarLoteProducaoPayload = {
+      const payload: IRequestBodyCreateLote = {
         codigoLote: values.codigoLote,
         responsavelId: values.responsavelId,
         status: values.status || 'planejado',
@@ -43,12 +43,12 @@ export function useProducaoActions() {
   /**
    * Transforma os dados para ADICIONAR ITENS (Enfestos/Grades)
    */
-  const handleAdicionarItens = useCallback(async (id: string, values: AdicionarItensLoteProducaoPayload | AdicionarItensLoteProducaoPayload[]) => {
+  const handleAdicionarItens = useCallback(async (id: string, values: IRequestBodyAddItensLote | IRequestBodyAddItensLote[]) => {
     setIsSubmitting(true);
     try {
       const valuesArray = Array.isArray(values) ? values : [values]
 
-      const payload: AdicionarItensLoteProducaoPayload[] = valuesArray.map((value) => ({
+      const payload: IRequestBodyAddItensLote[] = valuesArray.map((value) => ({
         corId: value.corId!,
         qtdFolhas: value.qtdFolhas || 0,
         rolosProducao: value.rolosProducao?.map(r => ({
@@ -68,10 +68,10 @@ export function useProducaoActions() {
   }, [adicionarItensLote]);
 
 
-  const handleAdicionarRolos = useCallback(async (id: string, values: AdicionarRolosLoteProducaoPayload ) => {
+  const handleAdicionarRolos = useCallback(async (id: string, values: IRequestBodyAddRolosLote ) => {
     setIsSubmitting(true);
     try {
-      const payload: AdicionarRolosLoteProducaoPayload = {
+      const payload: IRequestBodyAddRolosLote = {
         rolosProducao: values.rolosProducao?.map(r => ({
           estoqueRoloId: r.estoqueRoloId!,
           pesoReservado: r.pesoReservado || 0,
@@ -89,14 +89,14 @@ export function useProducaoActions() {
    */
 
 
-  const handleEditLoteCabeçalho = useCallback(async (id: string, values: ApiLoteProducaoResponse) => {
+  const handleEditLoteCabeçalho = useCallback(async (id: string, values: IRequestBodyUpdateLote) => {
 
     setIsSubmitting(true);
 
     try {
-      const payload: AtualizarLoteProducaoPayload = {
+      const payload: IRequestBodyUpdateLote = {
         codigoLote: values.codigoLote,
-        responsavelId: values.responsavel?.id,
+        responsavelId: values.responsavelId,
         status: values.status,
         observacao: values.observacao}
       await atualizarLote({ id, dados: payload });
@@ -106,14 +106,19 @@ export function useProducaoActions() {
   }, [atualizarLote]);
 
 
-  const handleEditLote = useCallback(async (id: string, values?: AtualizarLoteProducaoPayload) => {
+  const handleEditLote = useCallback(async (id: string, values?: IRequestBodyUpdateLote) => {
     setIsSubmitting(true);
     try {
-      const payload: AtualizarLoteProducaoPayload = {
+      const payload: IRequestBodyUpdateLote = {
         codigoLote: values?.codigoLote,
         responsavelId: values?.responsavelId,
         status: values?.status,
         observacao: values?.observacao,
+        gradeItens: values?.gradeItens?.map(g => ({
+          produtoId: g.produtoId!,
+          tamanhoId: g.tamanhoId!,
+          qtdMultiplicadorGrade: g.qtdMultiplicadorGrade || 0,
+        })) || [],
         enfestos: values?.enfestos?.flatMap(e =>
           ({
             qtdFolhas: e.qtdFolhas || 0,
@@ -122,11 +127,6 @@ export function useProducaoActions() {
               estoqueRoloId: r.estoqueRoloId!,
               pesoReservado: r.pesoReservado || 0
             })) || [],
-            itens: e.itens?.map(g => ({
-              produtoId: g.produtoId!,
-              tamanhoId: g.tamanhoId!,
-              qtdMultiplicadorGrade: g.qtdMultiplicadorGrade || 0,
-            })) || []
           })) || []
       };
 

@@ -352,19 +352,112 @@ export const useDeletarFaccao = () => {
 
 // ============ LOTES DE PRODUÇÃO ============
 
-export const useLotesProducao = (filtros?: { status?: string; responsavelId?: string }) => {
+export interface ILotesProducaoFiltros {
+    status?: string;
+    codigoLote?: string;
+    responsavelId?: string;
+    corId?: string;
+    produtoId?: string;
+    dataInicio?: string;
+    dataFim?: string;
+    page?: number;
+    limit?: number;
+}
+
+export const useLotesProducao = (filtros?: Partial<ILotesProducaoFiltros>) => {
     return useQuery({
         queryKey: ['lotes-producao', filtros],
         queryFn: async () => {
             const params = new URLSearchParams();
             if (filtros?.status) params.append('status', filtros.status);
+            if (filtros?.codigoLote) params.append('codigoLote', filtros.codigoLote);
             if (filtros?.responsavelId) params.append('responsavelId', filtros.responsavelId);
+            if (filtros?.corId) params.append('corId', filtros.corId);
+            if (filtros?.produtoId) params.append('produtoId', filtros.produtoId);
+            if (filtros?.dataInicio) params.append('dataInicio', filtros.dataInicio);
+            if (filtros?.dataFim) params.append('dataFim', filtros.dataFim);
+            if (typeof filtros?.page === 'number' && filtros.page > 0) params.append('page', String(filtros.page));
+            if (typeof filtros?.limit === 'number' && filtros.limit > 0) params.append('limit', String(filtros.limit));
 
             const queryString = params.toString();
             const { data } = await apiClient.get<{ data: ApiLoteProducaoResponse[]; pagination: PaginatedResponse }>(
                 `/lotes-producao${queryString ? `?${queryString}` : ''}`
             );
             return data as { data: ApiLoteProducaoResponse[]; pagination: PaginatedResponse };
+        },
+    });
+};
+
+export const useLotesProducaoCompleto = (filtros?: Partial<ILotesProducaoFiltros>) => {
+    return useQuery({
+        queryKey: ['lotes-producao', 'list-all', filtros],
+        queryFn: async () => {
+            const pageSize = typeof filtros?.limit === 'number' && filtros.limit > 0 ? filtros.limit : 100;
+
+            const paramsFirstPage = new URLSearchParams();
+            if (filtros?.status) paramsFirstPage.append('status', filtros.status);
+            if (filtros?.codigoLote) paramsFirstPage.append('codigoLote', filtros.codigoLote);
+            if (filtros?.responsavelId) paramsFirstPage.append('responsavelId', filtros.responsavelId);
+            if (filtros?.corId) paramsFirstPage.append('corId', filtros.corId);
+            if (filtros?.produtoId) paramsFirstPage.append('produtoId', filtros.produtoId);
+            if (filtros?.dataInicio) paramsFirstPage.append('dataInicio', filtros.dataInicio);
+            if (filtros?.dataFim) paramsFirstPage.append('dataFim', filtros.dataFim);
+            paramsFirstPage.append('page', '1');
+            paramsFirstPage.append('limit', String(pageSize));
+
+            const firstQueryString = paramsFirstPage.toString();
+            const { data: firstPage } = await apiClient.get<{ data: ApiLoteProducaoResponse[]; pagination: PaginatedResponse }>(
+                `/lotes-producao${firstQueryString ? `?${firstQueryString}` : ''}`
+            );
+
+            const totalPages = Math.max(firstPage?.pagination?.pages || 1, 1);
+            if (totalPages === 1) {
+                return firstPage;
+            }
+
+            const pageRequests: Promise<{ data: ApiLoteProducaoResponse[]; pagination: PaginatedResponse }>[] = [];
+
+            for (let page = 2; page <= totalPages; page += 1) {
+                const paramsPage = new URLSearchParams();
+                if (filtros?.status) paramsPage.append('status', filtros.status);
+                if (filtros?.codigoLote) paramsPage.append('codigoLote', filtros.codigoLote);
+                if (filtros?.responsavelId) paramsPage.append('responsavelId', filtros.responsavelId);
+                if (filtros?.corId) paramsPage.append('corId', filtros.corId);
+                if (filtros?.produtoId) paramsPage.append('produtoId', filtros.produtoId);
+                if (filtros?.dataInicio) paramsPage.append('dataInicio', filtros.dataInicio);
+                if (filtros?.dataFim) paramsPage.append('dataFim', filtros.dataFim);
+                paramsPage.append('page', String(page));
+                paramsPage.append('limit', String(pageSize));
+
+                const queryString = paramsPage.toString();
+
+                pageRequests.push(
+                    apiClient
+                        .get<{ data: ApiLoteProducaoResponse[]; pagination: PaginatedResponse }>(
+                            `/lotes-producao${queryString ? `?${queryString}` : ''}`
+                        )
+                        .then((response) => response.data)
+                );
+            }
+
+            const remainingPages = await Promise.all(pageRequests);
+
+            const mergedData = [
+                ...(firstPage.data || []),
+                ...remainingPages.flatMap((pageResult) => pageResult.data || []),
+            ];
+
+            return {
+                ...firstPage,
+                data: mergedData,
+                pagination: {
+                    ...firstPage.pagination,
+                    page: 1,
+                    pages: 1,
+                    limit: mergedData.length,
+                    total: mergedData.length,
+                },
+            } as { data: ApiLoteProducaoResponse[]; pagination: PaginatedResponse };
         },
     });
 };

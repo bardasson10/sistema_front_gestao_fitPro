@@ -7,6 +7,7 @@ import { UseFormReturn } from "react-hook-form";
 import { Colaborador } from "@/types/production";
 import { PaginatedResponse } from "@/hooks/queries/useColaboradores";
 import { ApiLoteProducaoResponse } from "@/hooks/queries/useProducao";
+import { IRequestBodyUpdateLote } from "@/types/Lote";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Pencil, Package, Shirt, CirclePile } from "lucide-react";
 import { LoteProducaoFormInfo } from "./subForms/loteProducao-info-form";
@@ -18,7 +19,7 @@ interface LoteProducaoAccordionFormProps {
   form: UseFormReturn<LoteProducaoFormValues>;
   lote: ApiLoteProducaoResponse
   colaboradoresResponse: PaginatedResponse<Colaborador> | undefined;
-  handleEditLoteCabeçalho: (id: string, values: ApiLoteProducaoResponse) => Promise<void>
+  handleEditLoteCabeçalho: (id: string, values: IRequestBodyUpdateLote) => Promise<void>
   submitting: boolean;
 }
 

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { ApiLoteProducaoResponse } from "@/hooks/queries/useProducao";
 import { Badge } from "@/components/ui/badge";
 import { dataFormatter } from "@/utils/Formatter/data-brasil-format";
+import { STATUS_LOTE_OPTIONS } from "@/types/Lote";
 
 interface DadosLoteFormProps {
   form: UseFormReturn<LoteProducaoFormValues>;
@@ -29,7 +30,7 @@ export const DadosLoteForm = ({ form, lote, colaboradoresResponse, handleEditLot
       {/* Header - Informações do Lote */}
       <div className="space-y-4 p-5 border rounded-lg bg-card">
         <h3 className="text-lg font-semibold text-foreground mb-4">Informações do Lote</h3>
-        
+
         <div className="grid grid-cols-3 gap-4">
           <div>
             <Label className="block text-xs text-muted-foreground mb-1 uppercase font-medium">
@@ -44,15 +45,15 @@ export const DadosLoteForm = ({ form, lote, colaboradoresResponse, handleEditLot
             <Label className="block text-xs text-muted-foreground mb-1 uppercase font-medium">
               Status
             </Label>
-            <Badge 
+            <Badge
               className="h-7 px-3 font-medium"
               variant={
-                lote.status === 'concluido' 
-                  ? 'secondary' 
-                  : lote.status === 'em_producao' 
-                    ? 'outline' 
-                    : lote.status === 'cancelado' 
-                      ? 'destructive' 
+                lote.status === 'concluido'
+                  ? 'secondary'
+                  : lote.status === 'em_producao'
+                    ? 'outline'
+                    : lote.status === 'cancelado'
+                      ? 'destructive'
                       : 'default'
               }
             >
@@ -74,20 +75,20 @@ export const DadosLoteForm = ({ form, lote, colaboradoresResponse, handleEditLot
       {/* Edição - Dados do Lote */}
       <div className="space-y-4 p-5 border rounded-lg bg-card">
         <h3 className="text-lg font-semibold text-foreground mb-4">Editar Dados do Lote</h3>
-        
+
         <div>
           <Label className="text-sm font-medium">ID do Lote</Label>
-          <Input 
-            value={form.getValues().codigoLote} 
-            className="bg-muted" 
-            onChange={(e) => form.setValue("codigoLote", e.target.value)} 
+          <Input
+            value={form.getValues().codigoLote}
+            className="bg-muted"
+            onChange={(e) => form.setValue("codigoLote", e.target.value)}
           />
         </div>
 
         <div>
           <Label className="text-sm font-medium">Responsável</Label>
-          <Select 
-            onValueChange={(value) => form.setValue("responsavel.id", value)} 
+          <Select
+            onValueChange={(value) => form.setValue("responsavel.id", value)}
             value={form.getValues().responsavel?.id || undefined}
           >
             <SelectTrigger disabled={colaboradores.length === 0}>
@@ -103,35 +104,41 @@ export const DadosLoteForm = ({ form, lote, colaboradoresResponse, handleEditLot
 
         <div>
           <Label className="text-sm font-medium">Status</Label>
-          <Select 
-            onValueChange={(value) => form.setValue("status", value)} 
-            value={form.getValues().status || undefined}
+          <Select
+            onValueChange={(value) => {
+              form.setValue("status", value);
+            }}
+            value={form.getValues().status}
           >
             <SelectTrigger>
               <SelectValue placeholder="Selecione um status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="planejado">Planejado</SelectItem>
-              <SelectItem value="em_producao">Em produção</SelectItem>
-              <SelectItem value="concluido">Concluído</SelectItem>
+              {
+                Object.entries(STATUS_LOTE_OPTIONS).map(([statusKey, statusLabel]) => (
+                  <SelectItem key={statusKey} value={statusKey}>
+                    {statusLabel}
+                  </SelectItem>
+                ))
+              }
             </SelectContent>
           </Select>
         </div>
 
         <div>
           <Label className="text-sm font-medium">Observação</Label>
-          <Textarea 
-            {...form.register("observacao")} 
-            onChange={(value) => form.setValue("observacao", value.target.value)} 
-            placeholder="Digite uma observação" 
+          <Textarea
+            {...form.register("observacao")}
+            onChange={(value) => form.setValue("observacao", value.target.value)}
+            placeholder="Digite uma observação"
             className="resize-none h-24"
           />
         </div>
       </div>
 
       <div className="flex gap-2">
-        <Button 
-          type="button" 
+        <Button
+          type="button"
           onClick={() => handleEditLoteCabeçalho(form.getValues().id!, form.getValues() as ApiLoteProducaoResponse)}
           className="flex-1"
         >
