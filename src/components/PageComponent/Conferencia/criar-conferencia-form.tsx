@@ -297,121 +297,22 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Selecao de Remessa */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
+      {isDirectByIdMode ? (
+        <Card className="overflow-hidden">
+          <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-base">
               <Package className="h-4 w-4" />
-              {isDirectByIdMode ? "Remessa Selecionada" : "Selecionar Remessa"}
+              Remessa Selecionada
             </CardTitle>
             <CardDescription>
-              {isDirectByIdMode
-                ? "Dados da remessa escolhida para conferencia"
-                : "Escolha a remessa que deseja conferir"}
+              Dados da remessa escolhida, configurações da conferência e itens para validação
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {!isDirectByIdMode && (
+          <CardContent className="space-y-6">
+            {remessaSelecionada ? (
               <>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar por faccao ou produto..."
-                    value={busca}
-                    onChange={(e) => setBusca(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-
-                <div className="max-h-64 overflow-y-auto rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12"></TableHead>
-                        <TableHead>Faccao</TableHead>
-                        <TableHead>Servico</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Qtd</TableHead>
-                        <TableHead>Data Saida</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {remessasFiltradas.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={6} className="h-16 text-center text-muted-foreground">
-                            Nenhuma remessa disponivel
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        remessasFiltradas.map((remessa) => (
-                          <TableRow
-                            key={remessa.id}
-                            className={cn(
-                              "cursor-pointer",
-                              remessaSelecionadaId === remessa.id && "bg-primary/10"
-                            )}
-                            onClick={() => handleSelectRemessa(remessa.id)}
-                          >
-                            <TableCell>
-                              <div
-                                className={cn(
-                                  "h-4 w-4 rounded-full border-2",
-                                  remessaSelecionadaId === remessa.id
-                                    ? "border-primary bg-primary"
-                                    : "border-muted-foreground"
-                                )}
-                              >
-                                {remessaSelecionadaId === remessa.id && (
-                                  <div className="h-full w-full rounded-full bg-primary-foreground scale-50" />
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <span className="font-medium">{remessa.faccao.nome}</span>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="secondary">
-                                {tipoServicoLabels[remessa.tipoServico] || remessa.tipoServico}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                variant="outline"
-                                className={cn(
-                                  remessa.status === "enviado"
-                                    ? "bg-warning/15 text-warning border-warning/30"
-                                    : remessa.status === "em_producao"
-                                      ? "bg-primary/15 text-primary border-primary/30"
-                                      : "bg-success/15 text-success border-success/30"
-                                )}
-                              >
-                                {remessa.status === "enviado"
-                                  ? "Enviado"
-                                  : remessa.status === "em_producao"
-                                    ? "Em Producao"
-                                    : "Concluido"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-right font-medium">
-                              {remessa.quantidade}
-                            </TableCell>
-                            <TableCell>
-                              {format(new Date(remessa.dataSaida), "dd/MM/yyyy", { locale: ptBR })}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </>
-            )}
-
-            {isDirectByIdMode && (
-              <div className="rounded-lg border p-4">
-                {remessaSelecionada ? (
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-lg border bg-card p-4">
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <div>
                       <p className="text-xs text-muted-foreground">Facção</p>
                       <p className="font-medium">{remessaSelecionada.faccao.nome}</p>
@@ -433,124 +334,113 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
                       </p>
                     </div>
                   </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Remessa não encontrada para conferência.</p>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                </div>
 
-        {/* Configuracoes da Conferencia */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <ClipboardCheck className="h-4 w-4" />
-              Configuracoes
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Responsavel</Label>
-              <Select value={responsavelId} onValueChange={setResponsavelId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o responsavel" />
-                </SelectTrigger>
-                <SelectContent>
-                  {dataResponsaveis.map((resp) => (
-                    <SelectItem key={resp.id} value={resp.id}>
-                      {resp.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                <div className="rounded-lg border bg-card p-4 space-y-4">
+                  <div>
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                      Configurações
+                    </h3>
+                  </div>
 
-            <div className="space-y-2">
-              <Label>Data da Conferencia</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !dataConferencia && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dataConferencia
-                      ? format(dataConferencia, "dd/MM/yyyy", { locale: ptBR })
-                      : "Selecione a data"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dataConferencia}
-                    onSelect={(date) => date && setDataConferencia(date)}
-                    locale={ptBR}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Responsavel</Label>
+                      <Select value={responsavelId} onValueChange={setResponsavelId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o responsavel" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {dataResponsaveis.map((resp) => (
+                            <SelectItem key={resp.id} value={resp.id}>
+                              {resp.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-            <div className="space-y-2">
-              <Label>Status de Qualidade</Label>
-              <Select value={statusQualidade} onValueChange={setStatusQualidade}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {statusQualidadeOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                    <div className="space-y-2">
+                      <Label>Data da Conferencia</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !dataConferencia && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {dataConferencia
+                              ? format(dataConferencia, "dd/MM/yyyy", { locale: ptBR })
+                              : "Selecione a data"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={dataConferencia}
+                            onSelect={(date) => date && setDataConferencia(date)}
+                            locale={ptBR}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
 
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div className="space-y-0.5">
-                <Label className="text-sm font-medium">Liberar Pagamento</Label>
-                <p className="text-xs text-muted-foreground">
-                  Aprovar para pagamento da faccao
-                </p>
-              </div>
-              <Switch
-                checked={liberadoPagamento}
-                onCheckedChange={setLiberadoPagamento}
-              />
-            </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Status de Qualidade</Label>
+                      <Select value={statusQualidade} onValueChange={setStatusQualidade}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statusQualidadeOptions.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-            <div className="space-y-2">
-              <Label>Observacao</Label>
-              <Textarea
-                placeholder="Adicione observacoes sobre a conferencia..."
-                value={observacao}
-                onChange={(e) => setObservacao(e.target.value)}
-                rows={3}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                    <div className="flex items-center justify-between rounded-lg border p-3 md:col-span-2">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-medium">Liberar Pagamento</Label>
+                        <p className="text-xs text-muted-foreground">
+                          Aprovar para pagamento da faccao
+                        </p>
+                      </div>
+                      <Switch
+                        checked={liberadoPagamento}
+                        onCheckedChange={setLiberadoPagamento}
+                      />
+                    </div>
 
-      {/* Itens para Conferencia */}
-      {remessaSelecionada && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              Itens para Conferencia
-            </CardTitle>
-            <CardDescription>
-              Informe a quantidade recebida e defeitos de cada item
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md border">
-              <Table>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Observacao</Label>
+                      <Textarea
+                        placeholder="Adicione observacoes sobre a conferencia..."
+                        value={observacao}
+                        onChange={(e) => setObservacao(e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3 rounded-lg border bg-card p-4">
+                  <div>
+                    <h3 className="text-base font-semibold">Itens para Conferencia</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Informe a quantidade recebida e defeitos de cada item
+                    </p>
+                  </div>
+
+                  <div className="overflow-hidden rounded-md border">
+                    <div className="overflow-x-auto">
+                      <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Produto</TableHead>
@@ -630,11 +520,12 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
                     )
                   })}
                 </TableBody>
-              </Table>
-            </div>
+                      </Table>
+                    </div>
+                  </div>
 
-            {/* Totais */}
-            <div className="mt-4 flex flex-wrap items-center justify-end gap-6 rounded-lg bg-muted/50 p-4">
+                  {/* Totais */}
+                  <div className="flex flex-wrap items-center justify-end gap-6 rounded-lg bg-muted/50 p-4">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Total Enviado:</span>
                 <span className="font-semibold">{totais.enviado}</span>
@@ -657,16 +548,224 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
               </div>
             </div>
 
-            {totais.quebra > 0 && (
+                  {totais.quebra > 0 && (
               <div className="mt-4 flex items-center gap-2 rounded-lg border border-warning/50 bg-warning/10 p-3 text-sm text-warning-foreground">
                 <AlertTriangle className="h-4 w-4" />
                 <span>
                   Atencao: Existe uma diferenca de {totais.quebra} peca(s) entre o enviado e o recebido.
                 </span>
               </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">Remessa não encontrada para conferência.</p>
             )}
           </CardContent>
         </Card>
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Selecao de Remessa */}
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Package className="h-4 w-4" />
+                Selecionar Remessa
+              </CardTitle>
+              <CardDescription>
+                Escolha a remessa que deseja conferir
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por faccao ou produto..."
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+
+              <div className="max-h-64 overflow-y-auto rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12"></TableHead>
+                      <TableHead>Faccao</TableHead>
+                      <TableHead>Servico</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Qtd</TableHead>
+                      <TableHead>Data Saida</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {remessasFiltradas.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="h-16 text-center text-muted-foreground">
+                          Nenhuma remessa disponivel
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      remessasFiltradas.map((remessa) => (
+                        <TableRow
+                          key={remessa.id}
+                          className={cn(
+                            "cursor-pointer",
+                            remessaSelecionadaId === remessa.id && "bg-primary/10"
+                          )}
+                          onClick={() => handleSelectRemessa(remessa.id)}
+                        >
+                          <TableCell>
+                            <div
+                              className={cn(
+                                "h-4 w-4 rounded-full border-2",
+                                remessaSelecionadaId === remessa.id
+                                  ? "border-primary bg-primary"
+                                  : "border-muted-foreground"
+                              )}
+                            >
+                              {remessaSelecionadaId === remessa.id && (
+                                <div className="h-full w-full rounded-full bg-primary-foreground scale-50" />
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-medium">{remessa.faccao.nome}</span>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">
+                              {tipoServicoLabels[remessa.tipoServico] || remessa.tipoServico}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                remessa.status === "enviado"
+                                  ? "bg-warning/15 text-warning border-warning/30"
+                                  : remessa.status === "em_producao"
+                                    ? "bg-primary/15 text-primary border-primary/30"
+                                    : "bg-success/15 text-success border-success/30"
+                              )}
+                            >
+                              {remessa.status === "enviado"
+                                ? "Enviado"
+                                : remessa.status === "em_producao"
+                                  ? "Em Producao"
+                                  : "Concluido"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {remessa.quantidade}
+                          </TableCell>
+                          <TableCell>
+                            {format(new Date(remessa.dataSaida), "dd/MM/yyyy", { locale: ptBR })}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Configuracoes da Conferencia */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <ClipboardCheck className="h-4 w-4" />
+                Configuracoes
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Responsavel</Label>
+                <Select value={responsavelId} onValueChange={setResponsavelId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o responsavel" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dataResponsaveis.map((resp) => (
+                      <SelectItem key={resp.id} value={resp.id}>
+                        {resp.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Data da Conferencia</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !dataConferencia && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dataConferencia
+                        ? format(dataConferencia, "dd/MM/yyyy", { locale: ptBR })
+                        : "Selecione a data"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dataConferencia}
+                      onSelect={(date) => date && setDataConferencia(date)}
+                      locale={ptBR}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Status de Qualidade</Label>
+                <Select value={statusQualidade} onValueChange={setStatusQualidade}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusQualidadeOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div className="space-y-0.5">
+                  <Label className="text-sm font-medium">Liberar Pagamento</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Aprovar para pagamento da faccao
+                  </p>
+                </div>
+                <Switch
+                  checked={liberadoPagamento}
+                  onCheckedChange={setLiberadoPagamento}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Observacao</Label>
+                <Textarea
+                  placeholder="Adicione observacoes sobre a conferencia..."
+                  value={observacao}
+                  onChange={(e) => setObservacao(e.target.value)}
+                  rows={3}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Botao Salvar */}
