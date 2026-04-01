@@ -9,14 +9,23 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 import { DirecionamentoRemessa } from "@/types/Direcionamento"
 import { ptBR } from "date-fns/locale"
 import { ChevronDown, ChevronRight, Eye } from "lucide-react"
 import { format } from "date-fns"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { StatusBadge } from "./listar-statusBadge"
 import { ServiceFaccao } from "@/types/Faccao"
+import {
+    usePutDirecionamento,
+    usePutDirecionamentoSkuPrice,
+    usePutDirecionamentoStatus,
+} from "@/hooks/queries/Direcionamento/useDirecionamento"
+import { DirecionamentoStatus } from "@/types/Direcionamento"
 
 const tipoServicoLabels: Record<string, ServiceFaccao> = {
     costura: "Costura",
@@ -35,6 +44,18 @@ type RemessaItemCompat = DirecionamentoRemessa["items"][number] & {
 
 export const RemessaRow = ({ remessa }: { remessa: DirecionamentoRemessa }) => {
     const [isOpen, setIsOpen] = useState(false)
+    const [tipoServicoEdit, setTipoServicoEdit] = useState<string>(remessa.tipoServico)
+    const [statusEdit, setStatusEdit] = useState<string>(remessa.status)
+    const [quantidadesEdit, setQuantidadesEdit] = useState<Record<string, number>>({})
+    const [skuPricesEdit, setSkuPricesEdit] = useState<Record<string, number>>({})
+
+    const putDirecionamento = usePutDirecionamento()
+    const putDirecionamentoStatus = usePutDirecionamentoStatus()
+    const putDirecionamentoSkuPrice = usePutDirecionamentoSkuPrice()
+
+    const canEditAll = remessa.status === DirecionamentoStatus.SEPARADO
+    const canEditSkuPrice = remessa.status === DirecionamentoStatus.EM_PRODUCAO
+    const isLocked = remessa.status === DirecionamentoStatus.ENTREGUE
 
     const handleToggle = () => setIsOpen((prev) => !prev)
 
@@ -55,6 +76,81 @@ export const RemessaRow = ({ remessa }: { remessa: DirecionamentoRemessa }) => {
 
     const getCodigoLote = (item: RemessaItemCompat) =>
         item.lote?.codigoLote ?? item.estoqueCorte?.lote?.codigoLote ?? "-"
+
+    const parseDate = (value?: string | null) => {
+        if (!value) return null
+        const parsed = new Date(value)
+        return Number.isNaN(parsed.getTime()) ? null : parsed
+    }
+
+    const dataSaida = parseDate(remessa.dataSaida)
+    const dataPrevisaoRetorno = parseDate(remessa.dataPrevisaoRetorno)
+
+    const itensComQtdEdit = useMemo(
+        () =>
+            remessa.items.map((item) => ({
+                ...item,
+                quantidadeEditada:
+                    quantidadesEdit[item.id] !== undefined
+                        ? quantidadesEdit[item.id]
+                        : Number(item.quantidade || 0),
+            })),
+        [quantidadesEdit, remessa.items],
+    )
+
+    const handleSalvarDirecionamento = () => {
+        const items = itensComQtdEdit.map((item) => ({
+            estoqueCorteId: (item as RemessaItemCompat).estoqueCorteId || item.id,
+            quantidade: Number(item.quantidadeEditada || 0),
+        }))
+
+        putDirecionamento.mutate({
+            id: remessa.id,
+            dados: {
+                direcionamentos: [
+                    {
+                        faccaoId: remessa.faccao.id,
+                        tipoServico: tipoServicoEdit,
+                        items,
+                    },
+                ],
+            },
+        })
+    }
+
+    const handleSalvarSkuPrice = () => {
+        const skuMap = new Map<string, number>()
+
+        remessa.items.forEach((item) => {
+            const sku = getSkuProduto(item as RemessaItemCompat)
+            const value = skuPricesEdit[sku]
+
+            if (!sku || sku === "-" || value === undefined || Number(value) <= 0) {
+                return
+            }
+
+            skuMap.set(sku, Number(value))
+        })
+
+        const produtoSKU = Array.from(skuMap.entries()).map(([sku, valorFaccaoPorPeca]) => ({
+            sku,
+            valorFaccaoPorPeca,
+        }))
+
+        if (!produtoSKU.length) return
+
+        putDirecionamentoSkuPrice.mutate({
+            id: remessa.id,
+            dados: { produtoSKU },
+        })
+    }
+
+    const handleSalvarStatus = () => {
+        putDirecionamentoStatus.mutate({
+            id: remessa.id,
+            dados: { status: statusEdit },
+        })
+    }
 
     return (
         <>
@@ -81,8 +177,8 @@ export const RemessaRow = ({ remessa }: { remessa: DirecionamentoRemessa }) => {
                 </TableCell>
                 <TableCell>
                     <div className="flex flex-col">
-                        <span className="max-w-[160px] truncate text-sm font-medium sm:max-w-none sm:text-base">{remessa.faccao.nome}</span>
-                        <span className="max-w-[160px] truncate text-xs text-muted-foreground sm:max-w-none">
+                        <span className="max-w-40 truncate text-sm font-medium sm:max-w-none sm:text-base">{remessa.faccao.nome}</span>
+                        <span className="max-w-40 truncate text-xs text-muted-foreground sm:max-w-none">
                             {remessa.faccao.responsavel}
                         </span>
                         <div className="mt-1 flex items-center gap-2 sm:hidden">
@@ -109,18 +205,30 @@ export const RemessaRow = ({ remessa }: { remessa: DirecionamentoRemessa }) => {
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
                     <div className="flex flex-col text-sm">
-                        <span>{format(new Date(remessa.dataSaida), "dd/MM/yyyy", { locale: ptBR })}</span>
-                        <span className="text-xs text-muted-foreground">
-                            {format(new Date(remessa.dataSaida), "HH:mm", { locale: ptBR })}
-                        </span>
+                        {dataSaida ? (
+                            <>
+                                <span>{format(dataSaida, "dd/MM/yyyy", { locale: ptBR })}</span>
+                                <span className="text-xs text-muted-foreground">
+                                    {format(dataSaida, "HH:mm", { locale: ptBR })}
+                                </span>
+                            </>
+                        ) : (
+                            <span className="text-xs text-muted-foreground">Aguardando ficar em produção</span>
+                        )}
                     </div>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
                     <div className="flex flex-col text-sm">
-                        <span>{format(new Date(remessa.dataPrevisaoRetorno), "dd/MM/yyyy", { locale: ptBR })}</span>
-                        <span className="text-xs text-muted-foreground">
-                            {format(new Date(remessa.dataPrevisaoRetorno), "HH:mm", { locale: ptBR })}
-                        </span>
+                        {dataPrevisaoRetorno ? (
+                            <>
+                                <span>{format(dataPrevisaoRetorno, "dd/MM/yyyy", { locale: ptBR })}</span>
+                                <span className="text-xs text-muted-foreground">
+                                    {format(dataPrevisaoRetorno, "HH:mm", { locale: ptBR })}
+                                </span>
+                            </>
+                        ) : (
+                            <span className="text-xs text-muted-foreground">Aguardando data saída</span>
+                        )}
                     </div>
                 </TableCell>
                 <TableCell className="hidden sm:table-cell">
@@ -138,6 +246,57 @@ export const RemessaRow = ({ remessa }: { remessa: DirecionamentoRemessa }) => {
                 <TableRow className="bg-muted/20 hover:bg-muted/30">
                     <TableCell colSpan={8} className="p-0">
                         <div className="p-4">
+                            <div className="mb-4 grid gap-3 rounded-md border bg-card p-3 md:grid-cols-3">
+                                <div className="space-y-1">
+                                    <Label>Tipo de Serviço</Label>
+                                    <Select
+                                        value={tipoServicoEdit}
+                                        onValueChange={setTipoServicoEdit}
+                                        disabled={!canEditAll}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="costura">Costura</SelectItem>
+                                            <SelectItem value="corte">Corte</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <Label>Status</Label>
+                                    <Select value={statusEdit} onValueChange={setStatusEdit}>
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value={DirecionamentoStatus.SEPARADO}>Separado</SelectItem>
+                                            <SelectItem value={DirecionamentoStatus.EM_PRODUCAO}>Em Produção</SelectItem>
+                                            <SelectItem value={DirecionamentoStatus.ENTREGUE}>Entregue</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="flex items-end gap-2">
+                                    <Button
+                                        type="button"
+                                        onClick={handleSalvarDirecionamento}
+                                        disabled={!canEditAll || putDirecionamento.isPending}
+                                    >
+                                        Salvar Remessa
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={handleSalvarStatus}
+                                        disabled={putDirecionamentoStatus.isPending || statusEdit === remessa.status}
+                                    >
+                                        Atualizar Status
+                                    </Button>
+                                </div>
+                            </div>
+
                             <h4 className="mb-3 text-sm font-medium text-muted-foreground">
                                 Itens da Remessa ({remessa.items.length})
                             </h4>
@@ -159,6 +318,38 @@ export const RemessaRow = ({ remessa }: { remessa: DirecionamentoRemessa }) => {
                                             </span>
                                             <span>Lote: {getCodigoLote(item as RemessaItemCompat)}</span>
                                         </div>
+                                        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                            <Input
+                                                type="number"
+                                                min={1}
+                                                value={
+                                                    quantidadesEdit[item.id] !== undefined
+                                                        ? quantidadesEdit[item.id]
+                                                        : Number(item.quantidade || 0)
+                                                }
+                                                onChange={(e) =>
+                                                    setQuantidadesEdit((prev) => ({
+                                                        ...prev,
+                                                        [item.id]: Number(e.target.value || 0),
+                                                    }))
+                                                }
+                                                disabled={!canEditAll || isLocked}
+                                            />
+                                            <Input
+                                                type="number"
+                                                min={0}
+                                                step={0.01}
+                                                placeholder="Preço facção / peça"
+                                                value={skuPricesEdit[getSkuProduto(item as RemessaItemCompat)] ?? ""}
+                                                onChange={(e) =>
+                                                    setSkuPricesEdit((prev) => ({
+                                                        ...prev,
+                                                        [getSkuProduto(item as RemessaItemCompat)]: Number(e.target.value || 0),
+                                                    }))
+                                                }
+                                                disabled={!canEditSkuPrice || isLocked}
+                                            />
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -172,6 +363,7 @@ export const RemessaRow = ({ remessa }: { remessa: DirecionamentoRemessa }) => {
                                             <TableHead>Cor</TableHead>
                                             <TableHead>Lote</TableHead>
                                             <TableHead className="text-right">Quantidade</TableHead>
+                                            <TableHead className="text-right">Preço SKU</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -199,12 +391,56 @@ export const RemessaRow = ({ remessa }: { remessa: DirecionamentoRemessa }) => {
                                                 </TableCell>
                                                 <TableCell>{getCodigoLote(item as RemessaItemCompat)}</TableCell>
                                                 <TableCell className="text-right font-medium">
-                                                    {item.quantidade}
+                                                    <Input
+                                                        type="number"
+                                                        min={1}
+                                                        className="ml-auto w-24 text-right"
+                                                        value={
+                                                            quantidadesEdit[item.id] !== undefined
+                                                                ? quantidadesEdit[item.id]
+                                                                : Number(item.quantidade || 0)
+                                                        }
+                                                        onChange={(e) =>
+                                                            setQuantidadesEdit((prev) => ({
+                                                                ...prev,
+                                                                [item.id]: Number(e.target.value || 0),
+                                                            }))
+                                                        }
+                                                        disabled={!canEditAll || isLocked}
+                                                    />
+                                                </TableCell>
+                                                <TableCell className="text-right font-medium">
+                                                    <Input
+                                                        type="number"
+                                                        min={0}
+                                                        step={0.01}
+                                                        className="ml-auto w-32 text-right"
+                                                        placeholder="0,00"
+                                                        value={skuPricesEdit[getSkuProduto(item as RemessaItemCompat)] ?? ""}
+                                                        onChange={(e) =>
+                                                            setSkuPricesEdit((prev) => ({
+                                                                ...prev,
+                                                                [getSkuProduto(item as RemessaItemCompat)]: Number(e.target.value || 0),
+                                                            }))
+                                                        }
+                                                        disabled={!canEditSkuPrice || isLocked}
+                                                    />
                                                 </TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
                                 </Table>
+                            </div>
+
+                            <div className="mt-3 flex justify-end gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={handleSalvarSkuPrice}
+                                    disabled={!canEditSkuPrice || putDirecionamentoSkuPrice.isPending || isLocked}
+                                >
+                                    Salvar Preço por SKU
+                                </Button>
                             </div>
                         </div>
                     </TableCell>

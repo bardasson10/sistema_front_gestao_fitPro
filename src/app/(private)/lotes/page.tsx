@@ -261,7 +261,7 @@ export default function Lotes() {
         id: item.id ?? initialValuesLote.id,
         codigoLote: item.codigoLote ?? initialValuesLote.codigoLote,
         tecidoId: item.tecidoId ?? initialValuesLote.tecidoId,
-        status: item.status ?? initialValuesLote.status,
+        status: item.status ?? initialValuesLote.status as any,
         observacao: item.observacao ?? initialValuesLote.observacao,
         createdAt: item.createdAt ?? initialValuesLote.createdAt,
         updatedAt: item.updatedAt ?? initialValuesLote.updatedAt,
@@ -319,7 +319,7 @@ export default function Lotes() {
             id: direcionamento.id || "",
             faccaoId: direcionamento.faccaoId || "",
             tipoServico: direcionamento.tipoServico || "",
-            status: direcionamento.status || "",
+            status: direcionamento.status as any,
             dataPrevisaoRetorno: direcionamento.dataPrevisaoRetorno || "",
         })),
     });

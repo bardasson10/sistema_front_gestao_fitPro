@@ -3,9 +3,8 @@
 import { useState, useMemo } from "react"
 import {
   CalendarDays,
-  ChevronDown,
+  ChevronLeft,
   ChevronRight,
-  Eye,
   Filter,
   Package,
   Plus,
@@ -13,8 +12,6 @@ import {
   Truck,
   Users,
 } from "lucide-react"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
@@ -45,10 +42,24 @@ import { RemessaRow } from "./components/remessa-row"
 
 interface ListarRemessasProps {
   dataRemessas: DirecionamentoRemessa[];
+  page: number;
+  totalPages: number;
+  totalItems: number;
+  limit: number;
+  onPageChange: (nextPage: number) => void;
+  onLimitChange: (nextLimit: number) => void;
 }
 
 
-export function ListarRemessas({ dataRemessas }: ListarRemessasProps) {
+export function ListarRemessas({
+  dataRemessas,
+  page,
+  totalPages,
+  totalItems,
+  limit,
+  onPageChange,
+  onLimitChange,
+}: ListarRemessasProps) {
   const [busca, setBusca] = useState("")
   const [statusFiltro, setStatusFiltro] = useState<string>("todos")
   const [tipoServicoFiltro, setTipoServicoFiltro] = useState<string>("todos")
@@ -77,13 +88,13 @@ export function ListarRemessas({ dataRemessas }: ListarRemessasProps) {
 
   const estatisticas = useMemo(() => {
     const total = dataRemessas.length
-    const pendentes = dataRemessas.filter((r) => r.status === "pendente").length
+    const separadas = dataRemessas.filter((r) => r.status === "separado").length
     const emProducao = dataRemessas.filter((r) => r.status === "em_producao").length
-    const concluidos = dataRemessas.filter((r) => r.status === "concluido").length
+    const entregues = dataRemessas.filter((r) => r.status === "entregue").length
     const totalPecas = dataRemessas.reduce((acc, r) => acc + r.quantidade, 0)
 
-    return { total, pendentes, emProducao, concluidos, totalPecas }
-  }, [])
+    return { total, separadas, emProducao, entregues, totalPecas }
+  }, [dataRemessas])
 
   return (
     <div className="flex flex-col gap-4 sm:gap-6">
@@ -134,13 +145,13 @@ export function ListarRemessas({ dataRemessas }: ListarRemessasProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Pendentes
+              Separadas
             </CardTitle>
             <CalendarDays className="h-4 w-4 text-warning" />
           </CardHeader>
           <CardContent>
             <div className="text-xl font-bold text-warning sm:text-2xl">
-              {estatisticas.pendentes}
+              {estatisticas.separadas}
             </div>
           </CardContent>
         </Card>
@@ -189,10 +200,9 @@ export function ListarRemessas({ dataRemessas }: ListarRemessasProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos os Status</SelectItem>
-                <SelectItem value="pendente">Pendente</SelectItem>
+                <SelectItem value="separado">Separado</SelectItem>
                 <SelectItem value="em_producao">Em Produção</SelectItem>
-                <SelectItem value="concluido">Concluído</SelectItem>
-                <SelectItem value="cancelado">Cancelado</SelectItem>
+                <SelectItem value="entregue">Entregue</SelectItem>
               </SelectContent>
             </Select>
             <Select value={tipoServicoFiltro} onValueChange={setTipoServicoFiltro}>
@@ -202,9 +212,6 @@ export function ListarRemessas({ dataRemessas }: ListarRemessasProps) {
               <SelectContent>
                 <SelectItem value="todos">Todos os Tipos</SelectItem>
                 <SelectItem value="costura">Costura</SelectItem>
-                <SelectItem value="acabamento">Acabamento</SelectItem>
-                <SelectItem value="bordado">Bordado</SelectItem>
-                <SelectItem value="estamparia">Estamparia</SelectItem>
                 <SelectItem value="corte">Corte</SelectItem>
               </SelectContent>
             </Select>
@@ -219,13 +226,13 @@ export function ListarRemessas({ dataRemessas }: ListarRemessasProps) {
             Lista de Remessas
           </CardTitle>
           <CardDescription>
-            {remessasFiltradas.length} remessa(s) encontrada(s)
+            {totalItems} remessa(s) encontrada(s)
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
             <div className="overflow-x-auto">
-              <Table className="min-w-[760px]">
+              <Table className="min-w-190">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12"></TableHead>
@@ -256,6 +263,53 @@ export function ListarRemessas({ dataRemessas }: ListarRemessasProps) {
               </TableBody>
               </Table>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Paginação */}
+      <Card>
+        <CardContent className="flex flex-col gap-3 pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-sm text-muted-foreground">
+            Página {page} de {totalPages} ({totalItems} remessas)
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm">Linhas por página</span>
+            <Select value={String(limit)} onValueChange={(value) => onLimitChange(Number(value))}>
+              <SelectTrigger className="h-9 w-20">
+                <SelectValue placeholder={String(limit)} />
+              </SelectTrigger>
+              <SelectContent>
+                {[5, 10, 20, 30, 50].map((pageSize) => (
+                  <SelectItem key={pageSize} value={String(pageSize)}>
+                    {pageSize}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-8"
+              onClick={() => onPageChange(page - 1)}
+              disabled={page <= 1}
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-8"
+              onClick={() => onPageChange(page + 1)}
+              disabled={page >= totalPages}
+            >
+              <ChevronRight className="size-4" />
+            </Button>
           </div>
         </CardContent>
       </Card>

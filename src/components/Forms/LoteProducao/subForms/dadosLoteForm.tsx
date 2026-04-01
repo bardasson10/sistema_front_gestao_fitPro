@@ -10,20 +10,23 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { dataFormatter } from "@/utils/Formatter/data-brasil-format";
-import { ILoteResponse, STATUS_LOTE_OPTIONS } from "@/types/Lote";
+import { ILoteResponse, IRequestBodyUpdateLote, STATUS_LOTE_OPTIONS, TStatusLote } from "@/types/Lote";
+
 
 interface DadosLoteFormProps {
   form: UseFormReturn<LoteProducaoFormValues>;
   lote: ILoteResponse;
   colaboradoresResponse: PaginatedResponse<Colaborador> | undefined;
-  handleEditLoteCabeçalho: (id: string, values: ILoteResponse) => Promise<void>
+  handleEditLoteCabeçalho: (id: string, values: IRequestBodyUpdateLote) => Promise<void>
 }
-
 export const DadosLoteForm = ({ form, lote, colaboradoresResponse, handleEditLoteCabeçalho }: DadosLoteFormProps) => {
   const colaboradores = Array.isArray(colaboradoresResponse)
     ? colaboradoresResponse
     : (colaboradoresResponse?.data || []);
 
+    const isTStatusLote = (value: string): value is TStatusLote => {
+      return value in STATUS_LOTE_OPTIONS;
+    };
   return (
     <section className="space-y-6">
       {/* Header - Informações do Lote */}
@@ -78,7 +81,7 @@ export const DadosLoteForm = ({ form, lote, colaboradoresResponse, handleEditLot
         <div>
           <Label className="text-sm font-medium">ID do Lote</Label>
           <Input
-            value={form.getValues().codigoLote}
+            value={form.watch("codigoLote")}
             className="bg-muted"
             onChange={(e) => form.setValue("codigoLote", e.target.value)}
           />
@@ -88,7 +91,7 @@ export const DadosLoteForm = ({ form, lote, colaboradoresResponse, handleEditLot
           <Label className="text-sm font-medium">Responsável</Label>
           <Select
             onValueChange={(value) => form.setValue("responsavel.id", value)}
-            value={form.getValues().responsavel?.id || undefined}
+            value={form.watch("responsavel.id") || undefined}
           >
             <SelectTrigger disabled={colaboradores.length === 0}>
               <SelectValue placeholder="Selecione um responsável" />
@@ -105,9 +108,9 @@ export const DadosLoteForm = ({ form, lote, colaboradoresResponse, handleEditLot
           <Label className="text-sm font-medium">Status</Label>
           <Select
             onValueChange={(value) => {
-              form.setValue("status", value);
+              form.setValue("status", value as TStatusLote);
             }}
-            value={form.getValues().status}
+            value={form.watch("status")}
           >
             <SelectTrigger>
               <SelectValue placeholder="Selecione um status" />
@@ -138,7 +141,17 @@ export const DadosLoteForm = ({ form, lote, colaboradoresResponse, handleEditLot
       <div className="flex gap-2">
         <Button
           type="button"
-          onClick={() => handleEditLoteCabeçalho(form.getValues().id!, form.getValues() as ILoteResponse)}
+          onClick={() => {
+            const formValues = form.getValues();
+            const payload: IRequestBodyUpdateLote = {
+              codigoLote: formValues.codigoLote,
+              responsavelId: formValues.responsavel?.id,
+              status: formValues.status,
+              observacao: formValues.observacao,
+            };
+
+            handleEditLoteCabeçalho(formValues.id, payload);
+          }}
           className="flex-1"
         >
           Salvar Alterações

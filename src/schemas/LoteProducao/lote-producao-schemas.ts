@@ -51,7 +51,7 @@ const loteDirecionamentoSchema = z.object({
   id: z.string(),
   faccaoId: z.string(),
   tipoServico: z.string(),
-  status: z.string(),
+  status: z.enum(["lote_criado", "enfesto", "cortado"]),
   dataPrevisaoRetorno: z.string(),
 });
 
@@ -62,7 +62,7 @@ export const loteProducaoFormSchema = z.object({
   id: z.string(),
   codigoLote: z.string(),
   tecidoId: z.string(),
-  status: z.string(),
+  status: z.enum(["lote_criado", "enfesto", "cortado"]),
   observacao: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),

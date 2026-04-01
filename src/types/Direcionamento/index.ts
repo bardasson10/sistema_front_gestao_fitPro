@@ -24,6 +24,40 @@ export interface DirecionamentoRequestBodyPayload{
     direcionamentos: Direcionamento[]
 }
 
+export interface DirecionamentoUpdateItemPayload {
+    estoqueCorteId: string
+    quantidade: number
+}
+
+export interface DirecionamentoUpdatePayloadItem {
+    faccaoId: string
+    tipoServico: string
+    items: DirecionamentoUpdateItemPayload[]
+}
+
+export interface DirecionamentoPutRequestBodyPayload {
+    direcionamentos: DirecionamentoUpdatePayloadItem[]
+}
+
+export enum DirecionamentoStatus {
+    SEPARADO = 'separado',
+    EM_PRODUCAO = 'em_producao',
+    ENTREGUE = 'entregue',
+}
+
+export interface DirecionamentoPutStatusRequestBodyPayload {
+    status: DirecionamentoStatus | string
+}
+
+export interface ProdutoSkuPricePayloadItem {
+    sku: string
+    valorFaccaoPorPeca: number
+}
+
+export interface DirecionamentoPutSkuPriceRequestBodyPayload {
+    produtoSKU: ProdutoSkuPricePayloadItem[]
+}
+
 // Types para listagem de remessas
 export interface RemessaFaccao {
     id: string
@@ -50,7 +84,9 @@ export interface RemessaLote {
 
 export interface RemessaItem {
     id: string
+    estoqueCorteId?: string
     quantidade: number
+    valorFaccaoPorPeca?: number
     produto: RemessaProduto
     lote: RemessaLote
 }

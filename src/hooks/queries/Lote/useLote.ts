@@ -69,7 +69,7 @@ const buildLoteParams = (filtros?: Partial<IFiltrosLote>) => ({
     limit: filtros?.limit,
 });
 export const useGetListAllLotes = (filtros?: Partial<IFiltrosLote>) => {
-    return useQuery({
+    return useSuspenseQuery({
         queryKey: ['lotes-producao', 'list-all' , filtros],
         queryFn: async () => {
             const { data } = await apiClient.get<{ data: ILoteResponse[]; pagination: PaginatedResponse }>(
@@ -85,7 +85,7 @@ export const useGetListAllLotes = (filtros?: Partial<IFiltrosLote>) => {
 };
 
 export const useGetResumoPorCor = (filtros?: Partial<IFiltrosLote>) => {
-    return useQuery({
+    return useSuspenseQuery({
         queryKey: ['lotes-producao', 'resumo-por-cor', filtros],
         queryFn: async () => {
             const { data } = await apiClient.get<{ data?: IResumoPorCorResponse; pagination?: PaginatedResponse } | IResumoPorCorResponse>(

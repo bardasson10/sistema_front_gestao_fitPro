@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import {
   ArrowLeft,
   CalendarIcon,
@@ -13,6 +13,7 @@ import {
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -66,6 +67,25 @@ interface ItemConferencia {
   qtdDefeito: number;
 }
 
+type RemessaItemCompat = {
+  id?: string;
+  direcionamentoItemId?: string;
+  quantidade?: number;
+  produto?: {
+    nome?: string;
+    sku?: string;
+    tamanho?: string;
+    cor?: { nome?: string; codigoHex?: string };
+  };
+  lote?: { codigoLote?: string };
+  estoqueCorte?: {
+    produto?: { nome?: string; sku?: string };
+    tamanho?: { nome?: string };
+    cor?: { nome?: string; codigoHex?: string };
+    lote?: { codigoLote?: string };
+  };
+}
+
 
 
 const statusQualidadeOptions = [
@@ -91,18 +111,44 @@ interface CriarConferenciaFormProps {
     pagination: PaginatedResponse;
   }, any, ConferenciaRequestBodyPayload, unknown>;
   isPending: boolean;
+  initialRemessaId?: string;
 
 }
 
-export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConferencia, isPending }: CriarConferenciaFormProps) {
+export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConferencia, isPending, initialRemessaId }: CriarConferenciaFormProps) {
+  const router = useRouter()
+  const isDirectByIdMode = Boolean(initialRemessaId)
+
+  const getNomeProduto = (item: RemessaItemCompat) =>
+    item.produto?.nome ?? item.estoqueCorte?.produto?.nome ?? "Produto"
+
+  const getSkuProduto = (item: RemessaItemCompat) =>
+    item.produto?.sku ?? item.estoqueCorte?.produto?.sku ?? "-"
+
+  const getTamanhoProduto = (item: RemessaItemCompat) =>
+    item.produto?.tamanho ?? item.estoqueCorte?.tamanho?.nome ?? "-"
+
+  const getCorProduto = (item: RemessaItemCompat) => ({
+    nome: item.produto?.cor?.nome ?? item.estoqueCorte?.cor?.nome ?? "-",
+    codigoHex: item.produto?.cor?.codigoHex ?? item.estoqueCorte?.cor?.codigoHex ?? "#D4D4D8",
+  })
+
+  const getLoteCodigo = (item: RemessaItemCompat) =>
+    item.lote?.codigoLote ?? item.estoqueCorte?.lote?.codigoLote ?? "-"
 
 
   // Filtra apenas remessas que podem ser conferidas
   const remessasDisponiveis = useMemo(() => {
-    return dataRemessas.filter((r) =>
-      ["enviado", "em_producao", "concluido"].includes(r.status)
-    )
-  }, [dataRemessas])
+    if (isDirectByIdMode) {
+      return dataRemessas
+    }
+
+    const statusPermitidos = ["enviado", "em_producao", "concluido", "entregue"]
+    return dataRemessas.filter((r) => {
+      if (initialRemessaId && r.id === initialRemessaId) return true
+      return statusPermitidos.includes(r.status)
+    })
+  }, [dataRemessas, initialRemessaId, isDirectByIdMode])
 
   const [remessaSelecionadaId, setRemessaSelecionadaId] = useState<string>("")
   const [responsavelId, setResponsavelId] = useState<string>("")
@@ -121,23 +167,52 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
     setRemessaSelecionadaId(remessaId)
     const remessa = remessasDisponiveis.find((r) => r.id === remessaId)
     if (remessa) {
+      const itensNormalizados = (remessa.items ?? [])
+        .map((item) => {
+          const itemCompat = item as unknown as RemessaItemCompat
+          const direcionamentoItemId = itemCompat.id ?? itemCompat.direcionamentoItemId
+
+          if (!direcionamentoItemId) return null
+
+          return {
+            direcionamentoItemId,
+            produto: {
+              nome: getNomeProduto(itemCompat),
+              sku: getSkuProduto(itemCompat),
+            },
+            tamanho: getTamanhoProduto(itemCompat),
+            cor: getCorProduto(itemCompat),
+            lote: getLoteCodigo(itemCompat),
+            quantidadeEnviada: itemCompat.quantidade ?? 0,
+            qtdRecebida: itemCompat.quantidade ?? 0,
+            qtdDefeito: 0,
+          }
+        })
+        .filter((item): item is ItemConferencia => item !== null)
+
       setItensConferencia(
-        remessa.items.map((item) => ({
-          direcionamentoItemId: item.id,
-          produto: {
-            nome: item.produto.nome,
-            sku: item.produto.sku,
-          },
-          tamanho: item.produto.tamanho,
-          cor: item.produto.cor,
-          lote: item.lote.codigoLote,
-          quantidadeEnviada: item.quantidade,
-          qtdRecebida: item.quantidade,
-          qtdDefeito: 0,
-        }))
+        itensNormalizados
       )
     }
   }
+
+  useEffect(() => {
+    if (!isDirectByIdMode) return;
+    if (remessaSelecionadaId) return;
+    if (!remessasDisponiveis.length) return;
+
+    const remessaByParam = initialRemessaId
+      ? remessasDisponiveis.find((remessa) => remessa.id === initialRemessaId)
+      : undefined;
+
+    const remessaAlvo = remessaByParam || remessasDisponiveis[0];
+    handleSelectRemessa(remessaAlvo.id);
+  }, [
+    initialRemessaId,
+    isDirectByIdMode,
+    remessaSelecionadaId,
+    remessasDisponiveis,
+  ]);
 
   const handleUpdateItem = (
     itemId: string,
@@ -159,7 +234,7 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
       (r) =>
         r.faccao.nome.toLowerCase().includes(busca.toLowerCase()) ||
         r.items.some((item) =>
-          item.produto.nome.toLowerCase().includes(busca.toLowerCase())
+          getNomeProduto(item as unknown as RemessaItemCompat).toLowerCase().includes(busca.toLowerCase())
         )
     )
   }, [remessasDisponiveis, busca])
@@ -193,7 +268,11 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
     }
 
     // Chama a mutação para criar a conferência
-    criarConferencia(payload);
+    criarConferencia(payload, {
+      onSuccess: () => {
+        router.push("/conferencia")
+      },
+    });
 
   }
 
@@ -202,7 +281,7 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/conferencias">
+          <Link href="/conferencia">
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -224,104 +303,141 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Package className="h-4 w-4" />
-              Selecionar Remessa
+              {isDirectByIdMode ? "Remessa Selecionada" : "Selecionar Remessa"}
             </CardTitle>
             <CardDescription>
-              Escolha a remessa que deseja conferir
+              {isDirectByIdMode
+                ? "Dados da remessa escolhida para conferencia"
+                : "Escolha a remessa que deseja conferir"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por faccao ou produto..."
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                className="pl-9"
-              />
-            </div>
+            {!isDirectByIdMode && (
+              <>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por faccao ou produto..."
+                    value={busca}
+                    onChange={(e) => setBusca(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
 
-            <div className="max-h-64 overflow-y-auto rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12"></TableHead>
-                    <TableHead>Faccao</TableHead>
-                    <TableHead>Servico</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Qtd</TableHead>
-                    <TableHead>Data Saida</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {remessasFiltradas.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="h-16 text-center text-muted-foreground">
-                        Nenhuma remessa disponivel
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    remessasFiltradas.map((remessa) => (
-                      <TableRow
-                        key={remessa.id}
-                        className={cn(
-                          "cursor-pointer",
-                          remessaSelecionadaId === remessa.id && "bg-primary/10"
-                        )}
-                        onClick={() => handleSelectRemessa(remessa.id)}
-                      >
-                        <TableCell>
-                          <div
-                            className={cn(
-                              "h-4 w-4 rounded-full border-2",
-                              remessaSelecionadaId === remessa.id
-                                ? "border-primary bg-primary"
-                                : "border-muted-foreground"
-                            )}
-                          >
-                            {remessaSelecionadaId === remessa.id && (
-                              <div className="h-full w-full rounded-full bg-primary-foreground scale-50" />
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="font-medium">{remessa.faccao.nome}</span>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">
-                            {tipoServicoLabels[remessa.tipoServico] || remessa.tipoServico}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              remessa.status === "enviado"
-                                ? "bg-warning/15 text-warning border-warning/30"
-                                : remessa.status === "em_producao"
-                                  ? "bg-primary/15 text-primary border-primary/30"
-                                  : "bg-success/15 text-success border-success/30"
-                            )}
-                          >
-                            {remessa.status === "enviado"
-                              ? "Enviado"
-                              : remessa.status === "em_producao"
-                                ? "Em Producao"
-                                : "Concluido"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {remessa.quantidade}
-                        </TableCell>
-                        <TableCell>
-                          {format(new Date(remessa.dataSaida), "dd/MM/yyyy", { locale: ptBR })}
-                        </TableCell>
+                <div className="max-h-64 overflow-y-auto rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12"></TableHead>
+                        <TableHead>Faccao</TableHead>
+                        <TableHead>Servico</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Qtd</TableHead>
+                        <TableHead>Data Saida</TableHead>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                    </TableHeader>
+                    <TableBody>
+                      {remessasFiltradas.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="h-16 text-center text-muted-foreground">
+                            Nenhuma remessa disponivel
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        remessasFiltradas.map((remessa) => (
+                          <TableRow
+                            key={remessa.id}
+                            className={cn(
+                              "cursor-pointer",
+                              remessaSelecionadaId === remessa.id && "bg-primary/10"
+                            )}
+                            onClick={() => handleSelectRemessa(remessa.id)}
+                          >
+                            <TableCell>
+                              <div
+                                className={cn(
+                                  "h-4 w-4 rounded-full border-2",
+                                  remessaSelecionadaId === remessa.id
+                                    ? "border-primary bg-primary"
+                                    : "border-muted-foreground"
+                                )}
+                              >
+                                {remessaSelecionadaId === remessa.id && (
+                                  <div className="h-full w-full rounded-full bg-primary-foreground scale-50" />
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className="font-medium">{remessa.faccao.nome}</span>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">
+                                {tipoServicoLabels[remessa.tipoServico] || remessa.tipoServico}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  remessa.status === "enviado"
+                                    ? "bg-warning/15 text-warning border-warning/30"
+                                    : remessa.status === "em_producao"
+                                      ? "bg-primary/15 text-primary border-primary/30"
+                                      : "bg-success/15 text-success border-success/30"
+                                )}
+                              >
+                                {remessa.status === "enviado"
+                                  ? "Enviado"
+                                  : remessa.status === "em_producao"
+                                    ? "Em Producao"
+                                    : "Concluido"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right font-medium">
+                              {remessa.quantidade}
+                            </TableCell>
+                            <TableCell>
+                              {format(new Date(remessa.dataSaida), "dd/MM/yyyy", { locale: ptBR })}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
+            )}
+
+            {isDirectByIdMode && (
+              <div className="rounded-lg border p-4">
+                {remessaSelecionada ? (
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Facção</p>
+                      <p className="font-medium">{remessaSelecionada.faccao.nome}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Serviço</p>
+                      <p className="font-medium">{tipoServicoLabels[remessaSelecionada.tipoServico] || remessaSelecionada.tipoServico}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Quantidade</p>
+                      <p className="font-medium">{remessaSelecionada.quantidade}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Data Saída</p>
+                      <p className="font-medium">
+                        {remessaSelecionada.dataSaida
+                          ? format(new Date(remessaSelecionada.dataSaida), "dd/MM/yyyy", { locale: ptBR })
+                          : "-"}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Remessa não encontrada para conferência.</p>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 

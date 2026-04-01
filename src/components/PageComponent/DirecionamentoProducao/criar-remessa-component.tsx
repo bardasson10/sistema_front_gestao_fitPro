@@ -300,8 +300,8 @@ export function CriarRemessaComponent({
                                 </SelectContent>
                             </Select>
                         </div>
-
-                        {/* Data de Saída */}
+{/* 
+                        Data de Saída
                         <div className="flex flex-col gap-2">
                             <Label>Data de Saída</Label>
                             <Popover>
@@ -326,10 +326,10 @@ export function CriarRemessaComponent({
                                     />
                                 </PopoverContent>
                             </Popover>
-                        </div>
+                        </div> */}
 
                         {/* Data de Previsão de Retorno */}
-                        <div className="flex flex-col gap-2">
+                        {/* <div className="flex flex-col gap-2">
                             <Label>Previsão de Retorno</Label>
                             <div className="relative">
                                 <CalendarIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -344,7 +344,7 @@ export function CriarRemessaComponent({
                                     }
                                 />
                             </div>
-                        </div>
+                        </div> */}
 
                         {/* Botão de Submit */}
                         <div className="flex flex-col gap-2 sm:flex-row sm:justify-center sm:gap-3">
