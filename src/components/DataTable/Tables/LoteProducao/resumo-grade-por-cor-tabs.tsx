@@ -23,9 +23,17 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { PaginatedResponse } from "@/types/production";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ResumoGradePorCorTabsProps {
     resumo?: IResumoPorCorResponse;
+    pagination?: PaginatedResponse;
+    onPageChange?: (page: number) => void;
+    onLimitChange?: (limit: number) => void;
+    isLoading?: boolean;
 }
 
 function getQuantidadeByTamanho(produto: IResumoPorCorProduto, tamanhoId: string): number {
@@ -114,7 +122,60 @@ function AggregateTable({ secao }: { secao: IResumoPorCorSecao }) {
     );
 }
 
-export function ResumoGradePorCorTabs({ resumo }: ResumoGradePorCorTabsProps) {
+function ResumoSkeleton() {
+    return (
+        <div className="flex flex-col gap-4">
+            <Skeleton className="h-6 w-96" />
+
+            <div className="space-y-6">
+                <section className="space-y-3">
+                    <Skeleton className="h-5 w-32" />
+                    <div className="overflow-x-auto rounded-lg border">
+                        <div className="space-y-2 p-4">
+                            {Array.from({ length: 5 }).map((_, idx) => (
+                                <div key={idx} className="flex gap-4">
+                                    <Skeleton className="h-4 w-44" />
+                                    <Skeleton className="h-4 w-20" />
+                                    <Skeleton className="h-4 w-20" />
+                                    <Skeleton className="h-4 w-20" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                <section className="space-y-3">
+                    <Skeleton className="h-5 w-40" />
+
+                    <div className="space-y-4">
+                        {Array.from({ length: 3 }).map((_, idx) => (
+                            <div key={idx} className="rounded-lg border p-4 space-y-3">
+                                <Skeleton className="h-4 w-24" />
+                                <div className="space-y-2">
+                                    {Array.from({ length: 4 }).map((_, cellIdx) => (
+                                        <div key={cellIdx} className="flex gap-4">
+                                            <Skeleton className="h-4 w-44" />
+                                            <Skeleton className="h-4 w-20" />
+                                            <Skeleton className="h-4 w-20" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            </div>
+        </div>
+    );
+}
+
+export function ResumoGradePorCorTabs({
+    resumo,
+    pagination,
+    onPageChange,
+    onLimitChange,
+    isLoading,
+}: ResumoGradePorCorTabsProps) {
     const [selectedColorKey, setSelectedColorKey] = React.useState<string>("all");
 
     const totalGeral = resumo?.totalGeral;
@@ -125,6 +186,10 @@ export function ResumoGradePorCorTabs({ resumo }: ResumoGradePorCorTabsProps) {
         if (selectedColorKey === "all") return cores;
         return cores.filter((color) => color.id === selectedColorKey);
     }, [cores, selectedColorKey]);
+
+    if (isLoading) {
+        return <ResumoSkeleton />;
+    }
 
     if (!hasAnyData || !totalGeral) {
         return (
@@ -187,6 +252,57 @@ export function ResumoGradePorCorTabs({ resumo }: ResumoGradePorCorTabsProps) {
                     )}
                 </section>
             </div>
+
+            {pagination && pagination.pages > 0 && (
+                <div className="mt-2 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="text-muted-foreground text-sm">
+                        Pagina {pagination.page} de {pagination.pages} ({pagination.total} cores)
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm">Cores por pagina</span>
+                            <Select
+                                value={String(pagination.limit || 10)}
+                                onValueChange={(value) => onLimitChange?.(Number(value))}
+                            >
+                                <SelectTrigger className="h-9 w-20">
+                                    <SelectValue placeholder={String(pagination.limit || 10)} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {[5, 10, 20, 30, 50].map((pageSize) => (
+                                        <SelectItem key={pageSize} value={String(pageSize)}>
+                                            {pageSize}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="size-8"
+                            onClick={() => onPageChange?.(pagination.page - 1)}
+                            disabled={pagination.page <= 1}
+                        >
+                            <ChevronLeft className="size-4" />
+                        </Button>
+
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="size-8"
+                            onClick={() => onPageChange?.(pagination.page + 1)}
+                            disabled={pagination.page >= pagination.pages}
+                        >
+                            <ChevronRight className="size-4" />
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

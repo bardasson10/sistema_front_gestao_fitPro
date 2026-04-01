@@ -8,10 +8,14 @@ import { CreateLoteForm } from "@/components/Forms/LoteProducao/subForms/createL
 import { MobileViewLoteProducao } from "@/components/MobileViewCards/LoteProducaoCard";
 import { BaseModal } from "@/components/Modal/base-modal";
 import { Button } from "@/components/ui/button";
+import {
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Form } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useColaboradores } from "@/hooks/queries/useColaboradores";
 import {
@@ -25,49 +29,133 @@ import {
     LoteProducaoFormValues,
 } from "@/schemas/LoteProducao/lote-producao-schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PlusIcon } from "lucide-react";
+import { ChevronDownIcon, PlusIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { STATUS_LOTE_OPTIONS_FILTER } from "@/types/Lote";
 import { IFiltrosLote, useGetListAllLotes, useGetResumoPorCor } from "@/hooks/queries/Lote/useLote";
 import { ResumoGradePorCorTabs } from "@/components/DataTable/Tables/LoteProducao/resumo-grade-por-cor-tabs";
 
-type IFiltrosFuncionaisLotes = Omit<IFiltrosLote, "page" | "limit">;
+type IFiltroLoteKey = "status" | "codigoLote" | "responsavelId" | "corId" | "produtoId" | "dataInicio" | "dataFim";
+type IFiltrosFuncionaisLotes = Record<IFiltroLoteKey, string[]>;
+
+interface IMultiSelectOption {
+    id: string;
+    nome: string;
+}
+
+interface MultiSelectFilterProps {
+    label: string;
+    placeholder: string;
+    options: IMultiSelectOption[];
+    selectedValues: string[];
+    allLabel?: string;
+    onToggle: (value: string) => void;
+    onClear: () => void;
+}
+
+function MultiSelectFilter({
+    label,
+    placeholder,
+    options,
+    selectedValues,
+    allLabel = "Todos",
+    onToggle,
+    onClear,
+}: MultiSelectFilterProps) {
+    const selectedLabels = options
+        .filter((option) => selectedValues.includes(option.id))
+        .map((option) => option.nome);
+
+    const buttonText = selectedLabels.length === 0
+        ? allLabel
+        : selectedLabels.length <= 2
+            ? selectedLabels.join(", ")
+            : `${selectedLabels.length} selecionados`;
+
+    return (
+        <div className="space-y-1">
+            <Label>{label}</Label>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button type="button" variant="outline" className="w-full justify-between font-normal">
+                        <span className="truncate text-left">{buttonText}</span>
+                        <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground" />
+                    </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent className="w-(--radix-dropdown-menu-trigger-width) min-w-52">
+                    <DropdownMenuCheckboxItem
+                        checked={selectedValues.length === 0}
+                        onSelect={(event) => event.preventDefault()}
+                        onCheckedChange={() => onClear()}
+                    >
+                        {allLabel}
+                    </DropdownMenuCheckboxItem>
+
+                    {options.length === 0 && (
+                        <div className="px-2 py-1.5 text-sm text-muted-foreground">Nenhuma opcao disponivel</div>
+                    )}
+
+                    {options.map((option) => (
+                        <DropdownMenuCheckboxItem
+                            key={option.id}
+                            checked={selectedValues.includes(option.id)}
+                            onSelect={(event) => event.preventDefault()}
+                            onCheckedChange={() => onToggle(option.id)}
+                        >
+                            {option.nome}
+                        </DropdownMenuCheckboxItem>
+                    ))}
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
+    );
+}
 
 const initialFiltros: IFiltrosFuncionaisLotes = {
-    status: "",
-    codigoLote: "",
-    responsavelId: "",
-    corId: "",
-    produtoId: "",
-    dataInicio: "",
-    dataFim: "",
+    status: [],
+    codigoLote: [],
+    responsavelId: [],
+    corId: [],
+    produtoId: [],
+    dataInicio: [],
+    dataFim: [],
 };
 
 export default function Lotes() {
-    const [filtros, setFiltros] = useState<IFiltrosFuncionaisLotes>(initialFiltros);
+    const [filtrosRascunho, setFiltrosRascunho] = useState<IFiltrosFuncionaisLotes>(initialFiltros);
+    const [filtrosAplicados, setFiltrosAplicados] = useState<IFiltrosFuncionaisLotes>(initialFiltros);
+    const [resumoPage, setResumoPage] = useState(1);
+    const [resumoLimit, setResumoLimit] = useState(10);
 
-    const filtrosAplicados = useMemo<Partial<IFiltrosFuncionaisLotes>>(() => ({
-        status: filtros.status || undefined,
-        codigoLote: filtros.codigoLote || undefined,
-        responsavelId: filtros.responsavelId || undefined,
-        corId: filtros.corId || undefined,
-        produtoId: filtros.produtoId || undefined,
-        dataInicio: filtros.dataInicio || undefined,
-        dataFim: filtros.dataFim || undefined,
-    }), [filtros]);
+    const filtrosParaQuery = useMemo<Partial<IFiltrosLote>>(() => ({
+        status: filtrosAplicados.status.length ? filtrosAplicados.status : undefined,
+        codigoLote: filtrosAplicados.codigoLote.length ? filtrosAplicados.codigoLote : undefined,
+        responsavelId: filtrosAplicados.responsavelId.length ? filtrosAplicados.responsavelId : undefined,
+        corId: filtrosAplicados.corId.length ? filtrosAplicados.corId : undefined,
+        produtoId: filtrosAplicados.produtoId.length ? filtrosAplicados.produtoId : undefined,
+        dataInicio: filtrosAplicados.dataInicio.length ? filtrosAplicados.dataInicio : undefined,
+        dataFim: filtrosAplicados.dataFim.length ? filtrosAplicados.dataFim : undefined,
+    }), [filtrosAplicados]);
 
-    const { data: lotesData, isLoading } = useGetListAllLotes({
-        ...filtrosAplicados,
+    const { data: lotesBaseData } = useGetListAllLotes({
         page: 1,
-        limit: 100,
+        limit: 300,
     });
-    const { data: resumoPorCorData } = useGetResumoPorCor({
-        ...filtrosAplicados,
+
+    const { data: lotesData, isPending: isLoadingLotes } = useGetListAllLotes({
+        ...filtrosParaQuery,
         page: 1,
-        limit: 100,
+        limit: 300,
+    });
+    const { data: resumoPorCorData, isPending: isLoadingResumo } = useGetResumoPorCor({
+        ...filtrosParaQuery,
+        page: resumoPage,
+        limit: resumoLimit,
     });
     const dataLote = lotesData || [];
+    const sourceOptionsLote = lotesBaseData || dataLote;
 
     const { mutate: deletarLote, isPending: isDeleting } = useDeletarLoteProducao();
     const { handleEditLoteCabeçalho, isSubmitting } = useProducaoActions();
@@ -81,7 +169,7 @@ export default function Lotes() {
     const opcoesCor = useMemo(() => {
         const corMap = new Map<string, string>();
 
-        (dataLote || []).forEach((lote) => {
+        (sourceOptionsLote || []).forEach((lote) => {
             (lote.materiais || []).forEach((material) => {
                 (material.cores || []).forEach((cor) => {
                     const corId = cor.corId || "";
@@ -94,12 +182,12 @@ export default function Lotes() {
         });
 
         return Array.from(corMap.entries()).map(([id, nome]) => ({ id, nome }));
-    }, [dataLote]);
+    }, [sourceOptionsLote]);
 
     const opcoesProduto = useMemo(() => {
         const produtoMap = new Map<string, string>();
 
-        (dataLote || []).forEach((lote) => {
+        (sourceOptionsLote || []).forEach((lote) => {
             (lote.materiais || []).forEach((material) => {
                 (material.cores || []).forEach((cor) => {
                     (cor.gradeLote || []).forEach((grade) => {
@@ -117,7 +205,51 @@ export default function Lotes() {
         });
 
         return Array.from(produtoMap.entries()).map(([id, nome]) => ({ id, nome }));
-    }, [dataLote]);
+    }, [sourceOptionsLote]);
+
+    const opcoesStatus = useMemo(
+        () => Object.entries(STATUS_LOTE_OPTIONS_FILTER)
+            .filter(([statusKey]) => statusKey !== "todos")
+            .map(([id, nome]) => ({ id, nome })),
+        [],
+    );
+
+    const opcoesResponsavel = useMemo(
+        () => (colaboradoresData?.data || []).map((colaborador) => ({
+            id: colaborador.id,
+            nome: colaborador.nome,
+        })),
+        [colaboradoresData?.data],
+    );
+
+    const opcoesCodigoLote = useMemo(() => {
+        const codigoMap = new Map<string, string>();
+
+        sourceOptionsLote.forEach((lote) => {
+            const codigo = lote.codigoLote || "";
+            if (!codigo || codigoMap.has(codigo)) return;
+            codigoMap.set(codigo, codigo);
+        });
+
+        return Array.from(codigoMap.entries()).map(([id, nome]) => ({ id, nome }));
+    }, [sourceOptionsLote]);
+
+    const opcoesDatas = useMemo(() => {
+        const dateMap = new Map<string, string>();
+
+        sourceOptionsLote.forEach((lote) => {
+            if (!lote.createdAt) return;
+            const dateOnly = lote.createdAt.slice(0, 10);
+            if (!dateOnly || dateMap.has(dateOnly)) return;
+
+            const prettyDate = new Date(`${dateOnly}T00:00:00`).toLocaleDateString("pt-BR");
+            dateMap.set(dateOnly, prettyDate);
+        });
+
+        return Array.from(dateMap.entries())
+            .map(([id, nome]) => ({ id, nome }))
+            .sort((a, b) => a.id.localeCompare(b.id));
+    }, [sourceOptionsLote]);
 
     const form = useForm<LoteProducaoFormValues>({
         resolver: zodResolver(loteProducaoFormSchema),
@@ -205,11 +337,25 @@ export default function Lotes() {
         setIsRemoveOpen(true);
     };
 
-    const updateFiltro = <K extends keyof IFiltrosFuncionaisLotes>(key: K, value: IFiltrosFuncionaisLotes[K]) => {
-        setFiltros((prev) => ({
+    const updateFiltro = (key: IFiltroLoteKey, value: string[]) => {
+        setFiltrosRascunho((prev) => ({
             ...prev,
             [key]: value,
         }));
+    };
+
+    const toggleFiltro = (key: IFiltroLoteKey, value: string) => {
+        setFiltrosRascunho((prev) => {
+            const current = prev[key];
+            const updated = current.includes(value)
+                ? current.filter((item) => item !== value)
+                : [...current, value];
+
+            return {
+                ...prev,
+                [key]: updated,
+            };
+        });
     };
 
     return (
@@ -238,122 +384,92 @@ export default function Lotes() {
                     <div className="mb-3 text-sm font-medium">Filtros</div>
 
                     <div className="w-full not-first:grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-7">
-                        <div className="w-full space-y-1">
-                            <Label>Status</Label>
-                            <Select  value={filtros.status || "todos"} onValueChange={(value) => updateFiltro("status", value === "todos" ? "" : value)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Todos" />
-                                </SelectTrigger>
-                                <SelectContent className="w-full">
-                                    {
-                                        Object.entries(STATUS_LOTE_OPTIONS_FILTER).map(([statusKey, statusLabel]) => (
-                                            <SelectItem key={statusKey} value={statusKey}>
-                                                {statusLabel}
-                                            </SelectItem>
-                                        ))
-                                    }
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        <MultiSelectFilter
+                            label="Status"
+                            placeholder="Selecione"
+                            options={opcoesStatus}
+                            selectedValues={filtrosRascunho.status}
+                            onToggle={(value) => toggleFiltro("status", value)}
+                            onClear={() => updateFiltro("status", [])}
+                        />
 
-                        <div className="space-y-1">
-                            <Label>Codigo Lote</Label>
-                            <Input
-                                placeholder="Ex: LOTE-001"
-                                value={filtros.codigoLote || ""}
-                                onChange={(e) => updateFiltro("codigoLote", e.target.value)}
-                            />
-                        </div>
+                        <MultiSelectFilter
+                            label="Codigo Lote"
+                            placeholder="Selecione"
+                            options={opcoesCodigoLote}
+                            selectedValues={filtrosRascunho.codigoLote}
+                            onToggle={(value) => toggleFiltro("codigoLote", value)}
+                            onClear={() => updateFiltro("codigoLote", [])}
+                        />
 
-                        <div className="space-y-1">
-                            <Label>Responsavel</Label>
-                            <Select
-                                value={filtros.responsavelId || "all"}
-                                onValueChange={(value) => updateFiltro("responsavelId", value === "all" ? "" : value)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Todos" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Todos</SelectItem>
-                                    {(colaboradoresData?.data || []).map((colaborador) => (
-                                        <SelectItem key={colaborador.id} value={colaborador.id}>
-                                            {colaborador.nome}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        <MultiSelectFilter
+                            label="Responsavel"
+                            placeholder="Selecione"
+                            options={opcoesResponsavel}
+                            selectedValues={filtrosRascunho.responsavelId}
+                            onToggle={(value) => toggleFiltro("responsavelId", value)}
+                            onClear={() => updateFiltro("responsavelId", [])}
+                        />
 
-                        <div className="space-y-1">
-                            <Label>Cor</Label>
-                            <Select
-                                value={filtros.corId || "all"}
-                                onValueChange={(value) => updateFiltro("corId", value === "all" ? "" : value)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Todas" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Todas</SelectItem>
-                                    {opcoesCor.map((cor) => (
-                                        <SelectItem key={cor.id} value={cor.id}>
-                                            {cor.nome}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        <MultiSelectFilter
+                            label="Cor"
+                            placeholder="Selecione"
+                            options={opcoesCor}
+                            selectedValues={filtrosRascunho.corId}
+                            onToggle={(value) => toggleFiltro("corId", value)}
+                            onClear={() => updateFiltro("corId", [])}
+                        />
 
-                        <div className="space-y-1">
-                            <Label>Produto</Label>
-                            <Select
-                                value={filtros.produtoId || "all"}
-                                onValueChange={(value) => updateFiltro("produtoId", value === "all" ? "" : value)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Todos" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Todos</SelectItem>
-                                    {opcoesProduto.map((produto) => (
-                                        <SelectItem key={produto.id} value={produto.id}>
-                                            {produto.nome}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        <MultiSelectFilter
+                            label="Produto"
+                            placeholder="Selecione"
+                            options={opcoesProduto}
+                            selectedValues={filtrosRascunho.produtoId}
+                            onToggle={(value) => toggleFiltro("produtoId", value)}
+                            onClear={() => updateFiltro("produtoId", [])}
+                        />
 
-                        <div className="space-y-1">
-                            <Label>Data Inicio</Label>
-                            <Input
-                                type="date"
-                                value={filtros.dataInicio || ""}
-                                onChange={(e) => updateFiltro("dataInicio", e.target.value)}
-                            />
-                        </div>
+                        <MultiSelectFilter
+                            label="Data Inicio"
+                            placeholder="Selecione"
+                            options={opcoesDatas}
+                            selectedValues={filtrosRascunho.dataInicio}
+                            onToggle={(value) => toggleFiltro("dataInicio", value)}
+                            onClear={() => updateFiltro("dataInicio", [])}
+                        />
 
-                        <div className="space-y-1">
-                            <Label>Data Fim</Label>
-                            <Input
-                                type="date"
-                                value={filtros.dataFim || ""}
-                                onChange={(e) => updateFiltro("dataFim", e.target.value)}
-                            />
-                        </div>
+                        <MultiSelectFilter
+                            label="Data Fim"
+                            placeholder="Selecione"
+                            options={opcoesDatas}
+                            selectedValues={filtrosRascunho.dataFim}
+                            onToggle={(value) => toggleFiltro("dataFim", value)}
+                            onClear={() => updateFiltro("dataFim", [])}
+                        />
 
                     </div>
 
-                    <div className="mt-4 flex justify-end">
+                    <div className="mt-4 flex justify-end gap-2">
                         <Button
                             type="button"
                             variant="outline"
                             onClick={() => {
-                                setFiltros(initialFiltros);
+                                setFiltrosRascunho(initialFiltros);
+                                setFiltrosAplicados(initialFiltros);
+                                setResumoPage(1);
                             }}
                         >
                             Limpar filtros
+                        </Button>
+
+                        <Button
+                            type="button"
+                            onClick={() => {
+                                setFiltrosAplicados(filtrosRascunho);
+                                setResumoPage(1);
+                            }}
+                        >
+                            Aplicar filtros
                         </Button>
                     </div>
                 </div>
@@ -362,7 +478,7 @@ export default function Lotes() {
                     <div className="hidden md:block">
                         <LoteProducaoTable
                             lotesProducao={dataLote}
-                            isLoading={isLoading || isDeleting}
+                            isLoading={isLoadingLotes || isDeleting}
                             onView={handleEdit}
                             onRemove={handleRemove}
                         />
@@ -371,7 +487,7 @@ export default function Lotes() {
                     <div className="block md:hidden">
                         <MobileViewLoteProducao
                             lotesProducao={dataLote}
-                            isLoading={isLoading || isDeleting}
+                            isLoading={isLoadingLotes || isDeleting}
                             onView={handleEdit}
                             onRemove={handleRemove}
                         />
@@ -379,7 +495,16 @@ export default function Lotes() {
                 </TabsContent>
 
                 <TabsContent value="resumo-grade-por-cor">
-                    <ResumoGradePorCorTabs resumo={resumoPorCorData} />
+                    <ResumoGradePorCorTabs
+                        resumo={resumoPorCorData?.resumo}
+                        pagination={resumoPorCorData?.pagination}
+                        isLoading={isLoadingResumo}
+                        onPageChange={setResumoPage}
+                        onLimitChange={(newLimit) => {
+                            setResumoLimit(newLimit);
+                            setResumoPage(1);
+                        }}
+                    />
                 </TabsContent>
             </Tabs>
 

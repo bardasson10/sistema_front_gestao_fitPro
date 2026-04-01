@@ -11,29 +11,72 @@ import {
     IResumoPorCorResponse
 } from '@/types/Lote';
 
+export type TFiltroMultiplo = string | string[];
+
 export interface IFiltrosLote {
-    status: string;
-    responsavelId: string;
-    corId: string;
-    produtoId: string;
-    codigoLote: string;
-    dataInicio: string;
-    dataFim: string;
+    status: TFiltroMultiplo;
+    responsavelId: TFiltroMultiplo;
+    corId: TFiltroMultiplo;
+    produtoId: TFiltroMultiplo;
+    codigoLote: TFiltroMultiplo;
+    dataInicio: TFiltroMultiplo;
+    dataFim: TFiltroMultiplo;
     page: number;
     limit: number;
 }
 
+export interface IResumoPorCorPaginatedResponse {
+    resumo: IResumoPorCorResponse;
+    pagination: PaginatedResponse;
+}
 
+const defaultResumo: IResumoPorCorResponse = {
+    totalGeral: {
+        produtos: [],
+        tamanhos: [],
+        grandTotal: 0,
+    },
+    cores: [],
+};
 
+const defaultPagination: PaginatedResponse = {
+    total: 0,
+    page: 1,
+    limit: 10,
+    pages: 0,
+};
+
+const normalizeMultiParam = (value?: TFiltroMultiplo) => {
+    if (!value) return undefined;
+    if (Array.isArray(value)) {
+        const values = value.map((item) => item?.trim()).filter(Boolean);
+        return values.length ? values.join(',') : undefined;
+    }
+
+    const normalized = value.trim();
+    return normalized ? normalized : undefined;
+};
+
+const buildLoteParams = (filtros?: Partial<IFiltrosLote>) => ({
+    status: normalizeMultiParam(filtros?.status),
+    codigoLote: normalizeMultiParam(filtros?.codigoLote),
+    responsavelId: normalizeMultiParam(filtros?.responsavelId),
+    corId: normalizeMultiParam(filtros?.corId),
+    produtoId: normalizeMultiParam(filtros?.produtoId),
+    dataInicio: normalizeMultiParam(filtros?.dataInicio),
+    dataFim: normalizeMultiParam(filtros?.dataFim),
+    page: filtros?.page,
+    limit: filtros?.limit,
+});
 export const useGetListAllLotes = (filtros?: Partial<IFiltrosLote>) => {
-    return useSuspenseQuery({
+    return useQuery({
         queryKey: ['lotes-producao', 'list-all' , filtros],
         queryFn: async () => {
             const { data } = await apiClient.get<{ data: ILoteResponse[]; pagination: PaginatedResponse }>(
                 `/lotes-producao`
                 , 
                 {
-                    params:  filtros 
+                    params: buildLoteParams(filtros),
                 }
             );
             return data.data
@@ -42,35 +85,35 @@ export const useGetListAllLotes = (filtros?: Partial<IFiltrosLote>) => {
 };
 
 export const useGetResumoPorCor = (filtros?: Partial<IFiltrosLote>) => {
-    return useSuspenseQuery({
+    return useQuery({
         queryKey: ['lotes-producao', 'resumo-por-cor', filtros],
         queryFn: async () => {
-            const emptyResumo: IResumoPorCorResponse = {
-                totalGeral: {
-                    produtos: [],
-                    tamanhos: [],
-                    grandTotal: 0,
-                },
-                cores: [],
-            };
-
             const { data } = await apiClient.get<{ data?: IResumoPorCorResponse; pagination?: PaginatedResponse } | IResumoPorCorResponse>(
                 `/lotes-producao/resumo-por-cor`,
                 {
-                    params: filtros,
+                    params: buildLoteParams(filtros),
                 }
             );
 
             // Aceita os dois formatos de resposta: direto ou envelopado em { data: ... }.
             if (data && typeof data === 'object' && 'totalGeral' in data && 'cores' in data) {
-                return data as IResumoPorCorResponse;
+                return {
+                    resumo: data as IResumoPorCorResponse,
+                    pagination: defaultPagination,
+                };
             }
 
-            if (data && typeof data === 'object' && 'data' in data && data.data) {
-                return data.data;
+            if (data && typeof data === 'object' && 'data' in data) {
+                return {
+                    resumo: data.data || defaultResumo,
+                    pagination: data.pagination || defaultPagination,
+                };
             }
 
-            return emptyResumo;
+            return {
+                resumo: defaultResumo,
+                pagination: defaultPagination,
+            };
         },
     });
 };
