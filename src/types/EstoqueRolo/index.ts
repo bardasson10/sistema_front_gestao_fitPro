@@ -4,6 +4,7 @@ interface Cor {
     id: string;
     nome: string;
     codigoHex: string;
+    valorTecido?: number;
 }
 
 interface Fornecedor {

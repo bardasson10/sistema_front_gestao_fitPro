@@ -149,6 +149,7 @@ interface ApiMaterialCor {
     nome?: string;
     codigoHex?: string;
     qtdFolhas?: number;
+    valorTecido?: number;
     rolos?: ApiMaterialRolo[];
     gradeLote?: ApiGradeItem[];
 }

@@ -32,7 +32,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDownIcon, PlusIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { STATUS_LOTE_OPTIONS_FILTER } from "@/types/Lote";
+import { ILoteResponse, STATUS_LOTE_OPTIONS_FILTER } from "@/types/Lote";
 import { IFiltrosLote, useGetListAllLotes, useGetResumoPorCor } from "@/hooks/queries/Lote/useLote";
 import { ResumoGradePorCorTabs } from "@/components/DataTable/Tables/LoteProducao/resumo-grade-por-cor-tabs";
 
@@ -286,6 +286,7 @@ export default function Lotes() {
                     id: cor.corId || "",
                     nome: cor.nome || "",
                     codigoHex: cor.codigoHex || "",
+                    valorTecido: Number(cor.valorTecido || 0),
                     qtdFolhas,
                     rolos: (cor.rolos || []).flatMap((rolo) => ({
                         id: rolo.id || "",
@@ -324,7 +325,7 @@ export default function Lotes() {
     });
 
     const selectedLote = editingItem
-        ? dataLote.find((l) => l.id === editingItem.id) ?? (editingItem as ApiLoteProducaoResponse)
+        ? dataLote.find((l) => l.id === editingItem.id) ?? (editingItem as ILoteResponse)
         : null;
 
     const handleEdit = (item: ApiLoteProducaoResponse) => {

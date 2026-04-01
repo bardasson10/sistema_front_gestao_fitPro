@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
 import { Label } from "@/components/ui/label";
 import { ApiLoteProducaoResponse } from "@/hooks/queries/useProducao";
@@ -13,21 +12,33 @@ interface LoteProducaoFormProps {
 export function LoteProducaoFormInfo({ lote }: LoteProducaoFormProps) {
   const { data: estoqueRolosData = [] } = useEstoqueTecidos();
 
-  const roloEstoqueById = useMemo(() => {
-    return new Map(estoqueRolosData.map((rolo) => [rolo.id, rolo]));
-  }, [estoqueRolosData]);
-
   const getValorPorKgRolo = (
-    rolo: { id: string; valorPorKg?: number | string; tecido?: { valorPorKg?: number | string } },
-    fallbackValorPorKg: number
+    rolo: {
+      id: string;
+      valorPorKg?: number | string;
+      tecido?: {
+        valorPorKg?: number | string;
+        cor?: { valorTecido?: number | string };
+      };
+    },
+    valorTecidoDaCor?: number | string,
+    fallbackValorPorKg = 0
   ) => {
+    const valorNoTecidoDaCor = parseNumber(valorTecidoDaCor);
+    if (valorNoTecidoDaCor > 0) return valorNoTecidoDaCor;
+
+    const valorNoTecidoDoRolo = parseNumber(rolo.tecido?.cor?.valorTecido);
+    if (valorNoTecidoDoRolo > 0) return valorNoTecidoDoRolo;
+
+    const valorNoTecidoBase = parseNumber(rolo.tecido?.valorPorKg);
+    if (valorNoTecidoBase > 0) return valorNoTecidoBase;
+
     const valorNoRolo = parseNumber(rolo.valorPorKg);
     if (valorNoRolo > 0) return valorNoRolo;
 
-    const valorNoTecidoDoRolo = parseNumber(rolo.tecido?.valorPorKg);
-    if (valorNoTecidoDoRolo > 0) return valorNoTecidoDoRolo;
-
-    const valorDoEstoque = parseNumber(roloEstoqueById.get(rolo.id)?.tecido.valorPorKg);
+    const valorDoEstoque = parseNumber(
+      estoqueRolosData.find((estoque) => estoque.id === rolo.id)?.tecido.cor?.valorTecido
+    );
     return valorDoEstoque > 0 ? valorDoEstoque : fallbackValorPorKg;
   };
 
@@ -40,7 +51,7 @@ export function LoteProducaoFormInfo({ lote }: LoteProducaoFormProps) {
 
   return (
     <div className="space-y-6">
-      
+
       {/* Materiais */}
       <div className="pt-2">
         <Label className="mb-3 block text-sm font-semibold">
@@ -50,13 +61,23 @@ export function LoteProducaoFormInfo({ lote }: LoteProducaoFormProps) {
         <div className="space-y-5">
           {lote.materiais?.map((m) => {
             const valorMaterialFallback = parseNumber(m.valorPorKg);
-            const totalMaterialTecidos = (m.cores || []).reduce((accCor, cor) => {
+            const coresUnicas = Array.from(
+              new Map(
+                (m.cores || []).map((cor) => [
+                  cor.corId || cor.nome || cor.codigoHex || "sem-cor",
+                  cor,
+                ])
+              ).values()
+            );
+
+            const totalMaterialTecidos = coresUnicas.reduce((accCor, cor) => {
               const rolosDaCor = cor.rolos || [];
-              const valorCorNoPayload = parseNumber((cor as { valorPorKg?: number | string }).valorPorKg);
-              const fallbackCor = valorCorNoPayload > 0 ? valorCorNoPayload : valorMaterialFallback;
+              const fallbackCor = parseNumber(cor.valorTecido) > 0
+                ? parseNumber(cor.valorTecido)
+                : valorMaterialFallback;
 
               const totalValorCor = rolosDaCor.reduce((accRolo, rolo) => {
-                const valorPorKgRolo = getValorPorKgRolo(rolo, fallbackCor);
+                const valorPorKgRolo = getValorPorKgRolo(rolo, cor.valorTecido, fallbackCor);
                 return accRolo + valorPorKgRolo * parseNumber(rolo.pesoReservado);
               }, 0);
 
@@ -114,7 +135,7 @@ export function LoteProducaoFormInfo({ lote }: LoteProducaoFormProps) {
 
                   {m.cores?.map((c) => {
                     const rolosDaCor = c.rolos || [];
-                    const valorCorNoPayload = parseNumber((c as { valorPorKg?: number | string }).valorPorKg);
+                    const valorCorNoPayload = parseNumber(c.valorTecido);
                     const fallbackCor = valorCorNoPayload > 0 ? valorCorNoPayload : valorMaterialFallback;
 
                     const totalPesoCor = rolosDaCor.reduce(
@@ -123,13 +144,15 @@ export function LoteProducaoFormInfo({ lote }: LoteProducaoFormProps) {
                     );
 
                     const totalValorCor = rolosDaCor.reduce((acc, rolo) => {
-                      const valorPorKgRolo = getValorPorKgRolo(rolo, fallbackCor);
+                      const valorPorKgRolo = getValorPorKgRolo(rolo, c.valorTecido, fallbackCor);
                       return acc + valorPorKgRolo * parseNumber(rolo.pesoReservado);
                     }, 0);
 
-                    const valorCorPorKg = totalPesoCor > 0
-                      ? totalValorCor / totalPesoCor
-                      : fallbackCor;
+                    const valorCorPorKg = valorCorNoPayload > 0
+                      ? valorCorNoPayload
+                      : totalPesoCor > 0
+                        ? totalValorCor / totalPesoCor
+                        : fallbackCor;
 
                     return (
                       <div
@@ -161,7 +184,7 @@ export function LoteProducaoFormInfo({ lote }: LoteProducaoFormProps) {
                           <div className="space-y-2">
                             {rolosDaCor.map((r) => {
                               const pesoReservado = parseNumber(r.pesoReservado);
-                              const valorPorKgRolo = getValorPorKgRolo(r, valorCorPorKg);
+                              const valorPorKgRolo = getValorPorKgRolo(r, c.valorTecido, fallbackCor);
                               const valorTotalRolo = valorPorKgRolo * pesoReservado;
 
                               return (

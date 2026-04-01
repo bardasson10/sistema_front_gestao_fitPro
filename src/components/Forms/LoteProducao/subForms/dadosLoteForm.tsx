@@ -8,16 +8,15 @@ import { Colaborador } from "@/types/production";
 import { PaginatedResponse } from "@/hooks/queries/useColaboradores";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ApiLoteProducaoResponse } from "@/hooks/queries/useProducao";
 import { Badge } from "@/components/ui/badge";
 import { dataFormatter } from "@/utils/Formatter/data-brasil-format";
-import { STATUS_LOTE_OPTIONS } from "@/types/Lote";
+import { ILoteResponse, STATUS_LOTE_OPTIONS } from "@/types/Lote";
 
 interface DadosLoteFormProps {
   form: UseFormReturn<LoteProducaoFormValues>;
-  lote: ApiLoteProducaoResponse;
+  lote: ILoteResponse;
   colaboradoresResponse: PaginatedResponse<Colaborador> | undefined;
-  handleEditLoteCabeçalho: (id: string, values: ApiLoteProducaoResponse) => Promise<void>
+  handleEditLoteCabeçalho: (id: string, values: ILoteResponse) => Promise<void>
 }
 
 export const DadosLoteForm = ({ form, lote, colaboradoresResponse, handleEditLoteCabeçalho }: DadosLoteFormProps) => {
@@ -48,11 +47,11 @@ export const DadosLoteForm = ({ form, lote, colaboradoresResponse, handleEditLot
             <Badge
               className="h-7 px-3 font-medium"
               variant={
-                lote.status === 'concluido'
+                lote.status === 'lote_criado'
                   ? 'secondary'
-                  : lote.status === 'em_producao'
+                  : lote.status === 'enfesto'
                     ? 'outline'
-                    : lote.status === 'cancelado'
+                    : lote.status === 'cortado'
                       ? 'destructive'
                       : 'default'
               }
@@ -139,7 +138,7 @@ export const DadosLoteForm = ({ form, lote, colaboradoresResponse, handleEditLot
       <div className="flex gap-2">
         <Button
           type="button"
-          onClick={() => handleEditLoteCabeçalho(form.getValues().id!, form.getValues() as ApiLoteProducaoResponse)}
+          onClick={() => handleEditLoteCabeçalho(form.getValues().id!, form.getValues() as ILoteResponse)}
           className="flex-1"
         >
           Salvar Alterações

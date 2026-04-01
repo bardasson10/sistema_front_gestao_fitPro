@@ -7,7 +7,7 @@ import { UseFormReturn } from "react-hook-form";
 import { Colaborador } from "@/types/production";
 import { PaginatedResponse } from "@/hooks/queries/useColaboradores";
 import { ApiLoteProducaoResponse } from "@/hooks/queries/useProducao";
-import { IRequestBodyUpdateLote } from "@/types/Lote";
+import { ILoteResponse, IRequestBodyUpdateLote } from "@/types/Lote";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Pencil, Package, Shirt, CirclePile } from "lucide-react";
 import { LoteProducaoFormInfo } from "./subForms/loteProducao-info-form";
@@ -17,7 +17,7 @@ import { DadosTecido } from "./subForms/dadosTecido";
 
 interface LoteProducaoAccordionFormProps {
   form: UseFormReturn<LoteProducaoFormValues>;
-  lote: ApiLoteProducaoResponse
+  lote: ILoteResponse
   colaboradoresResponse: PaginatedResponse<Colaborador> | undefined;
   handleEditLoteCabeçalho: (id: string, values: IRequestBodyUpdateLote) => Promise<void>
   submitting: boolean;
@@ -63,7 +63,7 @@ export const LoteProducaoAccordionForm = ({
               </TabsList>
 
               <TabsContent value="editar" className="flex flex-col gap-6 mt-6">
-                <DadosTecido form={form} />
+                <DadosTecido form={form} lote={lote} />
               </TabsContent>
 
               <TabsContent value="informacao" className="flex flex-col gap-6 mt-6">

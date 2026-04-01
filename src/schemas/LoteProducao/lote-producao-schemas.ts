@@ -29,6 +29,7 @@ const coresMateriaisSchema = z.object({
   nome: z.string(),
   codigoHex: z.string(),
   qtdFolhas: z.number(),
+  valorTecido: z.number().optional(),
   rolos: z.array(coresRoloMateriaisSchema),
   gradeLote: z.array(gradeLoteItemSchema),
 });

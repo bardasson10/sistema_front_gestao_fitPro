@@ -22,6 +22,7 @@ interface MaterialCor {
     nome?: string;
     codigoHex?: string;
     qtdFolhas?: number;
+    valorTecido?: number;
     rolos?: MaterialRolo[];
     gradeLote?: GradeItem[];
 }

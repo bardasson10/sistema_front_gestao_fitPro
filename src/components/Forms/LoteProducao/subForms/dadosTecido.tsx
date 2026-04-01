@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { UseFormReturn, useWatch } from "react-hook-form";
+import { UseFormReturn } from "react-hook-form";
 import { LoteProducaoFormValues } from "@/schemas/LoteProducao/lote-producao-schemas";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CircleColorView } from "@/components/ui/circle-color-view";
@@ -13,6 +13,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { formatNumberToBRL } from "@/utils/Formatter/moeda-brasil-format";
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
 import { EstoqueRolo } from "@/types/EstoqueRolo";
+import { ILoteResponse } from "@/types/Lote";
 
 
 type RoloFormValue = {
@@ -24,6 +25,7 @@ type RoloFormValue = {
   corNome?: string;
   corHex?: string;
   codigoBarraRolo?: string;
+  valorTecido?: number;
   valorPorKg?: number;
   pesoDisponivelKg?: number;
 };
@@ -37,27 +39,67 @@ type ResumoPorTecido = {
   cores: string[];
 };
 
+type CorLoteNormalizada = {
+  corId?: string;
+  nome?: string;
+  codigoHex?: string;
+  valorTecido?: number;
+  rolos: Array<{
+    id: string;
+    codigoBarraRolo?: string;
+    pesoAtualKg?: number;
+    pesoReservado?: number;
+    situacao?: string;
+  }>;
+};
+
+type MaterialLoteNormalizado = {
+  tecidoId?: string;
+  nome?: string;
+  valorPorKg?: number;
+  cores: CorLoteNormalizada[];
+};
+
 interface DadosTecidoProps {
   form: UseFormReturn<LoteProducaoFormValues>;
+  lote: ILoteResponse;
 }
 
-export const DadosTecido = ({ form }: DadosTecidoProps) => {
+export const DadosTecido = ({ form, lote }: DadosTecidoProps) => {
   const { data: roloTecidoData } = useEstoqueTecidos();
   const rolosTecido = roloTecidoData || [];
-  const materiaisDoLote = useWatch({
-    control: form.control,
-    name: "materiais",
-  }) || [];
 
   const { handleAdicionarRolos, isSubmitting } = useProducaoActions();
 
   const [rolosSelecionados, setRolosSelecionados] = useState<RoloFormValue[]>([]);
 
+  const materiaisNormalizados = useMemo<MaterialLoteNormalizado[]>(() => {
+    return (lote.materiais || []).map((material) => ({
+      tecidoId: material.tecidoId,
+      nome: material.nome,
+      valorPorKg: parseNumber(material.valorPorKg),
+      cores: (material.cores || []).map((cor) => ({
+        corId: (cor as { corId?: string; id?: string }).corId || (cor as { id?: string }).id,
+        nome: cor.nome,
+        codigoHex: cor.codigoHex,
+        valorTecido: parseNumber(cor.valorTecido),
+        rolos: (cor.rolos || []).map((rolo) => ({
+          id: rolo.id,
+          codigoBarraRolo: rolo.codigoBarraRolo,
+          pesoAtualKg: parseNumber(rolo.pesoAtualKg),
+          pesoReservado: parseNumber(rolo.pesoReservado),
+          situacao: rolo.situacao,
+        })),
+      })),
+    }));
+  }, [lote.materiais]);
+
   const rolosExistentes = useMemo<RoloFormValue[]>(() => {
-    return materiaisDoLote.flatMap((material) =>
+    return materiaisNormalizados.flatMap((material) =>
       (material.cores || []).flatMap((cor) =>
         (cor.rolos || []).map((rolo) => {
           const info = rolosTecido.find((r) => r.id === rolo.id);
+          const valorTecido = parseNumber(cor.valorTecido);
 
           return {
             estoqueRoloId: rolo.id,
@@ -68,13 +110,14 @@ export const DadosTecido = ({ form }: DadosTecidoProps) => {
             corNome: cor.nome,
             corHex: cor.codigoHex,
             codigoBarraRolo: rolo.codigoBarraRolo,
-            valorPorKg: parseNumber(material.valorPorKg),
-            pesoDisponivelKg: parseNumber(rolo.pesoAtualKg),
+            valorTecido,
+            valorPorKg: valorTecido,
+            pesoDisponivelKg: parseNumber(rolo.pesoReservado) || parseNumber(rolo.pesoAtualKg),
           };
         })
       )
     );
-  }, [materiaisDoLote, rolosTecido]);
+  }, [materiaisNormalizados, rolosTecido]);
 
   // Se um rolo virar "existente" apos salvar/refetch, remove da lista de "novos".
   useEffect(() => {
@@ -101,9 +144,8 @@ export const DadosTecido = ({ form }: DadosTecidoProps) => {
     });
 
   const getValorPorKg = (rolo: RoloFormValue): number => {
-    const valorDoEstoque = parseNumber(rolo.info?.tecido.valorPorKg);
-    if (valorDoEstoque > 0) return valorDoEstoque;
-    return parseNumber(rolo.valorPorKg);
+    const valor = parseNumber(rolo.valorTecido);
+    return valor > 0 ? valor : 0;
   };
 
   const getCodigoBarra = (rolo: RoloFormValue): string => {
@@ -123,9 +165,7 @@ export const DadosTecido = ({ form }: DadosTecidoProps) => {
   };
 
   const getPesoDisponivel = (rolo: RoloFormValue): number => {
-    const pesoDoEstoque = parseNumber(rolo.info?.pesoAtualKg);
-    if (pesoDoEstoque > 0) return pesoDoEstoque;
-    return parseNumber(rolo.pesoDisponivelKg);
+    return parseNumber(rolo.pesoReservado) || parseNumber(rolo.pesoDisponivelKg);
   };
 
   const buildRoloFromEstoque = (roloInfo: EstoqueRolo, pesoReservado: number): RoloFormValue => ({
@@ -137,8 +177,10 @@ export const DadosTecido = ({ form }: DadosTecidoProps) => {
     corNome: roloInfo.tecido.cor?.nome,
     corHex: roloInfo.tecido.cor?.codigoHex,
     codigoBarraRolo: roloInfo.codigoBarraRolo,
-    valorPorKg: parseNumber(roloInfo.tecido.valorPorKg),
-    pesoDisponivelKg: parseNumber(roloInfo.pesoAtualKg),
+    // Captura o valor NO MOMENTO da seleção e congela ele
+    valorTecido: parseNumber(roloInfo.tecido.cor?.valorTecido) || parseNumber(roloInfo.tecido.valorPorKg),
+    valorPorKg: parseNumber(roloInfo.tecido.cor?.valorTecido) || parseNumber(roloInfo.tecido.valorPorKg),
+    pesoDisponivelKg: parseNumber(pesoReservado) || parseNumber(roloInfo.pesoAtualKg),
   });
 
   const addRolo = (id: string, pesoReservado: number) => {
@@ -165,6 +207,16 @@ export const DadosTecido = ({ form }: DadosTecidoProps) => {
 
   const removeRolo = (id: string) => {
     setRolosSelecionados((prev) => prev.filter((rolo) => rolo.estoqueRoloId !== id));
+  };
+
+  const updateRoloPeso = (id: string, novoPeso: number) => {
+    setRolosSelecionados((prev) =>
+      prev.map((rolo) =>
+        rolo.estoqueRoloId === id
+          ? { ...rolo, pesoReservado: novoPeso }
+          : rolo
+      )
+    );
   };
 
   // Calcula o valor total do lote (rolos existentes + novos)
@@ -268,10 +320,10 @@ export const DadosTecido = ({ form }: DadosTecidoProps) => {
                     <CircleColorView color={getCorHex(item)} />
                     <span>Cor: {getCorNome(item)}</span>
                     <span>|</span>
-                    <span>Peso: {formatKg(getPesoDisponivel(item))}kg</span>
+                    <span>Peso: {formatKg(parseNumber(item.pesoReservado))}kg</span>
                   </div>
                   <div className="text-xs font-medium text-foreground">
-                    Valor: {formatNumberToBRL(getValorPorKg(item))}/kg x {formatKg(parseNumber(item.pesoReservado))}kg = <span className="text-primary font-bold">{formatNumberToBRL(calcularValorRolo(item))}</span>
+                    Valor: {formatNumberToBRL(item.valorPorKg ?? "")}/kg x {formatKg(parseNumber(item.pesoReservado))}kg = <span className="text-primary font-bold">{formatNumberToBRL(calcularValorRolo(item))}</span>
                   </div>
                 </div>
 
@@ -320,7 +372,10 @@ export const DadosTecido = ({ form }: DadosTecidoProps) => {
                     className="h-8"
                     placeholder="0.00"
                     value={parseNumber(item.pesoReservado) || ''}
-                    disabled={true}
+                    onChange={(e) => updateRoloPeso(item.estoqueRoloId, parseNumber(e.target.value))}
+                    min={0}
+                    max={getPesoDisponivel(item)}
+                    step={0.01}
                   />
                 </div>
 
