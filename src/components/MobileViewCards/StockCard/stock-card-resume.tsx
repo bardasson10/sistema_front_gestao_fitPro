@@ -4,7 +4,8 @@ import { getGroupedStockColumns } from "@/components/DataTable/Tables/Estoque/re
 import { EstoqueTecido } from "@/types/production"
 import { StockResumeProps } from "@/types/StockComponents/stock-components"
 import React from "react"
-import { EstoqueRolo } from "@/hooks/queries/useEstoque"
+import { EstoqueRolo } from "@/types/EstoqueRolo"
+
 
 
 

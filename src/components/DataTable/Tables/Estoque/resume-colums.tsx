@@ -1,8 +1,9 @@
 import { EstoqueTecido } from "@/types/production";
 import { ColumnDef } from "@tanstack/table-core";
 import { StockResume } from "@/types/StockComponents/stock-components";
-import { EstoqueRolo } from "@/hooks/queries/useEstoque";
+
 import { formatNumberToBRL } from "@/utils/Formatter/moeda-brasil-format";
+import { EstoqueRolo } from "@/types/EstoqueRolo";
 
 
 
