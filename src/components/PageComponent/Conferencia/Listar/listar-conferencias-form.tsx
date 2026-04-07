@@ -8,9 +8,10 @@ import {
   Plus,
   Search,
   CheckCircle2,
-  XCircle,
+  AlertTriangle,
   Clock,
   DollarSign,
+  PackageCheck,
 } from "lucide-react"
 
 import Link from "next/link"
@@ -74,12 +75,15 @@ interface ListarConferenciasProps {
 
   const estatisticas = useMemo(() => {
     const total = dataConferencias.length
-    const validando = dataConferencias.filter((c) => c.statusQualidade === "validando").length
+    const recebido = dataConferencias.filter((c) => c.statusQualidade === "recebido").length
+    const emConferencia = dataConferencias.filter((c) => c.statusQualidade === "em_conferencia").length
     const aprovados = dataConferencias.filter((c) => c.statusQualidade === "aprovado").length
-    const reprovados = dataConferencias.filter((c) => c.statusQualidade === "reprovado").length
+    const aprovadosComRessalva = dataConferencias.filter(
+      (c) => c.statusQualidade === "aprovado_parcial" || c.statusQualidade === "aprovado_defeito"
+    ).length
     const liberadosPagamento = dataConferencias.filter((c) => c.liberadoPagamento).length
 
-    return { total, validando, aprovados, reprovados, liberadosPagamento }
+    return { total, recebido, emConferencia, aprovados, aprovadosComRessalva, liberadosPagamento }
   }, [dataConferencias])
 
   return (
@@ -111,7 +115,7 @@ interface ListarConferenciasProps {
       </div>
 
       {/* Cards de Estatísticas */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -126,13 +130,26 @@ interface ListarConferenciasProps {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Validando
+              Recebido
+            </CardTitle>
+            <PackageCheck className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-primary">
+              {estatisticas.recebido}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Em Conferencia
             </CardTitle>
             <Clock className="h-4 w-4 text-warning" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-warning">
-              {estatisticas.validando}
+              {estatisticas.emConferencia}
             </div>
           </CardContent>
         </Card>
@@ -152,13 +169,13 @@ interface ListarConferenciasProps {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Reprovados
+              Aprov. c/ Ressalva
             </CardTitle>
-            <XCircle className="h-4 w-4 text-destructive" />
+            <AlertTriangle className="h-4 w-4 text-warning" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">
-              {estatisticas.reprovados}
+            <div className="text-2xl font-bold text-warning">
+              {estatisticas.aprovadosComRessalva}
             </div>
           </CardContent>
         </Card>
@@ -209,9 +226,11 @@ interface ListarConferenciasProps {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos Status</SelectItem>
-                <SelectItem value="validando">Validando</SelectItem>
+                <SelectItem value="recebido">Recebido</SelectItem>
+                <SelectItem value="em_conferencia">Em Conferencia</SelectItem>
                 <SelectItem value="aprovado">Aprovado</SelectItem>
-                <SelectItem value="reprovado">Reprovado</SelectItem>
+                <SelectItem value="aprovado_parcial">Aprovado Parcial</SelectItem>
+                <SelectItem value="aprovado_defeito">Aprovado Defeito</SelectItem>
               </SelectContent>
             </Select>
             <Select value={pagamentoFiltro} onValueChange={setPagamentoFiltro}>

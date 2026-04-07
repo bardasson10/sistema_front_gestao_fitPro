@@ -1,14 +1,20 @@
 import { Badge } from "@/components/ui/badge"
 import {
   CheckCircle2,
-  XCircle,
+  AlertTriangle,
   Clock,
+  PackageCheck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const statusQualidadeConfig: Record<string, { label: string; className: string; icon: React.ElementType }> = {
-  validando: {
-    label: "Validando",
+  recebido: {
+    label: "Recebido",
+    className: "bg-primary/15 text-primary border-primary/30",
+    icon: PackageCheck,
+  },
+  em_conferencia: {
+    label: "Em Conferencia",
     className: "bg-warning/15 text-warning-foreground border-warning/30",
     icon: Clock,
   },
@@ -17,10 +23,15 @@ const statusQualidadeConfig: Record<string, { label: string; className: string; 
     className: "bg-success/15 text-success border-success/30",
     icon: CheckCircle2,
   },
-  reprovado: {
-    label: "Reprovado",
-    className: "bg-destructive/15 text-destructive border-destructive/30",
-    icon: XCircle,
+  aprovado_parcial: {
+    label: "Aprovado Parcial",
+    className: "bg-warning/15 text-warning-foreground border-warning/30",
+    icon: AlertTriangle,
+  },
+  aprovado_defeito: {
+    label: "Aprovado Defeito",
+    className: "bg-muted text-muted-foreground border-muted-foreground/30",
+    icon: AlertTriangle,
   },
 }
 

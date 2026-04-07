@@ -58,6 +58,7 @@ interface ItemConferencia {
   produto: {
     nome: string;
     sku: string;
+    valorFaccaoPorPeca: number;
   }
   tamanho: string;
   cor: { nome: string; codigoHex: string; }
@@ -67,10 +68,16 @@ interface ItemConferencia {
   qtdDefeito: number;
 }
 
+interface SkuPriceItem {
+  sku: string
+  valorFaccaoPorPeca: number
+}
+
 type RemessaItemCompat = {
   id?: string;
   direcionamentoItemId?: string;
   quantidade?: number;
+  valorFaccaoPorPeca?: number;
   produto?: {
     nome?: string;
     sku?: string;
@@ -89,10 +96,11 @@ type RemessaItemCompat = {
 
 
 const statusQualidadeOptions = [
-  { value: "validando", label: "Validando" },
-  { value: "conforme", label: "Aprovado" },
-  { value: "nao_conforme", label: "Reprovado" },
-  { value: "com_defeito", label: "Com Defeito" },
+  { value: "recebido", label: "Recebido" },
+  { value: "em_conferencia", label: "Em Conferencia" },
+  { value: "aprovado", label: "Aprovado" },
+  { value: "aprovado_parcial", label: "Aprovado Parcial" },
+  { value: "aprovado_defeito", label: "Aprovado Defeito" },
 ]
 
 const tipoServicoLabels: Record<string, string> = {
@@ -153,10 +161,21 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
   const [remessaSelecionadaId, setRemessaSelecionadaId] = useState<string>("")
   const [responsavelId, setResponsavelId] = useState<string>("")
   const [dataConferencia, setDataConferencia] = useState<Date>(new Date())
-  const [statusQualidade, setStatusQualidade] = useState<string>("validando")
+  const [statusQualidade, setStatusQualidade] = useState<string>("recebido")
   const [liberadoPagamento, setLiberadoPagamento] = useState(false)
+    const isPagamentoEditavel = statusQualidade === "aprovado"
+    const liberadoPagamentoAutomatico = statusQualidade === "aprovado_parcial" || statusQualidade === "aprovado_defeito"
+    const liberadoPagamentoEfetivo = liberadoPagamentoAutomatico || (isPagamentoEditavel && liberadoPagamento)
+
+    useEffect(() => {
+      if (!isPagamentoEditavel) {
+        setLiberadoPagamento(false)
+      }
+    }, [isPagamentoEditavel])
+
   const [observacao, setObservacao] = useState("")
   const [itensConferencia, setItensConferencia] = useState<ItemConferencia[]>([])
+  const [skuPricesEdit, setSkuPricesEdit] = useState<Record<string, number>>({})
   const [busca, setBusca] = useState("")
 
   const remessaSelecionada = useMemo(() => {
@@ -179,6 +198,7 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
             produto: {
               nome: getNomeProduto(itemCompat),
               sku: getSkuProduto(itemCompat),
+              valorFaccaoPorPeca: Number(itemCompat.valorFaccaoPorPeca ?? 0),
             },
             tamanho: getTamanhoProduto(itemCompat),
             cor: getCorProduto(itemCompat),
@@ -193,6 +213,23 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
       setItensConferencia(
         itensNormalizados
       )
+
+      const initialSkuPrices = (remessa.items ?? []).reduce<Record<string, number>>((acc, item) => {
+        const itemCompat = item as unknown as RemessaItemCompat
+        const sku = getSkuProduto(itemCompat)
+
+        if (!sku || sku === "-") {
+          return acc
+        }
+
+        if (acc[sku] === undefined) {
+          acc[sku] = Number(itemCompat.valorFaccaoPorPeca ?? 0)
+        }
+
+        return acc
+      }, {})
+
+      setSkuPricesEdit(initialSkuPrices)
     }
   }
 
@@ -250,15 +287,33 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
   const canSubmit =
     remessaSelecionadaId && responsavelId && dataConferencia && statusQualidade
 
+  const skuPriceList = useMemo<SkuPriceItem[]>(() => {
+    const skuSet = new Set<string>()
+
+    itensConferencia.forEach((item) => {
+      if (item.produto.sku && item.produto.sku !== "-") {
+        skuSet.add(item.produto.sku)
+      }
+    })
+
+    return Array.from(skuSet).map((sku) => ({
+      sku,
+      valorFaccaoPorPeca: Number(skuPricesEdit[sku] ?? 0),
+    }))
+  }, [itensConferencia, skuPricesEdit])
+
   const handleSubmit = () => {
     if (!canSubmit) return
+
+    const produtoSKU = skuPriceList
 
     const payload: ConferenciaRequestBodyPayload = {
       direcionamentoId: remessaSelecionadaId,
       responsavelId,
       dataConferencia: dataConferencia.toISOString(),
-      statusQualidade,
-      liberadoPagamento,
+      statusQualidade: statusQualidade as 'recebido' | 'em_conferencia' | 'aprovado' | 'aprovado_parcial' | 'aprovado_defeito',
+      produtoSKU,
+      liberadoPagamento: liberadoPagamentoEfetivo,
       observacao,
       items: itensConferencia.map((item) => ({
         direcionamentoItemId: item.direcionamentoItemId,
@@ -409,12 +464,13 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
                       <div className="space-y-0.5">
                         <Label className="text-sm font-medium">Liberar Pagamento</Label>
                         <p className="text-xs text-muted-foreground">
-                          Aprovar para pagamento da faccao
+                          Editavel apenas em status Aprovado
                         </p>
                       </div>
                       <Switch
-                        checked={liberadoPagamento}
+                        checked={liberadoPagamentoEfetivo}
                         onCheckedChange={setLiberadoPagamento}
+                        disabled={!isPagamentoEditavel}
                       />
                     </div>
 
@@ -428,6 +484,44 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
                       />
                     </div>
                   </div>
+                </div>
+
+                <div className="space-y-3 rounded-lg border bg-card p-4">
+                  <div>
+                    <h3 className="text-base font-semibold">Valor por peca por SKU</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Defina o valor da faccao por peca para cada SKU desta remessa
+                    </p>
+                  </div>
+
+                  {skuPriceList.length === 0 ? (
+                    <div className="rounded-md border bg-muted/30 p-3 text-sm text-muted-foreground">
+                      Nenhum SKU encontrado para precificacao.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {skuPriceList.map((skuItem) => (
+                        <div key={skuItem.sku} className="grid items-center gap-3 rounded-md border p-3 sm:grid-cols-[1fr_180px]">
+                          <div className="flex flex-col">
+                            <span className="font-medium">{skuItem.sku}</span>
+                            <span className="text-xs text-muted-foreground">Valor da faccao por peca</span>
+                          </div>
+                          <Input
+                            type="number"
+                            min={0}
+                            step={0.01}
+                            value={skuPricesEdit[skuItem.sku] ?? 0}
+                            onChange={(e) =>
+                              setSkuPricesEdit((prev) => ({
+                                ...prev,
+                                [skuItem.sku]: Number(e.target.value || 0),
+                              }))
+                            }
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-3 rounded-lg border bg-card p-4">
@@ -745,12 +839,13 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
                 <div className="space-y-0.5">
                   <Label className="text-sm font-medium">Liberar Pagamento</Label>
                   <p className="text-xs text-muted-foreground">
-                    Aprovar para pagamento da faccao
+                    Editavel apenas em status Aprovado
                   </p>
                 </div>
                 <Switch
-                  checked={liberadoPagamento}
+                  checked={liberadoPagamentoEfetivo}
                   onCheckedChange={setLiberadoPagamento}
+                  disabled={!isPagamentoEditavel}
                 />
               </div>
 
@@ -769,6 +864,45 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
       )}
 
       {/* Botao Salvar */}
+      {!isDirectByIdMode && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Valor por peca por SKU</CardTitle>
+            <CardDescription>
+              Defina o valor da faccao por peca para cada SKU antes de salvar
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {skuPriceList.length === 0 ? (
+              <div className="rounded-md border bg-muted/30 p-3 text-sm text-muted-foreground">
+                Selecione uma remessa para carregar os SKUs.
+              </div>
+            ) : (
+              skuPriceList.map((skuItem) => (
+                <div key={skuItem.sku} className="grid items-center gap-3 rounded-md border p-3 sm:grid-cols-[1fr_180px]">
+                  <div className="flex flex-col">
+                    <span className="font-medium">{skuItem.sku}</span>
+                    <span className="text-xs text-muted-foreground">Valor da faccao por peca</span>
+                  </div>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={skuPricesEdit[skuItem.sku] ?? 0}
+                    onChange={(e) =>
+                      setSkuPricesEdit((prev) => ({
+                        ...prev,
+                        [skuItem.sku]: Number(e.target.value || 0),
+                      }))
+                    }
+                  />
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex justify-end gap-4">
         <Link href="/conferencias">
           <Button variant="outline">Cancelar</Button>

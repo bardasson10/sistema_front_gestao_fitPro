@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { ConferenciaFormValues } from '@/schemas/conferencia-schema';
 import {
@@ -29,8 +30,23 @@ interface ConferenciaFormProps {
 }
 
 export function ConferenciaForm({ items = [] }: ConferenciaFormProps) {
-  const { control, watch, formState: { errors } } = useFormContext<ConferenciaFormValues>();
+  const { control, watch, setValue, formState: { errors } } = useFormContext<ConferenciaFormValues>();
   const formItems = watch('items');
+  const statusQualidade = watch('statusQualidade');
+  const isPagamentoEditavel = statusQualidade === 'aprovado';
+  const liberarAutomatico = statusQualidade === 'aprovado_parcial' || statusQualidade === 'aprovado_defeito';
+  const liberadoPagamento = watch('liberadoPagamento');
+
+  useEffect(() => {
+    if (liberarAutomatico) {
+      setValue('liberadoPagamento', true);
+      return;
+    }
+
+    if (!isPagamentoEditavel && liberadoPagamento) {
+      setValue('liberadoPagamento', false);
+    }
+  }, [isPagamentoEditavel, liberarAutomatico, liberadoPagamento, setValue]);
 
   return (
     <div className="space-y-4">
@@ -167,9 +183,11 @@ export function ConferenciaForm({ items = [] }: ConferenciaFormProps) {
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="conforme">Conforme</SelectItem>
-                <SelectItem value="nao_conforme">Não Conforme</SelectItem>
-                <SelectItem value="com_defeito">Com Defeito</SelectItem>
+                <SelectItem value="recebido">Recebido</SelectItem>
+                <SelectItem value="em_conferencia">Em Conferência</SelectItem>
+                <SelectItem value="aprovado">Aprovado</SelectItem>
+                <SelectItem value="aprovado_parcial">Aprovado Parcial</SelectItem>
+                <SelectItem value="aprovado_defeito">Aprovado Defeito</SelectItem>
               </SelectContent>
             </Select>
             <FormMessage />
@@ -187,6 +205,7 @@ export function ConferenciaForm({ items = [] }: ConferenciaFormProps) {
               <Checkbox
                 checked={field.value}
                 onCheckedChange={field.onChange}
+                disabled={!isPagamentoEditavel}
               />
             </FormControl>
             <FormLabel className="mt-0!">Liberar para Pagamento</FormLabel>

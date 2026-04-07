@@ -11,7 +11,7 @@ interface ConferenciaTableItem {
 	loteCodigo: string;
 	faccaoNome?: string;
 	dataConferencia: string;
-	statusQualidade: "conforme" | "nao_conforme" | "com_defeito";
+	statusQualidade: "recebido" | "em_conferencia" | "aprovado" | "aprovado_parcial" | "aprovado_defeito";
 	liberadoPagamento: boolean;
 	observacao?: string;
 	responsavel: { nome: string };
@@ -54,9 +54,11 @@ export const MobileViewConferencia = ({
 			)}
 			{data.map((item) => {
 				const qualityMap = {
-					conforme: { label: "Conforme", type: "success" as const, Icon: CheckCircle },
-					nao_conforme: { label: "Não Conforme", type: "danger" as const, Icon: XCircle },
-					com_defeito: { label: "Com Defeito", type: "warning" as const, Icon: AlertCircle },
+					recebido: { label: "Recebido", type: "neutral" as const, Icon: CheckCircle },
+					em_conferencia: { label: "Em Conferência", type: "warning" as const, Icon: AlertCircle },
+					aprovado: { label: "Aprovado", type: "success" as const, Icon: CheckCircle },
+					aprovado_parcial: { label: "Aprovado Parcial", type: "warning" as const, Icon: AlertCircle },
+					aprovado_defeito: { label: "Aprovado Defeito", type: "danger" as const, Icon: XCircle },
 				};
 
 				const quality = qualityMap[item.statusQualidade];

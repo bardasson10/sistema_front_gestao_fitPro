@@ -12,7 +12,7 @@ interface ConferenciaTableItem {
 	loteCodigo: string;
 	faccaoNome?: string;
 	dataConferencia: string;
-	statusQualidade: "conforme" | "nao_conforme" | "com_defeito";
+	statusQualidade: "recebido" | "em_conferencia" | "aprovado" | "aprovado_parcial" | "aprovado_defeito";
 	liberadoPagamento: boolean;
 	observacao?: string;
 	responsavel: { nome: string };

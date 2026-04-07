@@ -2,11 +2,11 @@ import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from '@tansta
 import { apiClient } from '@/services/api/api-client';
 import { toast } from 'sonner';
 import { PaginatedResponse } from '@/types/production';
-import { Conferencia, ConferenciaRequestBodyPayload } from '@/types/Conferencia';
+import { Conferencia, ConferenciaRequestBodyPayload, ConferenciaStatusQualidade, ConferenciaUpdateRequestBodyPayload } from '@/types/Conferencia';
 
 
 export const useGetListAllConferencias = (filtros?: {
-    statusQualidade?: string;
+    statusQualidade?: ConferenciaStatusQualidade;
     liberadoPagamento?: boolean;
 }) => {
     return useSuspenseQuery({
@@ -62,14 +62,13 @@ export const useAtualizarConferencia = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async ({ id, ...dados }: any) => {
-            const { data } = await apiClient.put<Conferencia>(`/conferencias/${id}`, dados);
+        mutationFn: async ({ id, dados }: { id: string; dados: ConferenciaUpdateRequestBodyPayload }) => {
+            const { data } = await apiClient.put<{data: Conferencia, pagination: PaginatedResponse}>(`/conferencias/${id}`, dados);
             return data;
         },
         onSuccess: (data) => {
+            toast.success('Conferência atualizada com sucesso!'); 
             queryClient.invalidateQueries({ queryKey: ['conferencias'] });
-            queryClient.invalidateQueries({ queryKey: ['conferencias', data.id] });
-            toast.success('Conferência atualizada com sucesso!');
         },
         onError: (error: any) => {
             const mensagem = error.response?.data?.details?.[0]?.mensage ||
