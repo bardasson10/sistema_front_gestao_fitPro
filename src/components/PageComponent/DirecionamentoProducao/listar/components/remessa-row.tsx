@@ -26,6 +26,7 @@ import {
     usePutDirecionamentoStatus,
 } from "@/hooks/queries/Direcionamento/useDirecionamento"
 import { DirecionamentoStatus } from "@/types/Direcionamento"
+import { EditarItensRemessaModal } from "./editar-itens-remessa-modal"
 
 const tipoServicoLabels: Record<string, ServiceFaccao> = {
     costura: "Costura",
@@ -33,7 +34,9 @@ const tipoServicoLabels: Record<string, ServiceFaccao> = {
 }
 
 type RemessaItemCompat = DirecionamentoRemessa["items"][number] & {
+    estoqueCorteId?: string
     estoqueCorte?: {
+        id?: string
         produto?: { nome?: string; sku?: string }
         tamanho?: { nome?: string }
         cor?: { nome?: string; codigoHex?: string }
@@ -99,10 +102,19 @@ export const RemessaRow = ({ remessa }: { remessa: DirecionamentoRemessa }) => {
     )
 
     const handleSalvarDirecionamento = () => {
-        const items = itensComQtdEdit.map((item) => ({
-            estoqueCorteId: (item as RemessaItemCompat).estoqueCorteId || item.id,
-            quantidade: Number(item.quantidadeEditada || 0),
-        }))
+        const items = itensComQtdEdit
+            .map((item) => {
+                const itemCompat = item as RemessaItemCompat
+                const estoqueCorteId = itemCompat.estoqueCorteId || itemCompat.estoqueCorte?.id
+
+                if (!estoqueCorteId) return null
+
+                return {
+                    estoqueCorteId,
+                    quantidade: Number(item.quantidadeEditada || 0),
+                }
+            })
+            .filter((item): item is { estoqueCorteId: string; quantidade: number } => item !== null)
 
         putDirecionamento.mutate({
             id: remessa.id,
@@ -441,6 +453,10 @@ export const RemessaRow = ({ remessa }: { remessa: DirecionamentoRemessa }) => {
                                 >
                                     Salvar Preço por SKU
                                 </Button>
+                                <EditarItensRemessaModal
+                                    remessa={remessa}
+                                    disabled={!canEditAll || isLocked}
+                                />
                             </div>
                         </div>
                     </TableCell>

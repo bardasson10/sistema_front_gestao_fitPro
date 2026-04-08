@@ -58,6 +58,16 @@ export interface DirecionamentoPutSkuPriceRequestBodyPayload {
     produtoSKU: ProdutoSkuPricePayloadItem[]
 }
 
+export interface DirecionamentoPutItensPayloadItem {
+    estoqueCorteId: string
+    quantidade: number
+}
+
+export interface DirecionamentoPutItensRequestBodyPayload {
+    itensAdicionar?: DirecionamentoPutItensPayloadItem[]
+    itensRemover?: DirecionamentoPutItensPayloadItem[]
+}
+
 // Types para listagem de remessas
 export interface RemessaFaccao {
     id: string
