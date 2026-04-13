@@ -302,7 +302,7 @@ export function EditarItensRemessaModal({ remessa, disabled }: EditarItensRemess
                                 <ScrollArea className="h-[60vh]">
                                     {isFetching ? (
                                         <div className="flex min-h-70 items-center justify-center">
-                                            <Spinner size={32} />
+                                            <Spinner className="size-8" />
                                         </div>
                                     ) : remessaItemsFiltrados.length === 0 ? (
                                         <div className="flex min-h-70 items-center justify-center px-6 text-sm text-muted-foreground">
@@ -379,7 +379,7 @@ export function EditarItensRemessaModal({ remessa, disabled }: EditarItensRemess
                                 <ScrollArea className="h-[60vh]">
                                     {isFetching ? (
                                         <div className="flex min-h-70 items-center justify-center">
-                                            <Spinner size={32} />
+                                            <Spinner className="size-8" />
                                         </div>
                                     ) : estoquesDisponiveisFiltrados.length === 0 ? (
                                         <div className="flex min-h-70 items-center justify-center px-6 text-sm text-muted-foreground">
