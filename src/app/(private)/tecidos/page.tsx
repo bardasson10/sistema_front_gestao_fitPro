@@ -3,6 +3,7 @@
 import { FabricTable } from '@/components/DataTable/Tables/Tecido/table';
 import { RemoveItemWarning } from '@/components/ErrorManagementComponent/WarnningRemoveItem';
 import { FabricForm } from '@/components/Forms/fabric-form';
+import { TecidoFilters, TecidoFiltersValues } from '@/components/Forms/tecido-filters';
 import { MobileViewFabric } from '@/components/MobileViewCards/FabricCard';
 import { FormModal } from '@/components/Modal/base-modal-form';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,7 @@ import { FabricFormValues, fabricSchema } from '@/schemas/tecido-schema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { parseNumber } from '@/utils/Formatter/parse-number-format';
 
 const initialValues: FabricFormValues = {
@@ -34,10 +35,29 @@ const initialValues: FabricFormValues = {
   gramatura: 0,
 };
 
+const ITEMS_PER_PAGE = 10;
+
 export default function Tecidos() {
+  // Estados de filtro e paginação
+  const [filtros, setFiltros] = useState<TecidoFiltersValues>({
+    fornecedorId: undefined,
+    corId: undefined,
+    nome: undefined,
+    codigoReferencia: undefined,
+    gramatura: undefined,
+  });
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(ITEMS_PER_PAGE);
+
   // Queries
-  const { data: tecidosData, isLoading } = useTecidos();
-  const tecidos = tecidosData || [];
+  const { data: tecidosResponse, isLoading } = useTecidos({
+    ...filtros,
+    page,
+    limit: pageSize,
+  });
+
+  const tecidos = tecidosResponse?.data || [];
+  const pagination = tecidosResponse?.pagination || { total: 0, page: 1, limit: pageSize, pages: 1 };
 
   const { data: fornecedoresData } = useFornecedores();
   const fornecedores = fornecedoresData || [];
@@ -124,18 +144,47 @@ export default function Tecidos() {
     }
   }, [editingItem]);
 
+  const handleFilterChange = (newFiltros: TecidoFiltersValues) => {
+    setFiltros(newFiltros);
+    setPage(1); // Resetar para primeira página
+  };
 
+  const handleClearFilters = () => {
+    setFiltros({
+      fornecedorId: undefined,
+      corId: undefined,
+      nome: undefined,
+      codigoReferencia: undefined,
+      gramatura: 0,
+    });
+    setPage(1);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setPage(1); // Resetar para primeira página
+  };
 
   return (
     <main className="space-y-6">
       <div className="flex justify-between items-center">
         <div className="text-sm text-muted-foreground">
-          {tecidos.length} tecidos cadastrados
+          {pagination.total} tecidos encontrados
         </div>
 
         <Button onClick={handleOpen}>
           <Plus className="mr-2 h-4 w-4" /> Novo Tecido
         </Button>
+      </div>
+
+      {/* Filtros */}
+      <div className="bg-muted/50 p-4 rounded-lg border">
+        <TecidoFilters
+          fornecedores={fornecedores}
+          cores={cores}
+          onFilter={handleFilterChange}
+          onClear={handleClearFilters}
+        />
       </div>
 
       <FormModal
@@ -170,6 +219,11 @@ export default function Tecidos() {
           cores={cores}
           onEdit={handleEdit}
           onRemove={handleRemove}
+          pagination={pagination}
+          currentPage={page}
+          onPageChange={setPage}
+          pageSize={pageSize}
+          onPageSizeChange={handlePageSizeChange}
         />
       </div>
 

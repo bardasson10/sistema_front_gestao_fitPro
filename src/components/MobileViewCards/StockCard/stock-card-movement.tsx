@@ -33,13 +33,15 @@ export const MobileViewStockMovement = ({
 
     return (
         <div className="flex flex-col gap-3 py-3">
-            <SemDadosComponent<MovimentacaoEstoque> nomeDado="movimentação" data={movimentacoes} />
-            {Array.isArray(movimentacoes) && movimentacoes.map((item) => (
+            {!Array.isArray(movimentacoes) || movimentacoes.length === 0 && <SemDadosComponent<any> nomeDado="movimentação" data={[]} />}
+            {Array.isArray(movimentacoes) && movimentacoes.length > 0 && movimentacoes.map((item) => (
                 (() => {
-                    const rolo = rolos.find(r => r.id === item.estoqueRoloId);
-                    const tecido = rolo ? tecidos.find(t => t.id === rolo.tecidoId) : undefined;
-                    const cor = tecido ? cores.find(c => c.id === tecido.corId) : undefined;
-                    const info = tipoMovimentacaoMap[item.tipoMovimentacao] || tipoMovimentacaoMap.entrada;
+                    // Usar dados aninhados do rolo se disponível
+                    const rolo = item.rolo;
+                    const tecido = rolo?.fornecedor?.tecido;
+                    const cor = tecido?.cor;
+                    const tipoKey = item.tipoMovimentacao as keyof typeof tipoMovimentacaoMap;
+                    const info = tipoMovimentacaoMap[tipoKey] || (tipoMovimentacaoMap['entrada' as keyof typeof tipoMovimentacaoMap]);
                     const Icon = info.icon;
 
                     return (
@@ -65,7 +67,7 @@ export const MobileViewStockMovement = ({
                                     {cor && (
                                         <div
                                             className="h-4 w-4 rounded-full border dark:border-gray-700"
-                                            style={{ backgroundColor: cor.codigoHex }}
+                                            style={{ backgroundColor: cor.codigoHex ?? '#000000' }}
                                             title={cor.nome}
                                         />
                                     )}
@@ -88,14 +90,8 @@ export const MobileViewStockMovement = ({
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">Usuário:</span>
-                                <span className="font-medium">{item.usuario?.nome || '-'}</span>
+                                <span className="font-medium">{item.responsavel?.nome || '-'}</span>
                             </div>
-                            {item.usuario?.funcaoSetor && (
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Setor:</span>
-                                    <span className="font-medium">{item.usuario.funcaoSetor}</span>
-                                </div>
-                            )}
                         </div>
                     }
                 //     footer={

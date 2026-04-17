@@ -73,9 +73,9 @@ export function DataTable<TData, TValue>({
   const skeletonRows = 10
 
   return (
-    <div className="rounded-lg border bg-card overflow-hidden">
+    <div className="w-full bg-card">
       <div className="w-full overflow-x-auto">
-        <Table className="min-w-max">
+      <Table className="min-w-max">
         <TableHeader className="bg-table">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="hover:bg-transparent">

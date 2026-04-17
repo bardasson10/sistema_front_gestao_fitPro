@@ -171,19 +171,39 @@ export const useDeletarCor = () => {
 
 // ============ TECIDOS ============
 
-export const useTecidos = (filtros?: { fornecedorId?: string; corId?: string }) => {
+export interface TecidoFiltros {
+    fornecedorId?: string;
+    corId?: string;
+    nome?: string;
+    codigoReferencia?: string;
+    gramatura?: number;
+    page?: number;
+    limit?: number;
+}
+
+export interface TecidosPaginatedResponse {
+    data: Tecido[];
+    pagination: PaginatedResponse;
+}
+
+export const useTecidos = (filtros?: TecidoFiltros) => {
     return useQuery({
         queryKey: ['tecidos', filtros],
         queryFn: async () => {
             const params = new URLSearchParams();
             if (filtros?.fornecedorId) params.append('fornecedorId', filtros.fornecedorId);
             if (filtros?.corId) params.append('corId', filtros.corId);
+            if (filtros?.nome) params.append('nome', filtros.nome);
+            if (filtros?.codigoReferencia) params.append('codigoReferencia', filtros.codigoReferencia);
+            if (filtros?.gramatura !== undefined) params.append('gramatura', filtros.gramatura.toString());
+            if (filtros?.page !== undefined) params.append('page', filtros.page.toString());
+            if (filtros?.limit !== undefined) params.append('limit', filtros.limit.toString());
 
             const queryString = params.toString();
-            const response = await apiClient.get<{ data: Tecido[], pagination: any }>(
+            const response = await apiClient.get<TecidosPaginatedResponse>(
                 `/tecidos${queryString ? `?${queryString}` : ''}`
             );
-            return response.data.data;
+            return response.data;
         },
     });
 };

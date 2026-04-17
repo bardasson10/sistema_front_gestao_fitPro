@@ -58,8 +58,8 @@ export default function Estoque() {
   const isTabResumo = activeTab === "resumo-por-tecido";
   const isTabMovimentacao = activeTab === "movimentacao-do-estoque";
 
-  const { data: tecidosData } = useTecidos();
-  const tecidos = tecidosData || [];
+  const { data: tecidosResponse } = useTecidos();
+  const tecidos = tecidosResponse?.data || [];
 
   const { data: coresData } = useCores();
   const cores = coresData || [];
