@@ -83,3 +83,35 @@ export interface IFiltroEstoqueRolo {
     page?: number | string,
     limit?: number | string,
 }
+
+
+export interface IMovimentacaoRolo {
+    id: string
+    tipoMovimentacao: string,
+    pesoMovimentado: number,
+    createdAt?: string,
+    estoqueRoloId?: string,
+    rolo?: {
+        id: string
+        codigoBarraRolo: string,
+        fornecedor: {
+            id: string
+            nome: string,
+            tipo: string,
+            tecido: {
+                id: string
+                nome: string,
+                codigoReferencia: string,
+                cor: {
+                    id: string
+                    nome: string,
+                    codigoHex: string
+                }
+            }
+        }
+    },
+    responsavel?: {
+        id: string
+        nome: string
+    }
+}

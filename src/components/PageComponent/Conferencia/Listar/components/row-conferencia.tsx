@@ -139,7 +139,7 @@ export const ConferenciaRow = ({ conferencia }: { conferencia: Conferencia }) =>
 
   const handleSalvarEdicao = () => {
     if (itensSemDirecionamentoItemId.length > 0) {
-      toast.error("Nao foi possivel salvar. Existem itens sem direcionamentoItemId valido nesta conferencia.")
+      toast.error("Não foi possível salvar. Existem itens sem direcionamentoItemId válido nesta conferência.")
       return
     }
 

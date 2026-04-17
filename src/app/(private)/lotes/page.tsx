@@ -94,7 +94,7 @@ function MultiSelectFilter({
                     </DropdownMenuCheckboxItem>
 
                     {options.length === 0 && (
-                        <div className="px-2 py-1.5 text-sm text-muted-foreground">Nenhuma opcao disponivel</div>
+                        <div className="px-2 py-1.5 text-sm text-muted-foreground">Nenhuma opção disponível</div>
                     )}
 
                     {options.map((option) => (
@@ -404,7 +404,7 @@ export default function Lotes() {
                         />
 
                         <MultiSelectFilter
-                            label="Responsavel"
+                            label="Responsável"
                             placeholder="Selecione"
                             options={opcoesResponsavel}
                             selectedValues={filtrosRascunho.responsavelId}
@@ -513,7 +513,7 @@ export default function Lotes() {
                 title="Criar Novo Lote"
                 open={openCreateFormModal}
                 onOpenChange={setOpenCreateFormModal}
-                description="Aqui voce criar um novo lote"
+                description="Aqui você cria um novo lote"
             >
                 <CreateLoteForm colaboradoresResponse={colaboradoresData} fecharModal={() => setOpenCreateFormModal(false)} />
             </BaseModal>
@@ -527,7 +527,7 @@ export default function Lotes() {
                         form.reset(initialValuesLote);
                     }
                 }}
-                description="Aqui voce editar um lote existente"
+                description="Aqui você edita um lote existente"
             >
                 {selectedLote && (
                     <Form {...form}>

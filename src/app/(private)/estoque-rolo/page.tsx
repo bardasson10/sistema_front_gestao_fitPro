@@ -20,7 +20,7 @@ import { MovementStockTable } from "@/components/DataTable/Tables/Estoque/Movime
 import { MobileViewStockMovement } from "@/components/MobileViewCards/StockCard/stock-card-movement";
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
 import { formatNumberToBRL } from "@/utils/Formatter/moeda-brasil-format";
-import { EstoqueRolo } from "@/types/EstoqueRolo";
+import { EstoqueRolo, IMovimentacaoRolo } from "@/types/EstoqueRolo";
 import { useGetKPIsEstoqueRolo, useGetListAllEstoqueRoloCompleto, useGetResumeEstoqueRolo } from "@/hooks/queries/Estoque/useEstoque-Rolo";
 import { useGetListAllMovimentacoesEstoque } from "@/hooks/queries/Estoque/useEstoque-Rolo-Movimentacao";
 import { MovimentacaoEstoque } from "@/types/production";
@@ -87,18 +87,50 @@ export default function Estoque() {
   }, {
     enabled: isTabMovimentacao,
   });
-  const movimentacoes: MovimentacaoEstoque[] = (movimentacoesData || []).map((mov: any) => ({
-    id: mov.id,
-    estoqueRoloId: mov.estoqueRoloId ?? mov.rolo?.id ?? "",
-    tipoMovimentacao: mov.tipoMovimentacao,
-    pesoMovimentado: parseNumber(mov.pesoMovimentado),
-    createdAt: mov.createdAt ?? new Date().toISOString(),
-    usuario: {
-      id: mov.usuario?.id ?? mov.reponsavel?.id ?? "",
-      nome: mov.usuario?.nome ?? mov.reponsavel?.nome ?? "-",
-      funcaoSetor: mov.usuario?.funcaoSetor ?? "",
-    },
-  }));
+  const movimentacoes: IMovimentacaoRolo[] = (movimentacoesData || []).map((mov: any) => {
+    const roloFromApi = mov.rolo;
+    const fornecedorFromApi = roloFromApi?.fornecedor ?? roloFromApi?.forncedor;
+    const tecidoFromApi = fornecedorFromApi?.tecido ?? fornecedorFromApi?.Tecidos;
+    const corFromApi = tecidoFromApi?.cor;
+
+    const roloNormalizado = roloFromApi && fornecedorFromApi && tecidoFromApi && corFromApi
+      ? {
+          id: roloFromApi.id ?? mov.estoqueRoloId ?? "",
+          codigoBarraRolo: roloFromApi.codigoBarraRolo ?? "-",
+          fornecedor: {
+            id: fornecedorFromApi.id ?? "",
+            nome: fornecedorFromApi.nome ?? "-",
+            tipo: fornecedorFromApi.tipo ?? "",
+            tecido: {
+              id: tecidoFromApi.id ?? "",
+              nome: tecidoFromApi.nome ?? "-",
+              codigoReferencia: tecidoFromApi.codigoReferencia ?? "-",
+              cor: {
+                id: corFromApi.id ?? "",
+                nome: corFromApi.nome ?? "-",
+                codigoHex: corFromApi.codigoHex ?? "#000000",
+              },
+            },
+          },
+        }
+      : undefined;
+
+    const responsavelId = mov.responsavel?.id ?? mov.reponsavel?.id ?? mov.usuario?.id ?? "";
+    const responsavelNome = mov.responsavel?.nome ?? mov.reponsavel?.nome ?? mov.usuario?.nome ?? "-";
+
+    return {
+      id: mov.id,
+      estoqueRoloId: mov.estoqueRoloId ?? roloFromApi?.id ?? "",
+      tipoMovimentacao: mov.tipoMovimentacao,
+      pesoMovimentado: parseNumber(mov.pesoMovimentado),
+      createdAt: mov.createdAt ?? new Date().toISOString(),
+      rolo: roloNormalizado,
+      responsavel: {
+        id: responsavelId,
+        nome: responsavelNome,
+      },
+    };
+  });
 
   const isLoading =
     isFetchingRolosCompletos ||

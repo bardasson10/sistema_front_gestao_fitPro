@@ -3,7 +3,7 @@ import { SemDadosComponent } from "@/components/ErrorManagementComponent/AnyData
 import { StockMovimentacao } from "@/types/StockComponents/stock-components"
 import { DataTable } from "@/components/DataTable";
 import { getStockMovementColumns } from "./columns"
-import { MovimentacaoEstoque } from "@/types/production";
+import { IMovimentacaoRolo } from "@/types/EstoqueRolo";
 
 interface MovementStockTableProps extends StockMovimentacao {
 
@@ -23,7 +23,7 @@ export const MovementStockTable = ({ movimentacoes, rolos, cores, tecidos, isLoa
         <div className="w-full" >
             {
                 data.length === 0 ?
-                    (<SemDadosComponent<MovimentacaoEstoque> nomeDado="movimentação" data={data} />)
+                    (<SemDadosComponent<IMovimentacaoRolo> nomeDado="movimentação" data={data} />)
                     :
                     (<DataTable
                         columns={columns}

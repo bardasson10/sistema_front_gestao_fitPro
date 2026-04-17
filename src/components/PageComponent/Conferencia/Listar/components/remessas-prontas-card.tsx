@@ -19,10 +19,10 @@ export function RemessasProntasCard({ remessas }: RemessasProntasCardProps) {
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-base">
           <ClipboardCheck className="h-4 w-4" />
-          Remessas Prontas Para Conferir
+          Remessas Prontas para Conferir
         </CardTitle>
         <CardDescription>
-          Selecione uma remessa para abrir a conferencia ja com os dados preenchidos
+          Selecione uma remessa para abrir a conferência já com os dados preenchidos
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -30,11 +30,11 @@ export function RemessasProntasCard({ remessas }: RemessasProntasCardProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Faccao</TableHead>
-                <TableHead>Servico</TableHead>
+                <TableHead>Facção</TableHead>
+                <TableHead>Serviço</TableHead>
                 <TableHead className="text-right">Qtd</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="w-36 text-right">Acao</TableHead>
+                <TableHead className="w-36 text-right">Ação</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

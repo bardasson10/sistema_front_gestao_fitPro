@@ -92,10 +92,10 @@ interface ListarConferenciasProps {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight text-balance">
-            Conferencias
+            Conferências
           </h1>
           <p className="text-muted-foreground">
-            Gerencie as conferencias de remessas retornadas
+            Gerencie as conferências de remessas retornadas
           </p>
         </div>
         <div className="flex gap-2">
@@ -108,7 +108,7 @@ interface ListarConferenciasProps {
           <Link href="/nova-conferencia">
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              Nova Conferencia
+              Nova Conferência
             </Button>
           </Link>
         </div>
@@ -143,7 +143,7 @@ interface ListarConferenciasProps {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Em Conferencia
+              Em Conferência
             </CardTitle>
             <Clock className="h-4 w-4 text-warning" />
           </CardHeader>
@@ -204,7 +204,7 @@ interface ListarConferenciasProps {
                 Filtros
               </CardTitle>
               <CardDescription>
-                Encontre conferencias por faccao, responsavel ou status
+                Encontre conferências por facção, responsável ou status
               </CardDescription>
             </div>
           </div>
@@ -214,7 +214,7 @@ interface ListarConferenciasProps {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar por faccao, responsavel ou produto..."
+                placeholder="Buscar por facção, responsável ou produto..."
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
                 className="pl-9"
@@ -227,7 +227,7 @@ interface ListarConferenciasProps {
               <SelectContent>
                 <SelectItem value="todos">Todos Status</SelectItem>
                 <SelectItem value="recebido">Recebido</SelectItem>
-                <SelectItem value="em_conferencia">Em Conferencia</SelectItem>
+                <SelectItem value="em_conferencia">Em Conferência</SelectItem>
                 <SelectItem value="aprovado">Aprovado</SelectItem>
                 <SelectItem value="aprovado_parcial">Aprovado Parcial</SelectItem>
                 <SelectItem value="aprovado_defeito">Aprovado Defeito</SelectItem>
@@ -251,10 +251,10 @@ interface ListarConferenciasProps {
       <Card>
         <CardHeader className="pb-4">
           <CardTitle className="text-base">
-            Lista de Conferencias
+            Lista de Conferências
           </CardTitle>
           <CardDescription>
-            {conferenciasFiltradas.length} conferencia(s) encontrada(s)
+            {conferenciasFiltradas.length} conferência(s) encontrada(s)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -263,12 +263,12 @@ interface ListarConferenciasProps {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12"></TableHead>
-                  <TableHead>Faccao / Servico</TableHead>
-                  <TableHead>Responsavel</TableHead>
+                  <TableHead>Facção / Serviço</TableHead>
+                  <TableHead>Responsável</TableHead>
                   <TableHead>Qualidade</TableHead>
                   <TableHead>Pagamento</TableHead>
                   <TableHead className="text-right">Recebido/Enviado</TableHead>
-                  <TableHead>Data Conferencia</TableHead>
+                  <TableHead>Data Conferência</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -278,7 +278,7 @@ interface ListarConferenciasProps {
                       colSpan={7}
                       className="h-24 text-center text-muted-foreground"
                     >
-                      Nenhuma conferencia encontrada
+                      Nenhuma conferência encontrada
                     </TableCell>
                   </TableRow>
                 ) : (

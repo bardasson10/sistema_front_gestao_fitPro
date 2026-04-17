@@ -69,7 +69,7 @@ export function ColaboradoresForm() {
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               </FormControl>
               <SelectContent>
-                {['cortador' ,'costureira interna' , 'expedicao' , 'responsavel' , 'auxiliar'].map((funcao) => (
+                {['Cortador' ,'Costureira Interna' , 'Expedição' , 'Supervisor', 'Auxiliar de Produção', 'Desenvolvedor', 'CEO'].map((funcao) => (
                   <SelectItem key={funcao} value={funcao}>{funcao}</SelectItem>
                 ))}
               </SelectContent>

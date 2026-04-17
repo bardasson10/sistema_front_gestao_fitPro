@@ -14,7 +14,7 @@ const statusQualidadeConfig: Record<string, { label: string; className: string; 
     icon: PackageCheck,
   },
   em_conferencia: {
-    label: "Em Conferencia",
+    label: "Em Conferência",
     className: "bg-warning/15 text-warning-foreground border-warning/30",
     icon: Clock,
   },

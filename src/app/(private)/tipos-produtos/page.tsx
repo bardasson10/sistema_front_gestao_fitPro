@@ -115,7 +115,7 @@ export default function TiposProdutosPage() {
     const disponiveis = tamanhos.filter((tamanho) => !associados.has(tamanho.id));
 
     if (disponiveis.length === 0) {
-      toast.info("Todos os tamanhos ja estao associados a este tipo.");
+      toast.info("Todos os tamanhos já estão associados a este tipo.");
       return;
     }
 
@@ -138,7 +138,7 @@ export default function TiposProdutosPage() {
     }));
 
     if (associados.length === 0) {
-      toast.info("Nao ha tamanhos associados a este tipo.");
+      toast.info("Não há tamanhos associados a este tipo.");
       return;
     }
 

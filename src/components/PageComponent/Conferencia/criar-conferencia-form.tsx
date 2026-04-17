@@ -97,7 +97,7 @@ type RemessaItemCompat = {
 
 const statusQualidadeOptions = [
   { value: "recebido", label: "Recebido" },
-  { value: "em_conferencia", label: "Em Conferencia" },
+  { value: "em_conferencia", label: "Em Conferência" },
   { value: "aprovado", label: "Aprovado" },
   { value: "aprovado_parcial", label: "Aprovado Parcial" },
   { value: "aprovado_defeito", label: "Aprovado Defeito" },
@@ -343,7 +343,7 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
           </Link>
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold tracking-tight text-balance">
-              Nova Conferencia
+              Nova Conferência
             </h1>
             <p className="text-muted-foreground">
               Confira os itens recebidos de uma remessa
@@ -400,10 +400,10 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
 
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label>Responsavel</Label>
+                      <Label>Responsável</Label>
                       <Select value={responsavelId} onValueChange={setResponsavelId}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione o responsavel" />
+                          <SelectValue placeholder="Selecione o responsável" />
                         </SelectTrigger>
                         <SelectContent>
                           {dataResponsaveis.map((resp) => (
@@ -416,7 +416,7 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Data da Conferencia</Label>
+                      <Label>Data da Conferência</Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
@@ -464,7 +464,7 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
                       <div className="space-y-0.5">
                         <Label className="text-sm font-medium">Liberar Pagamento</Label>
                         <p className="text-xs text-muted-foreground">
-                          Editavel apenas em status Aprovado
+                          Editável apenas em status Aprovado
                         </p>
                       </div>
                       <Switch
@@ -475,9 +475,9 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
-                      <Label>Observacao</Label>
+                      <Label>Observação</Label>
                       <Textarea
-                        placeholder="Adicione observacoes sobre a conferencia..."
+                        placeholder="Adicione observações sobre a conferência..."
                         value={observacao}
                         onChange={(e) => setObservacao(e.target.value)}
                         rows={3}
@@ -488,9 +488,9 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
 
                 <div className="space-y-3 rounded-lg border bg-card p-4">
                   <div>
-                    <h3 className="text-base font-semibold">Valor por peca por SKU</h3>
+                    <h3 className="text-base font-semibold">Valor por peça por SKU</h3>
                     <p className="text-sm text-muted-foreground">
-                      Defina o valor da faccao por peca para cada SKU desta remessa
+                      Defina o valor da facção por peça para cada SKU desta remessa
                     </p>
                   </div>
 
@@ -504,7 +504,7 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
                         <div key={skuItem.sku} className="grid items-center gap-3 rounded-md border p-3 sm:grid-cols-[1fr_180px]">
                           <div className="flex flex-col">
                             <span className="font-medium">{skuItem.sku}</span>
-                            <span className="text-xs text-muted-foreground">Valor da faccao por peca</span>
+                            <span className="text-xs text-muted-foreground">Valor da facção por peça</span>
                           </div>
                           <Input
                             type="number"
@@ -526,7 +526,7 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
 
                 <div className="space-y-3 rounded-lg border bg-card p-4">
                   <div>
-                    <h3 className="text-base font-semibold">Itens para Conferencia</h3>
+                    <h3 className="text-base font-semibold">Itens para Conferência</h3>
                     <p className="text-sm text-muted-foreground">
                       Informe a quantidade recebida e defeitos de cada item
                     </p>
@@ -646,7 +646,7 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
               <div className="mt-4 flex items-center gap-2 rounded-lg border border-warning/50 bg-warning/10 p-3 text-sm text-warning-foreground">
                 <AlertTriangle className="h-4 w-4" />
                 <span>
-                  Atencao: Existe uma diferenca de {totais.quebra} peca(s) entre o enviado e o recebido.
+                  Atenção: Existe uma diferença de {totais.quebra} peça(s) entre o enviado e o recebido.
                 </span>
               </div>
                   )}
@@ -659,7 +659,7 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
         </Card>
       ) : (
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Selecao de Remessa */}
+          {/* Seleção de Remessa */}
           <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
@@ -674,7 +674,7 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por faccao ou produto..."
+                  placeholder="Buscar por facção ou produto..."
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
                   className="pl-9"
@@ -686,8 +686,8 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-12"></TableHead>
-                      <TableHead>Faccao</TableHead>
-                      <TableHead>Servico</TableHead>
+                      <TableHead>Facção</TableHead>
+                      <TableHead>Serviço</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Qtd</TableHead>
                       <TableHead>Data Saida</TableHead>
@@ -697,7 +697,7 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
                     {remessasFiltradas.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="h-16 text-center text-muted-foreground">
-                          Nenhuma remessa disponivel
+                          Nenhuma remessa disponível
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -746,8 +746,8 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
                               {remessa.status === "enviado"
                                 ? "Enviado"
                                 : remessa.status === "em_producao"
-                                  ? "Em Producao"
-                                  : "Concluido"}
+                                  ? "Em Produção"
+                                  : "Concluído"}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right font-medium">
@@ -765,20 +765,20 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
             </CardContent>
           </Card>
 
-          {/* Configuracoes da Conferencia */}
+          {/* Configurações da Conferência */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <ClipboardCheck className="h-4 w-4" />
-                Configuracoes
+                Configurações
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Responsavel</Label>
+                <Label>Responsável</Label>
                 <Select value={responsavelId} onValueChange={setResponsavelId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione o responsavel" />
+                    <SelectValue placeholder="Selecione o responsável" />
                   </SelectTrigger>
                   <SelectContent>
                     {dataResponsaveis.map((resp) => (
@@ -791,7 +791,7 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
               </div>
 
               <div className="space-y-2">
-                <Label>Data da Conferencia</Label>
+                <Label>Data da Conferência</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -839,7 +839,7 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
                 <div className="space-y-0.5">
                   <Label className="text-sm font-medium">Liberar Pagamento</Label>
                   <p className="text-xs text-muted-foreground">
-                    Editavel apenas em status Aprovado
+                    Editável apenas em status Aprovado
                   </p>
                 </div>
                 <Switch
@@ -850,9 +850,9 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
               </div>
 
               <div className="space-y-2">
-                <Label>Observacao</Label>
+                <Label>Observação</Label>
                 <Textarea
-                  placeholder="Adicione observacoes sobre a conferencia..."
+                  placeholder="Adicione observações sobre a conferência..."
                   value={observacao}
                   onChange={(e) => setObservacao(e.target.value)}
                   rows={3}
@@ -867,9 +867,9 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
       {!isDirectByIdMode && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Valor por peca por SKU</CardTitle>
+            <CardTitle className="text-base">Valor por peça por SKU</CardTitle>
             <CardDescription>
-              Defina o valor da faccao por peca para cada SKU antes de salvar
+              Defina o valor da facção por peça para cada SKU antes de salvar
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -882,7 +882,7 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
                 <div key={skuItem.sku} className="grid items-center gap-3 rounded-md border p-3 sm:grid-cols-[1fr_180px]">
                   <div className="flex flex-col">
                     <span className="font-medium">{skuItem.sku}</span>
-                    <span className="text-xs text-muted-foreground">Valor da faccao por peca</span>
+                    <span className="text-xs text-muted-foreground">Valor da facção por peça</span>
                   </div>
                   <Input
                     type="number"
@@ -913,7 +913,7 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
           ) : (
             <Save className="mr-2 h-4 w-4" />
           )}
-          Salvar Conferencia
+          Salvar Conferência
         </Button>
       </div>
     </div>

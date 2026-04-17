@@ -230,7 +230,7 @@ export const EnfestoEditarForm = ({
     const idLote = form.getValues("id")
 
     if (!idLote) {
-      toast.error("ID do lote nao encontrado para atualizar.")
+      toast.error("ID do lote não encontrado para atualizar.")
       return
     }
 

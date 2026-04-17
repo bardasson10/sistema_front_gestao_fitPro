@@ -1,5 +1,5 @@
 
-import { EstoqueRolo } from "../EstoqueRolo";
+import { EstoqueRolo, IMovimentacaoRolo } from "../EstoqueRolo";
 import { Cor, MovimentacaoEstoque, Tecido } from "../production";
 
 export interface StockProps {
@@ -29,7 +29,7 @@ export interface StockResumeProps {
 }
 
 export interface StockMovimentacao {
-  movimentacoes: MovimentacaoEstoque[];
+  movimentacoes: IMovimentacaoRolo[];
   rolos: EstoqueRolo[];
   tecidos: Tecido[];
   cores: Cor[];

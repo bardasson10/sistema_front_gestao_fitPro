@@ -340,7 +340,7 @@ export function CriarRemessaComponent({
                                     value={
                                         dataPrevisaoRetorno
                                             ? format(dataPrevisaoRetorno, "dd/MM/yyyy", { locale: ptBR })
-                                            : "Aguardando Faccao"
+                                            : "Aguardando Facção"
                                     }
                                 />
                             </div>
