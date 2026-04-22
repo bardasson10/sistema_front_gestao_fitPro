@@ -23,6 +23,7 @@ import { Plus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useEffect, useState } from 'react';
 import { parseNumber } from '@/utils/Formatter/parse-number-format';
+import { usePagination } from '@/hooks/use-pagination';
 
 const initialValues: FabricFormValues = {
   fornecedorId: '',
@@ -46,8 +47,17 @@ export default function Tecidos() {
     codigoReferencia: undefined,
     gramatura: undefined,
   });
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(ITEMS_PER_PAGE);
+
+  const {
+    page,
+    limit: pageSize,
+    currentPage,
+    setPage,
+    setPageSize,
+  } = usePagination({
+    initialPage: 1,
+    initialLimit: ITEMS_PER_PAGE,
+  });
 
   // Queries
   const { data: tecidosResponse, isLoading } = useTecidos({
@@ -155,7 +165,7 @@ export default function Tecidos() {
       corId: undefined,
       nome: undefined,
       codigoReferencia: undefined,
-      gramatura: 0,
+      gramatura: undefined,
     });
     setPage(1);
   };
@@ -220,7 +230,7 @@ export default function Tecidos() {
           onEdit={handleEdit}
           onRemove={handleRemove}
           pagination={pagination}
-          currentPage={page}
+          currentPage={currentPage}
           onPageChange={setPage}
           pageSize={pageSize}
           onPageSizeChange={handlePageSizeChange}

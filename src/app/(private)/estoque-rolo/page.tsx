@@ -21,10 +21,11 @@ import { MobileViewStockMovement } from "@/components/MobileViewCards/StockCard/
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
 import { formatNumberToBRL } from "@/utils/Formatter/moeda-brasil-format";
 import { EstoqueRolo, IMovimentacaoRolo } from "@/types/EstoqueRolo";
-import { useGetKPIsEstoqueRolo, useGetListAllEstoqueRoloCompleto, useGetResumeEstoqueRolo } from "@/hooks/queries/Estoque/useEstoque-Rolo";
+import { useGetKPIsEstoqueRolo, useGetListAllEstoqueRolo, useGetListAllEstoqueRoloCompleto, useGetResumeEstoqueRolo } from "@/hooks/queries/Estoque/useEstoque-Rolo";
 import { useGetListAllMovimentacoesEstoque } from "@/hooks/queries/Estoque/useEstoque-Rolo-Movimentacao";
 import { MovimentacaoEstoque } from "@/types/production";
 import { useState } from "react";
+import { usePagination } from "@/hooks/use-pagination";
 
 const getTodayDate = () => new Date().toISOString().split("T")[0];
 
@@ -58,17 +59,37 @@ export default function Estoque() {
   const isTabResumo = activeTab === "resumo-por-tecido";
   const isTabMovimentacao = activeTab === "movimentacao-do-estoque";
 
+  const {
+    page,
+    limit: pageSize,
+    currentPage,
+    setPage,
+    setPageSize,
+  } = usePagination({
+    initialPage: 1,
+    initialLimit: 10,
+  });
+
   const { data: tecidosResponse } = useTecidos();
   const tecidos = tecidosResponse?.data || [];
 
   const { data: coresData } = useCores();
   const cores = coresData || [];
 
+  const { data: rolosData, isFetching: isFetchingRolos } = useGetListAllEstoqueRolo({
+    page,
+    limit: pageSize,
+  }, {
+    enabled: isTabRolos,
+  });
+  const rolos = rolosData?.data || [];
+  const rolosPagination = rolosData?.pagination || { total: 0, page, limit: pageSize, pages: 1 };
+
   const { data: rolosCompletosData, isFetching: isFetchingRolosCompletos } = useGetListAllEstoqueRoloCompleto({
     page: 1,
     limit: 1000,
   }, {
-    enabled: isTabRolos || isTabResumo || isTabMovimentacao,
+    enabled: isTabResumo || isTabMovimentacao,
   });
   const rolosCompletos = rolosCompletosData?.data || [];
 
@@ -133,6 +154,7 @@ export default function Estoque() {
   });
 
   const isLoading =
+    isFetchingRolos ||
     isFetchingRolosCompletos ||
     isFetchingResumo ||
     isFetchingKPIs ||
@@ -173,6 +195,7 @@ export default function Estoque() {
             id,
             pesoAtualKg: parseNumber(values.pesoAtualKg),
             situacao: normalizeSituacaoForApi(values.situacao),
+            codigoBarraRolo: values.codigoBarraRolo,
           });
         } else {
           criar({
@@ -231,7 +254,7 @@ export default function Estoque() {
             }
           >
             <Form {...form} >
-              <StockFabricForm tecidos={tecidos} cores={cores} isEditing={!!editingItem} />
+              <StockFabricForm cores={cores} isEditing={!!editingItem} />
             </Form>
           </FormModal>
 
@@ -241,15 +264,20 @@ export default function Estoque() {
             <StockTable
               isLoading={isLoading}
               cores={cores}
-              rolos={rolosCompletos}
+              rolos={rolos}
               tecidos={tecidos}
               onEdit={handleEdit}
+              pagination={rolosPagination}
+              currentPage={currentPage}
+              onPageChange={setPage}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
             />
           </div>
           <div className="block md:hidden">
             <MobileViewStock
               isLoading={isLoading}
-              rolos={rolosCompletos}
+              rolos={rolos}
               tecidos={tecidos}
               cores={cores}
               onEdit={handleEdit}
