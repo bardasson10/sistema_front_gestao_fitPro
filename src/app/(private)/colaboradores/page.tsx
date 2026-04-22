@@ -9,6 +9,7 @@ import { Form } from "@/components/ui/form";
 import { useAtualizarColaborador, useColaborador, useColaboradores, useCriarColaborador, useDeletarColaborador } from "@/hooks/queries/useColaboradores";
 import { useAuth } from "@/hooks/use-auth";
 import { useFormModal } from "@/hooks/use-form-modal";
+import { usePagination } from "@/hooks/use-pagination";
 import { ColaboradorFormValues, colaboradorSchema } from "@/schemas/colaborador-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
@@ -26,13 +27,27 @@ const initialValues: ColaboradorFormValues = {
 export default function Colaboradores() {
 
   const { user } = useAuth();
+
+  const {
+    page,
+    limit: pageSize,
+    currentPage,
+    setPage,
+    setPageSize,
+  } = usePagination({
+    initialPage: 1,
+    initialLimit: 10,
+  });
   
   const { data: colaboradoresData, isLoading } = useColaboradores({
+    page,
+    limit: pageSize,
     userPerfil: user.perfil as 'ADM' | 'GERENTE' | 'FUNCIONARIO',
     excludeUserId: user.id,
   });
 
   const colaboradores = colaboradoresData?.data || [];
+  const pagination = colaboradoresData?.pagination || { total: 0, page, limit: pageSize, pages: 1 };
 
   const {mutate: criarColaborador, isPending: isCreating} = useCriarColaborador();
   const { mutate: atualizar, isPending: isUpdating } = useAtualizarColaborador();
@@ -78,7 +93,7 @@ export default function Colaboradores() {
       <div className="flex justify-between items-center mb-6">
 
         <div className="text-sm text-muted-foreground p-4 items-center">
-          {colaboradoresData?.pagination.total || 0} colaboradores cadastrados
+          {pagination.total} colaboradores cadastrados
         </div>
 
         <FormModal
@@ -121,6 +136,11 @@ export default function Colaboradores() {
           isLoading={isLoading}
           onEdit={handleEdit}
           onRemove={handleRemove}
+          pagination={pagination}
+          currentPage={currentPage}
+          onPageChange={setPage}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
         />
       </div>
 

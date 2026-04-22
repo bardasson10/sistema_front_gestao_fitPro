@@ -27,15 +27,7 @@ import { ThemeToggle } from "@/components/ThemeToggle"
 import { LogOutButton } from "@/components/LoginForms/logout-button"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/hooks/use-auth"
-
-const getPerfilLabel = (perfil: string) => {
-  const labels: Record<string, string> = {
-    ADM: "Administrador",
-    GERENTE: "Gerente",
-    FUNCIONARIO: "Funcionário",
-  };
-  return labels[perfil] || perfil;
-};
+import { getPerfilLabel } from "@/constants/perfil"
 
 const getPerfilColor = (perfil: string) => {
   const colors: Record<string, string> = {

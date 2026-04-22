@@ -1,4 +1,5 @@
 import { Colaborador } from "../production";
+import { PaginatedResponse } from "../production";
 
 
 export interface ColaboradorProps {
@@ -6,4 +7,9 @@ export interface ColaboradorProps {
   isLoading: boolean;
   onEdit: (item: Colaborador) => void;
   onRemove: (id: string) => void;
+  pagination?: PaginatedResponse;
+  currentPage?: number;
+  onPageChange?: (page: number) => void;
+  pageSize?: number;
+  onPageSizeChange?: (pageSize: number) => void;
 }

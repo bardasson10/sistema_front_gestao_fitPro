@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { api } from "@/services/api/api";
+import { PERFIL_OPTIONS } from "@/constants/perfil";
 
 type RegisterFormValues = z.input<typeof createUserSchema>;
 
@@ -135,11 +136,11 @@ export default function RegisterPage() {
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            <SelectItem value="ADM">Administrador</SelectItem>
-                                            <SelectItem value="GERENTE">Gerente</SelectItem>
-                                            <SelectItem value="FUNCIONARIO">
-                                                Funcionário
-                                            </SelectItem>
+                                            {PERFIL_OPTIONS.map((perfil) => (
+                                                <SelectItem key={perfil.value} value={perfil.value}>
+                                                    {perfil.label}
+                                                </SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />

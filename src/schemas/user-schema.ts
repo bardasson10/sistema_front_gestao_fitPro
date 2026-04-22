@@ -1,10 +1,11 @@
 import z from "zod";
+import { PERFIL_VALUES } from "@/constants/perfil";
 
 export const createUserSchema = z.object({
         nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
         email: z.email("Email inválido"),
         senha: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-        perfil: z.enum(["ADM", "GERENTE", "FUNCIONARIO"]).optional().default("FUNCIONARIO"),
+    perfil: z.enum(PERFIL_VALUES).optional().default("FUNCIONARIO"),
         funcaoSetor: z.string().optional(),
 });
 
@@ -21,7 +22,7 @@ export const authResponseSchema = z.object(
         id: z.uuid(),
         nome: z.string(),
         email: z.string(),
-        perfil: z.enum(["ADM", "GERENTE", "FUNCIONARIO"]),
+        perfil: z.enum(PERFIL_VALUES),
         token: z.string(),
         createdAt: z.date(),
         updatedAt: z.date(),
