@@ -139,6 +139,7 @@ export const useCriarEstoqueTecido = () => {
 interface AtualizarEstoqueTecidoBody {
     pesoAtualKg: number;
     situacao: SituacaoRolo;
+    codigoBarraRolo?: string;
 }
 
 export const useAtualizarEstoqueTecido = () => {

@@ -28,11 +28,11 @@ export function TablePagination<TData>({
     <div className={`flex items-center ${tabelaRepeticoes ? 'justify-end' : 'justify-between'} p-2 pb-0`}>
       {!tabelaRepeticoes &&
         <div className="text-muted-foreground flex-1 text-sm">
-          {table.getFilteredSelectedRowModel().rows.length} de
-          {table.getFilteredRowModel().rows.length}{" "}
+          {table.getFilteredSelectedRowModel().rows.length} <span className="hidden sm:inline">de </span>
+          {table.getFilteredRowModel().rows.length}{"  "}
           {table.getFilteredSelectedRowModel().rows.length > 1 ?
-            "linhas selecionadas"
-            : "linha selecionada"}.
+            " linhas selecionadas "
+            : " linha selecionada "}.
         </div>
       }
       <div className="flex items-center space-x-6 lg:space-x-8">

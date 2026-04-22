@@ -25,12 +25,14 @@ export const ResumeStockTable = ({ rolos, cores, tecidos, isLoading }: ResumeSto
         data.length === 0 ?
           (<SemDadosComponent<StockResume> nomeDado="tecido" data={resumoData} />)
           :
-          (<DataTable
-            columns={columns}
-            data={resumoData}
-            isLoading={isLoading}
-            getRowId={(row) => row.id}
-          />)
+          (<div className="border rounded-lg overflow-hidden">
+            <DataTable
+              columns={columns}
+              data={resumoData}
+              isLoading={isLoading}
+              getRowId={(row) => row.id}
+            />
+          </div>)
       }
     </div>
   )

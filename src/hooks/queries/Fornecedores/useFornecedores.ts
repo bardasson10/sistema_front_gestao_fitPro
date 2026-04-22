@@ -12,6 +12,7 @@ interface Tecido {
     corId: string;
     nome: string;
     codigoReferencia: string;
+    fornecedorId?: string;
 }
 
 export interface IFornecedor {

@@ -25,12 +25,14 @@ export const MovementStockTable = ({ movimentacoes, rolos, cores, tecidos, isLoa
                 data.length === 0 ?
                     (<SemDadosComponent<IMovimentacaoRolo> nomeDado="movimentação" data={data} />)
                     :
-                    (<DataTable
-                        columns={columns}
-                        data={data}
-                        isLoading={isLoading}
-                        getRowId={(row) => row.id}
-                    />)
+                    (<div className="border rounded-lg overflow-hidden">
+                        <DataTable
+                            columns={columns}
+                            data={data}
+                            isLoading={isLoading}
+                            getRowId={(row) => row.id}
+                        />
+                    </div>)
             }
         </div>
     )

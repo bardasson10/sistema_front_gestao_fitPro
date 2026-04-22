@@ -1,6 +1,7 @@
 
 import { EstoqueRolo, IMovimentacaoRolo } from "../EstoqueRolo";
 import { Cor, MovimentacaoEstoque, Tecido } from "../production";
+import { PaginatedResponse } from "../production";
 
 export interface StockProps {
   rolos: EstoqueRolo[];
@@ -8,6 +9,11 @@ export interface StockProps {
   cores: Cor[];
   isLoading: boolean;
   onEdit: (item: EstoqueRolo) => void;
+  pagination?: PaginatedResponse;
+  currentPage?: number;
+  onPageChange?: (page: number) => void;
+  pageSize?: number;
+  onPageSizeChange?: (pageSize: number) => void;
 
 }
 

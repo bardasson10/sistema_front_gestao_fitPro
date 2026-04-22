@@ -186,9 +186,10 @@ export interface TecidosPaginatedResponse {
     pagination: PaginatedResponse;
 }
 
-export const useTecidos = (filtros?: TecidoFiltros) => {
+export const useTecidos = (filtros?: TecidoFiltros, options?: { enabled?: boolean }) => {
     return useQuery({
         queryKey: ['tecidos', filtros],
+        enabled: options?.enabled ?? true,
         queryFn: async () => {
             const params = new URLSearchParams();
             if (filtros?.fornecedorId) params.append('fornecedorId', filtros.fornecedorId);

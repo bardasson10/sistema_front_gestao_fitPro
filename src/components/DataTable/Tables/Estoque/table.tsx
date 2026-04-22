@@ -4,13 +4,25 @@ import React from "react";
 import { getStockColumns } from "./colums";
 import { DataTable } from "@/components/DataTable";
 import { EstoqueRolo } from "@/types/EstoqueRolo";
+import { ServerPagination } from "../../TablePagination/server-pagination";
 
 
 interface StockTableProps extends StockProps {
 
 }
 
-export const StockTable = ({ rolos, tecidos, cores, isLoading, onEdit }: StockTableProps) => {
+export const StockTable = ({
+  rolos,
+  tecidos,
+  cores,
+  isLoading,
+  onEdit,
+  pagination,
+  currentPage = 1,
+  onPageChange,
+  pageSize,
+  onPageSizeChange,
+}: StockTableProps) => {
   const columns = React.useMemo(
     () => getStockColumns(onEdit, tecidos, cores),
     [tecidos, onEdit, cores]);
@@ -19,13 +31,25 @@ export const StockTable = ({ rolos, tecidos, cores, isLoading, onEdit }: StockTa
     <div className="w-full" >
       {data.length === 0 ? (<SemDadosComponent<EstoqueRolo> nomeDado="tecido" data={rolos} />)
       :
-      ( <DataTable
-        columns={columns}
-        data={data}
-        isLoading={isLoading}
-        getRowId={(row) => row.id}
-        showPagination={false}
-      />)}
+      ( <div className="border rounded-lg overflow-hidden">
+        <DataTable
+          columns={columns}
+          data={data}
+          isLoading={isLoading}
+          getRowId={(row) => row.id}
+          showPagination={false}
+        />
+        {pagination && onPageChange && (
+          <ServerPagination
+            pagination={pagination}
+            currentPage={currentPage}
+            onPageChange={onPageChange}
+            pageSize={pageSize}
+            onPageSizeChange={onPageSizeChange}
+            isLoading={isLoading}
+          />
+        )}
+      </div>)}
     </div>
   )
 }

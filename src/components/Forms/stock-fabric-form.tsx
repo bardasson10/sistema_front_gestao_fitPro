@@ -2,23 +2,31 @@ import { useFieldArray, useFormContext } from "react-hook-form";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Cor, Tecido } from "@/types/production";
+import { Cor } from "@/types/production";
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
 import { RoloTecidoFormValues } from "@/schemas/rolo-tecido-schema";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
-import { IFornecedor, useGetListAllFornecedores } from "@/hooks/queries/Fornecedores/useFornecedores";
+import { CalendarIcon, Plus, Trash2 } from "lucide-react";
+import { useGetListAllFornecedores } from "@/hooks/queries/Fornecedores/useFornecedores";
+import { useTecidos } from "@/hooks/queries/useMateriais";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import React from "react";
+import { useAuth } from "@/hooks/use-auth";
 
 interface StockFabricFormProps {
-  tecidos: Tecido[];
   cores: Cor[];
   isEditing?: boolean;
 }
 
 
-export function StockFabricForm({ tecidos, cores, isEditing = false }: StockFabricFormProps) {
-  const { control } = useFormContext<RoloTecidoFormValues>();
+export function StockFabricForm({ cores, isEditing = false }: StockFabricFormProps) {
+  const { control, setValue } = useFormContext<RoloTecidoFormValues>();
+  const { user } = useAuth();
+  const isAdmin = user.perfil === "ADM";
   const { fields, append, remove } = useFieldArray({
     control,
     name: "rolos",
@@ -27,17 +35,30 @@ export function StockFabricForm({ tecidos, cores, isEditing = false }: StockFabr
   const [selectedFornecedor, setSelectedFornecedor] = React.useState<string | null>(null);
 
   const { data: fornecedores } = useGetListAllFornecedores();
+  const { data: tecidosResponse, isFetching: isFetchingTecidos } = useTecidos(
+    selectedFornecedor
+      ? {
+        fornecedorId: selectedFornecedor,
+        page: 1,
+        limit: 1000,
+      }
+      : undefined,
+    { enabled: !!selectedFornecedor && !isEditing }
+  );
 
+  React.useEffect(() => {
+    if (!isEditing) {
+      setValue("tecidoId", "");
+    }
+  }, [isEditing, selectedFornecedor, setValue]);
 
-  // Filtrar tecidos baseado no fornecedor selecionado
-  const tecidosFiltrados = selectedFornecedor && fornecedores
-    ? fornecedores
-      .find((f) => f.id === selectedFornecedor)
-      ?.tecidos.map((tecidoFornecedor) =>
-        tecidos.find((t) => t.id === tecidoFornecedor.id)
-      )
-      .filter((t) => t !== undefined) as Tecido[]
-    : tecidos;
+  const tecidosFiltrados = React.useMemo(() => {
+    if (!selectedFornecedor || isEditing) {
+      return [];
+    }
+
+    return tecidosResponse?.data ?? [];
+  }, [isEditing, selectedFornecedor, tecidosResponse]);
 
 
 
@@ -72,7 +93,7 @@ export function StockFabricForm({ tecidos, cores, isEditing = false }: StockFabr
                 render={({ field }) => (
                   <FormItem className="w-full">
                     <FormLabel>Tecido</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={isFetchingTecidos}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione" />
@@ -114,9 +135,34 @@ export function StockFabricForm({ tecidos, cores, isEditing = false }: StockFabr
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Data do Lote</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value
+                            ? format(new Date(`${field.value}T00:00:00`), "dd/MM/yyyy", { locale: ptBR })
+                            : "Selecione a data"}
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        locale={ptBR}
+                        selected={field.value ? new Date(`${field.value}T00:00:00`) : undefined}
+                        onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
@@ -185,7 +231,11 @@ export function StockFabricForm({ tecidos, cores, isEditing = false }: StockFabr
               <FormItem>
                 <FormLabel>Código do Rolo</FormLabel>
                 <FormControl>
-                  <Input {...field} disabled />
+                  <Input
+                    {...field}
+                    disabled={!isAdmin}
+                    readOnly={!isAdmin}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
