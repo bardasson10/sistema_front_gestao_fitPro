@@ -20,12 +20,13 @@ import { MovementStockTable } from "@/components/DataTable/Tables/Estoque/Movime
 import { MobileViewStockMovement } from "@/components/MobileViewCards/StockCard/stock-card-movement";
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
 import { formatNumberToBRL } from "@/utils/Formatter/moeda-brasil-format";
-import { EstoqueRolo, IMovimentacaoRolo } from "@/types/EstoqueRolo";
+import { EstoqueRolo, IFiltroEstoqueRolo, IMovimentacaoRolo } from "@/types/EstoqueRolo";
 import { useGetKPIsEstoqueRolo, useGetListAllEstoqueRolo, useGetListAllEstoqueRoloCompleto, useGetResumeEstoqueRolo } from "@/hooks/queries/Estoque/useEstoque-Rolo";
 import { useGetListAllMovimentacoesEstoque } from "@/hooks/queries/Estoque/useEstoque-Rolo-Movimentacao";
 import { MovimentacaoEstoque } from "@/types/production";
 import { useState } from "react";
 import { usePagination } from "@/hooks/use-pagination";
+import { EstoqueRoloFilters } from "@/components/Forms/estoque-rolo-filters";
 
 const getTodayDate = () => new Date().toISOString().split("T")[0];
 
@@ -58,6 +59,7 @@ export default function Estoque() {
   const isTabRolos = activeTab === "rolos-individuais";
   const isTabResumo = activeTab === "resumo-por-tecido";
   const isTabMovimentacao = activeTab === "movimentacao-do-estoque";
+  const [filtros, setFiltros] = useState<IFiltroEstoqueRolo>({});
 
   const {
     page,
@@ -76,16 +78,26 @@ export default function Estoque() {
   const { data: coresData } = useCores();
   const cores = coresData || [];
 
-  const { data: rolosData, isFetching: isFetchingRolos } = useGetListAllEstoqueRolo({
+  const rolosQuery = {
+    ...filtros,
     page,
     limit: pageSize,
-  }, {
+  };
+
+  const movimentacoesQuery = {
+    ...filtros,
+    page: 1,
+    limit: 1000,
+  };
+
+  const { data: rolosData, isFetching: isFetchingRolos } = useGetListAllEstoqueRolo(rolosQuery, {
     enabled: isTabRolos,
   });
   const rolos = rolosData?.data || [];
   const rolosPagination = rolosData?.pagination || { total: 0, page, limit: pageSize, pages: 1 };
 
   const { data: rolosCompletosData, isFetching: isFetchingRolosCompletos } = useGetListAllEstoqueRoloCompleto({
+    ...filtros,
     page: 1,
     limit: 1000,
   }, {
@@ -93,19 +105,13 @@ export default function Estoque() {
   });
   const rolosCompletos = rolosCompletosData?.data || [];
 
-  const { data: resumoEstoqueData, isFetching: isFetchingResumo } = useGetResumeEstoqueRolo({
-    page: 1,
-    limit: 1,
-  }, {
+  const { data: resumoEstoqueData, isFetching: isFetchingResumo } = useGetResumeEstoqueRolo(filtros, {
     enabled: isTabRolos,
   });
 
-  const { data: kpisEstoqueData, isFetching: isFetchingKPIs } = useGetKPIsEstoqueRolo();
+  const { data: kpisEstoqueData, isFetching: isFetchingKPIs } = useGetKPIsEstoqueRolo(filtros);
 
-  const { data: movimentacoesData, isFetching: isFetchingMovimentacoes } = useGetListAllMovimentacoesEstoque({
-    page: 1,
-    limit: 1000,
-  }, {
+  const { data: movimentacoesData, isFetching: isFetchingMovimentacoes } = useGetListAllMovimentacoesEstoque(movimentacoesQuery, {
     enabled: isTabMovimentacao,
   });
   const movimentacoes: IMovimentacaoRolo[] = (movimentacoesData || []).map((mov: any) => {
@@ -159,6 +165,16 @@ export default function Estoque() {
     isFetchingResumo ||
     isFetchingKPIs ||
     isFetchingMovimentacoes;
+
+  const handleFilterChange = (nextFilters: IFiltroEstoqueRolo) => {
+    setFiltros(nextFilters);
+    setPage(1);
+  };
+
+  const handleClearFilters = () => {
+    setFiltros({});
+    setPage(1);
+  };
 
   const { mutate: criar, isPending: isCreating } = useCriarEstoqueTecido();
   const { mutate: atualizar, isPending: isUpdating } = useAtualizarEstoqueTecido();
@@ -232,6 +248,9 @@ export default function Estoque() {
           icon={Package}
           variant="primary"
         />
+      </div>
+      <div className="bg-muted/50 p-4 rounded-lg border mb-6">
+          <EstoqueRoloFilters onFilter={handleFilterChange} onClear={handleClearFilters} />
       </div>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:justify-between sm:items-center">
