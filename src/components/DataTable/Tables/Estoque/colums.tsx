@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { dataFormatter } from "@/utils/Formatter/data-brasil-format";
 import { formatNumberToBRL } from "@/utils/Formatter/moeda-brasil-format";
@@ -12,6 +12,8 @@ import { CircleColorView } from "@/components/ui/circle-color-view";
 
 export const getStockColumns = (
   onEdit: (item: EstoqueRolo) => void,
+  onRemove: ((id: string) => void) | undefined,
+  canDelete: boolean,
   tecidos: { id: string; tipo: string; corId: string }[],
   cores: { id: string; nome: string; codigoHex: string }[],
 ): ColumnDef<EstoqueRolo>[] => [
@@ -22,14 +24,17 @@ export const getStockColumns = (
       cell: ({ row }) => <span className="font-medium text-foreground">{row.original.codigoBarraRolo}</span>,
     },
     {
-      accessorKey: 'tecidoId',
+      accessorKey: 'tecido',
       header: 'Tecido',
       cell: ({ row }) => {
-        const tecido = tecidos.find(t => t.id === row.original.tecidoId);
+        const corHex = row.original.tecido.cor.codigoHex; 
+        const nomeTecido = row.original.tecido.nome;
+        const nomeCor = row.original.tecido.cor.nome;
+
         return (
           <div className="flex items-center gap-2">
-            <CircleColorView color={cores.find(c => c.id === tecido?.corId)?.codigoHex} />
-            <span>{tecido?.tipo} - {cores.find(c => c.id === tecido?.corId)?.nome}</span>
+            <CircleColorView color={corHex} />
+            <span>{nomeTecido} - {nomeCor}</span>
           </div>
         )
       },
@@ -91,7 +96,7 @@ export const getStockColumns = (
     {
       id: 'actions',
       cell: ({ row }) => (
-        <div>
+        <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="icon"
@@ -99,13 +104,16 @@ export const getStockColumns = (
           >
             <Pencil className="h-4 w-4" />
           </Button>
-          {/* <Button
-            variant="destructive"
-            size="icon"
-            onClick={() => onRemove(row.original.id)}
-          >
-            <Trash className="h-4 w-4" />
-          </Button> */}
+
+          {canDelete && onRemove && (
+            <Button
+              variant="destructive"
+              size="icon"
+              onClick={() => onRemove(row.original.id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       ),
 

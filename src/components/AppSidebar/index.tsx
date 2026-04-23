@@ -76,8 +76,8 @@ const data = {
           icon: PackageOpen,
         },
         {
-          title: "Estoque de Rolos",
-          url: "/estoque-rolo",
+          title: "Estoque de Tecidos",
+          url: "/estoque-tecidos",
           icon: CirclePile,
         },
       ],

@@ -17,6 +17,8 @@ export const StockTable = ({
   cores,
   isLoading,
   onEdit,
+  onRemove,
+  canDelete = false,
   pagination,
   currentPage = 1,
   onPageChange,
@@ -24,8 +26,8 @@ export const StockTable = ({
   onPageSizeChange,
 }: StockTableProps) => {
   const columns = React.useMemo(
-    () => getStockColumns(onEdit, tecidos, cores),
-    [tecidos, onEdit, cores]);
+    () => getStockColumns(onEdit, onRemove, canDelete, tecidos, cores),
+    [tecidos, onEdit, onRemove, canDelete, cores]);
   const data = Array.isArray(rolos) ? rolos : [];
   return (
     <div className="w-full" >

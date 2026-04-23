@@ -9,6 +9,8 @@ export interface StockProps {
   cores: Cor[];
   isLoading: boolean;
   onEdit: (item: EstoqueRolo) => void;
+  onRemove?: (id: string) => void;
+  canDelete?: boolean;
   pagination?: PaginatedResponse;
   currentPage?: number;
   onPageChange?: (page: number) => void;

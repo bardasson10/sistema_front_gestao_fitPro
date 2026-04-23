@@ -2,6 +2,8 @@ import axios, { AxiosInstance } from 'axios';
 import { getAuthToken, removeAuthCookies } from '@/utils/Cookies/auth';
 import { toast } from 'sonner';
 
+let isRedirectingToLogin = false;
+
 class APIClient {
     private client: AxiosInstance;
 
@@ -29,11 +31,19 @@ class APIClient {
                 console.log(`📥 [${response.status}] ${response.config.url} - Dados:`, response.data);
                 return response;
             },
-            (error) => {
+            async (error) => {
                 if (error.response?.status === 401) {
                     // Token expirado ou inválido
-                    removeAuthCookies();
-                    toast.error(error.response.data?.error);
+                    await removeAuthCookies();
+
+                    if (!isRedirectingToLogin) {
+                        isRedirectingToLogin = true;
+                        toast.error(error.response?.data?.error || 'Sessao expirada. Faca login novamente.');
+
+                        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+                            window.location.assign('/login');
+                        }
+                    }
                 }
                 console.error(`❌ [${error.response?.status}] ${error.config?.url} - Erro:`, error.response?.data);
                 return Promise.reject(error);

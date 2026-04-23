@@ -130,7 +130,7 @@ export function EstoqueRoloFilters({ onFilter, onClear }: EstoqueRoloFiltersProp
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3">
-        <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           <FormField
             control={form.control}
             name="estoqueRoloId"

@@ -1,12 +1,11 @@
-'use server';
-import { cookies } from "next/headers";
-
 const AUTH_USER_ID_COOKIE = "auth_user_id";
 const AUTH_TOKEN_COOKIE = "auth_token";
 const AUTH_USER_NAME_COOKIE = "auth_user_name";
 const AUTH_USER_EMAIL_COOKIE = "auth_user_email";
 const AUTH_USER_PERFIL_COOKIE = "auth_user_perfil";
 const AUTH_COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 dias
+
+const isBrowser = typeof document !== "undefined";
 
 interface UserAuthData {
   id: string;
@@ -16,92 +15,74 @@ interface UserAuthData {
   token: string;
 }
 
+const readCookie = (name: string): string | null => {
+  if (!isBrowser) return null;
+
+  const prefix = `${name}=`;
+  const found = document.cookie
+    .split("; ")
+    .find((cookie) => cookie.startsWith(prefix));
+
+  if (!found) return null;
+
+  return decodeURIComponent(found.slice(prefix.length));
+};
+
+const writeCookie = (name: string, value: string) => {
+  if (!isBrowser) return;
+
+  const secure = process.env.NODE_ENV === "production" ? "; secure" : "";
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${AUTH_COOKIE_MAX_AGE}; samesite=lax${secure}`;
+};
+
+const deleteCookie = (name: string) => {
+  if (!isBrowser) return;
+
+  document.cookie = `${name}=; path=/; max-age=0; samesite=lax`;
+};
+
 export const saveAuthCookies = async (userData: UserAuthData) => {
-  const cookieStore = await cookies();
-  
-  cookieStore.set(AUTH_USER_ID_COOKIE, userData.id, {
-    maxAge: AUTH_COOKIE_MAX_AGE,
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-  });
-
-  cookieStore.set(AUTH_TOKEN_COOKIE, userData.token, {
-    maxAge: AUTH_COOKIE_MAX_AGE,
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-  });
-
-  cookieStore.set(AUTH_USER_NAME_COOKIE, userData.nome, {
-    maxAge: AUTH_COOKIE_MAX_AGE,
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-  });
-
-  cookieStore.set(AUTH_USER_EMAIL_COOKIE, userData.email, {
-    maxAge: AUTH_COOKIE_MAX_AGE,
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-  });
-
-  cookieStore.set(AUTH_USER_PERFIL_COOKIE, userData.perfil, {
-    maxAge: AUTH_COOKIE_MAX_AGE,
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-  });
+  writeCookie(AUTH_USER_ID_COOKIE, userData.id);
+  writeCookie(AUTH_TOKEN_COOKIE, userData.token);
+  writeCookie(AUTH_USER_NAME_COOKIE, userData.nome);
+  writeCookie(AUTH_USER_EMAIL_COOKIE, userData.email);
+  writeCookie(AUTH_USER_PERFIL_COOKIE, userData.perfil);
 };
 
 export const getAuthUserId = async (): Promise<string | null> => {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get(AUTH_USER_ID_COOKIE);
-  return userId?.value || null;
+  return readCookie(AUTH_USER_ID_COOKIE);
 };
 
 export const getAuthToken = async (): Promise<string | null> => {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(AUTH_TOKEN_COOKIE);
-  return token?.value || null;
+  return readCookie(AUTH_TOKEN_COOKIE);
 };
 
 export const getAuthUserData = async (): Promise<UserAuthData | null> => {
-  const cookieStore = await cookies();
-  
-  const userId = cookieStore.get(AUTH_USER_ID_COOKIE);
-  const token = cookieStore.get(AUTH_TOKEN_COOKIE);
-  const nome = cookieStore.get(AUTH_USER_NAME_COOKIE);
-  const email = cookieStore.get(AUTH_USER_EMAIL_COOKIE);
-  const perfil = cookieStore.get(AUTH_USER_PERFIL_COOKIE);
+  const userId = readCookie(AUTH_USER_ID_COOKIE);
+  const token = readCookie(AUTH_TOKEN_COOKIE);
+  const nome = readCookie(AUTH_USER_NAME_COOKIE);
+  const email = readCookie(AUTH_USER_EMAIL_COOKIE);
+  const perfil = readCookie(AUTH_USER_PERFIL_COOKIE);
 
   if (!userId || !token || !nome || !email || !perfil) {
     return null;
   }
 
   return {
-    id: userId.value,
-    token: token.value,
-    nome: nome.value,
-    email: email.value,
-    perfil: perfil.value as "ADM" | "GERENTE" | "FUNCIONARIO",
+    id: userId,
+    token,
+    nome,
+    email,
+    perfil: perfil as "ADM" | "GERENTE" | "FUNCIONARIO",
   };
 };
 
 export const removeAuthCookies = async () => {
-  const cookieStore = await cookies();
-  
-  cookieStore.delete(AUTH_USER_ID_COOKIE);
-  cookieStore.delete(AUTH_TOKEN_COOKIE);
-  cookieStore.delete(AUTH_USER_NAME_COOKIE);
-  cookieStore.delete(AUTH_USER_EMAIL_COOKIE);
-  cookieStore.delete(AUTH_USER_PERFIL_COOKIE);
+  deleteCookie(AUTH_USER_ID_COOKIE);
+  deleteCookie(AUTH_TOKEN_COOKIE);
+  deleteCookie(AUTH_USER_NAME_COOKIE);
+  deleteCookie(AUTH_USER_EMAIL_COOKIE);
+  deleteCookie(AUTH_USER_PERFIL_COOKIE);
 };
 
 export const isAuthenticated = async (): Promise<boolean> => {

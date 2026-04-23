@@ -6,7 +6,7 @@ export const CircleColorView = ({ color, height, width }: { color: string | null
       {color ? (
         <div className="rounded-full border border-black dark:border-gray-500" style={{ backgroundColor: color, height: height || 16, width: width || 16 }} />
       ) :
-        <div className="rounded-full" style={{ height: 0, width: width || 0 }} />
+        <div className="rounded-full" style={{ height: 0, width: width || 0 }} > nada </div>
       }
     </>
 

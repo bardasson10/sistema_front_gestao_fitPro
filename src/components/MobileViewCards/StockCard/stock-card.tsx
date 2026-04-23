@@ -8,7 +8,7 @@ import { EstoqueTecido } from "@/types/production"
 import { StockProps } from "@/types/StockComponents/stock-components"
 import { formatNumberToBRL } from "@/utils/Formatter/moeda-brasil-format"
 import { parseNumber } from "@/utils/Formatter/parse-number-format"
-import { Circle, Pencil } from "lucide-react"
+import { Pencil, Trash2 } from "lucide-react"
 
 
 
@@ -18,6 +18,8 @@ export const MobileViewStock = ({
   cores,
   isLoading,
   onEdit,
+  onRemove,
+  canDelete = false,
 }: StockProps) => {
 
   if (isLoading) {
@@ -95,19 +97,22 @@ export const MobileViewStock = ({
               <div className="flex w-full gap-2">
                 <Button
                   variant="outline"
-                  className="flex-1"
+                  className={canDelete && onRemove ? "flex-1" : "w-full"}
                   onClick={() => onEdit(item)}
                 >
                   <Pencil className="mr-2 h-4 w-4" />
                   Editar
                 </Button>
-                {/* <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => onRemove(item.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button> */}
+
+                {canDelete && onRemove && (
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => onRemove(item.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             }
             footerClassName="border-t 0 bg-muted/50 px-6 py-8"
