@@ -1,34 +1,28 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Layers, Package, Plus, Weight } from "lucide-react";
 
-// UI Components
 import { MetricCard } from "@/components/ui/metric-card";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// Table & Pagination Components
 import { StockTable } from "@/components/DataTable/Tables/Estoque/table";
 import { ResumeStockTable } from "@/components/DataTable/Tables/Estoque/resume-table";
 import { MovementStockTable } from "@/components/DataTable/Tables/Estoque/MovimentacaoEstoque/table";
 
-
-// Forms & Modals
 import { FormModal } from "@/components/Modal/base-modal-form";
 import { StockFabricForm } from "@/components/Forms/stock-fabric-form";
 import { EstoqueRoloFilters } from "@/components/Forms/estoque-rolo-filters";
 import { RemoveItemWarning } from "@/components/ErrorManagementComponent/WarnningRemoveItem";
 
-// Mobile Views
 import { MobileViewStock } from "@/components/MobileViewCards/StockCard/stock-card";
 import { MobileViewStockResume } from "@/components/MobileViewCards/StockCard/stock-card-resume";
 import { MobileViewStockMovement } from "@/components/MobileViewCards/StockCard/stock-card-movement";
 
-// Hooks & Queries
 import { useFormModal } from "@/hooks/use-form-modal";
 import { usePagination } from "@/hooks/use-pagination";
 import { useAuth } from "@/hooks/use-auth";
@@ -46,7 +40,6 @@ import {
 } from "@/hooks/queries/Estoque/useEstoque-Rolo";
 import { useGetListAllMovimentacoesEstoque } from "@/hooks/queries/Estoque/useEstoque-Rolo-Movimentacao";
 
-// Utils & Schemas
 import { RoloTecidoFormValues, roloTecidoSchema } from "@/schemas/rolo-tecido-schema";
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
 import { formatNumberToBRL } from "@/utils/Formatter/moeda-brasil-format";
@@ -83,7 +76,6 @@ export default function Estoque() {
   const [activeTab, setActiveTab] = useState("rolos-individuais");
   const [filtros, setFiltros] = useState<IFiltroEstoqueRolo>({});
 
-  // HOOK DE PAGINAÇÃO
   const {
     page,
     limit: pageSize,
@@ -95,18 +87,16 @@ export default function Estoque() {
   const isTabResumo = activeTab === "resumo-por-tecido";
   const isTabMovimentacao = activeTab === "movimentacao-do-estoque";
 
-  // Queries Básicas
   const { data: tecidosResponse } = useTecidos();
   const tecidos = tecidosResponse?.data || [];
   const { data: coresData } = useCores();
   const cores = coresData || [];
 
-  // QUERY DE ROLOS (Com paginação integrada)
-  const rolosQuery = {
+  const rolosQuery = useMemo(() => ({
     ...filtros,
-    page: page,    // Envia página atual para a API
-    limit: pageSize // Envia limite por página para a API
-  };
+    page: page,
+    limit: pageSize
+  }), [filtros, page, pageSize]);
 
   const { data: rolosData, isFetching: isFetchingRolos } = useGetListAllEstoqueRolo(rolosQuery, {
     enabled: isTabRolos,
@@ -114,7 +104,6 @@ export default function Estoque() {
 
   const rolos = rolosData?.data || [];
   
-  // Objeto de paginação formatado para o componente ServerPagination
   const rolosPagination = {
     total: rolosData?.pagination?.total ?? 0,
     pages: rolosData?.pagination?.pages ?? 1,
@@ -122,7 +111,6 @@ export default function Estoque() {
     limit: pageSize,
   };
 
-  // Outras Queries
   const { data: rolosCompletosData, isFetching: isFetchingRolosCompletos } = useGetListAllEstoqueRoloCompleto(filtros, {
     enabled: isTabResumo || isTabMovimentacao,
   });
@@ -134,14 +122,13 @@ export default function Estoque() {
     enabled: isTabMovimentacao,
   });
 
-  // Normalização de Movimentações (Omitido para brevidade, mantenha sua lógica original aqui)
   const movimentacoes: IMovimentacaoRolo[] = (movimentacoesData || []).map((mov: any) => ({
       id: mov.id,
       estoqueRoloId: mov.estoqueRoloId ?? "",
       tipoMovimentacao: mov.tipoMovimentacao,
       pesoMovimentado: parseNumber(mov.pesoMovimentado),
       createdAt: mov.createdAt ?? new Date().toISOString(),
-      rolo: mov.rolo, // Idealmente usar sua lógica de normalização completa aqui
+      rolo: mov.rolo, 
       responsavel: {
         id: mov.responsavel?.id ?? "",
         nome: mov.responsavel?.nome ?? "-",
@@ -150,18 +137,18 @@ export default function Estoque() {
 
   const isLoading = isFetchingRolos || isFetchingRolosCompletos || isFetchingKPIs || isFetchingMovimentacoes;
 
-  // Handlers de Filtro
-  const handleFilterChange = (nextFilters: IFiltroEstoqueRolo) => {
-    setFiltros(nextFilters);
-    setPage(1); // Reset para primeira página ao filtrar
-  };
+  const handleFilterChange = useMemo(() => {
+    return (nextFilters: IFiltroEstoqueRolo) => {
+      setFiltros(nextFilters);
+      setPage(1);
+    };
+  }, [setPage]);
 
-  const handleClearFilters = () => {
+  const handleClearFilters = useMemo(() => {
     setFiltros({});
     setPage(1);
-  };
+  }, [setPage]);
 
-  // Mutações
   const { mutate: criar, isPending: isCreating } = useCriarEstoqueTecido();
   const { mutate: atualizar, isPending: isUpdating } = useAtualizarEstoqueTecido();
   const { mutate: deletar, isPending: isDeleting } = useDeletarEstoqueTecido();
@@ -291,8 +278,6 @@ export default function Estoque() {
               onEdit={handleEdit}
               onRemove={isAdmin ? handleRemove : undefined}
               canDelete={isAdmin}
-              
-              // PAGINAÇÃO CORRIGIDA AQUI
               pagination={rolosPagination}
               currentPage={page}
               onPageChange={setPage}

@@ -15,7 +15,8 @@ interface UserAuthData {
   token: string;
 }
 
-const readCookie = (name: string): string | null => {
+// 1. Função base para ler no Navegador (Client-side)
+const readCookieBrowser = (name: string): string | null => {
   if (!isBrowser) return null;
 
   const prefix = `${name}=`;
@@ -26,6 +27,28 @@ const readCookie = (name: string): string | null => {
   if (!found) return null;
 
   return decodeURIComponent(found.slice(prefix.length));
+};
+
+// 2. O CORAÇÃO DO SISTEMA: Função universal para ler o cookie (SSR e Navegador)
+const getUniversalCookie = async (name: string): Promise<string | null> => {
+  // Se for o Servidor (SSR / F5 do Next.js)
+  if (!isBrowser) {
+    try {
+      const { cookies } = await import("next/headers");
+
+      // No Next.js 15+, cookies() retorna uma Promise, então já damos o await direto aqui:
+      const cookieStore = await cookies();
+      const cookie = cookieStore.get(name);
+
+      return cookie?.value || null;
+    } catch (error) {
+      console.warn(`[Aviso SSR] Não foi possível ler o cookie ${name} no servidor.`);
+      return null;
+    }
+  }
+
+
+  return readCookieBrowser(name);
 };
 
 const writeCookie = (name: string, value: string) => {
@@ -41,6 +64,8 @@ const deleteCookie = (name: string) => {
   document.cookie = `${name}=; path=/; max-age=0; samesite=lax`;
 };
 
+// --- Exportações Públicas ---
+
 export const saveAuthCookies = async (userData: UserAuthData) => {
   writeCookie(AUTH_USER_ID_COOKIE, userData.id);
   writeCookie(AUTH_TOKEN_COOKIE, userData.token);
@@ -50,19 +75,20 @@ export const saveAuthCookies = async (userData: UserAuthData) => {
 };
 
 export const getAuthUserId = async (): Promise<string | null> => {
-  return readCookie(AUTH_USER_ID_COOKIE);
+  return getUniversalCookie(AUTH_USER_ID_COOKIE); // Agora chama a função universal
 };
 
 export const getAuthToken = async (): Promise<string | null> => {
-  return readCookie(AUTH_TOKEN_COOKIE);
+  return getUniversalCookie(AUTH_TOKEN_COOKIE); // Agora chama a função universal
 };
 
 export const getAuthUserData = async (): Promise<UserAuthData | null> => {
-  const userId = readCookie(AUTH_USER_ID_COOKIE);
-  const token = readCookie(AUTH_TOKEN_COOKIE);
-  const nome = readCookie(AUTH_USER_NAME_COOKIE);
-  const email = readCookie(AUTH_USER_EMAIL_COOKIE);
-  const perfil = readCookie(AUTH_USER_PERFIL_COOKIE);
+  // Aguarda todos os cookies através da função universal
+  const userId = await getUniversalCookie(AUTH_USER_ID_COOKIE);
+  const token = await getUniversalCookie(AUTH_TOKEN_COOKIE);
+  const nome = await getUniversalCookie(AUTH_USER_NAME_COOKIE);
+  const email = await getUniversalCookie(AUTH_USER_EMAIL_COOKIE);
+  const perfil = await getUniversalCookie(AUTH_USER_PERFIL_COOKIE);
 
   if (!userId || !token || !nome || !email || !perfil) {
     return null;
