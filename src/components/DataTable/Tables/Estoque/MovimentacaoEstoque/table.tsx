@@ -4,12 +4,25 @@ import { StockMovimentacao } from "@/types/StockComponents/stock-components"
 import { DataTable } from "@/components/DataTable";
 import { getStockMovementColumns } from "./columns"
 import { IMovimentacaoRolo } from "@/types/EstoqueRolo";
+import { ServerPagination } from "@/components/DataTable/TablePagination/server-pagination";
+
 
 interface MovementStockTableProps extends StockMovimentacao {
 
 }
 
-export const MovementStockTable = ({ movimentacoes, rolos, cores, tecidos, isLoading }: MovementStockTableProps) => {
+export const MovementStockTable = ({
+    movimentacoes,
+    rolos,
+    cores,
+    tecidos,
+    isLoading,
+    pagination,
+    currentPage = 1,
+    onPageChange,
+    pageSize,
+    onPageSizeChange,
+}: MovementStockTableProps) => {
 
     const columns = React.useMemo(
         () => getStockMovementColumns(rolos, tecidos, cores),
@@ -31,7 +44,18 @@ export const MovementStockTable = ({ movimentacoes, rolos, cores, tecidos, isLoa
                             data={data}
                             isLoading={isLoading}
                             getRowId={(row) => row.id}
+                            showPagination={false}
                         />
+                        {pagination && onPageChange && (
+                            <ServerPagination
+                                pagination={pagination}
+                                currentPage={currentPage}
+                                onPageChange={onPageChange}
+                                pageSize={pageSize}
+                                onPageSizeChange={onPageSizeChange}
+                                isLoading={isLoading}
+                            />
+                        )}
                     </div>)
             }
         </div>

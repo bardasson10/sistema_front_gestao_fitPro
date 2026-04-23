@@ -42,4 +42,9 @@ export interface StockMovimentacao {
   tecidos: Tecido[];
   cores: Cor[];
   isLoading: boolean;
+  pagination?: PaginatedResponse;
+  currentPage?: number;
+  onPageChange?: (page: number) => void;
+  pageSize?: number;
+  onPageSizeChange?: (pageSize: number) => void;
 }

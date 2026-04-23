@@ -82,6 +82,13 @@ export default function Estoque() {
     setPageSize,
   } = usePagination();
 
+  const {
+    page: movimentacaoPage,
+    limit: movimentacaoPageSize,
+    setPage: setMovimentacaoPage,
+    setPageSize: setMovimentacaoPageSize,
+  } = usePagination();
+
   const isTabRolos = activeTab === "rolos-individuais";
   const isTabResumo = activeTab === "resumo-por-tecido";
   const isTabMovimentacao = activeTab === "movimentacao-do-estoque";
@@ -117,13 +124,29 @@ export default function Estoque() {
 
   const { data: kpisEstoqueData, isFetching: isFetchingKPIs } = useGetKPIsEstoqueRolo(filtros);
 
-  const shouldFetchMovimentacoes = isTabMovimentacao || (isTabResumo && !!filtros.tipoMovimentacao);
+  const movimentacoesQuery = useMemo(() => ({
+    ...filtros,
+    page: movimentacaoPage,
+    limit: movimentacaoPageSize,
+  }), [filtros, movimentacaoPage, movimentacaoPageSize]);
 
-  const { data: movimentacoesData, isFetching: isFetchingMovimentacoes } = useGetListAllMovimentacoesEstoque(filtros, {
-    enabled: shouldFetchMovimentacoes,
+  const resumoMovimentacoesQuery = useMemo(() => ({
+    ...filtros,
+    page: 1,
+    limit: 1000,
+  }), [filtros]);
+
+  const shouldFetchMovimentacoesResumo = isTabResumo && !!filtros.tipoMovimentacao;
+
+  const { data: movimentacoesData, isFetching: isFetchingMovimentacoes } = useGetListAllMovimentacoesEstoque(movimentacoesQuery, {
+    enabled: isTabMovimentacao,
   });
 
-  const movimentacoes: IMovimentacaoRolo[] = (movimentacoesData || []).map((mov: any) => ({
+  const { data: resumoMovimentacoesData, isFetching: isFetchingResumoMovimentacoes } = useGetListAllMovimentacoesEstoque(resumoMovimentacoesQuery, {
+    enabled: shouldFetchMovimentacoesResumo,
+  });
+
+  const movimentacoes: IMovimentacaoRolo[] = (movimentacoesData?.data || []).map((mov: any) => ({
       id: mov.id,
       estoqueRoloId: mov.estoqueRoloId ?? "",
       tipoMovimentacao: mov.tipoMovimentacao,
@@ -136,31 +159,53 @@ export default function Estoque() {
       },
   }));
 
+  const movimentacoesResumo: IMovimentacaoRolo[] = (resumoMovimentacoesData?.data || []).map((mov: any) => ({
+      id: mov.id,
+      estoqueRoloId: mov.estoqueRoloId ?? "",
+      tipoMovimentacao: mov.tipoMovimentacao,
+      pesoMovimentado: parseNumber(mov.pesoMovimentado),
+      createdAt: mov.createdAt ?? new Date().toISOString(),
+      rolo: mov.rolo,
+      responsavel: {
+        id: mov.responsavel?.id ?? mov.reponsavel?.id ?? "",
+        nome: mov.responsavel?.nome ?? mov.reponsavel?.nome ?? "-",
+      },
+  }));
+
+  const movimentacoesPagination = {
+    total: movimentacoesData?.pagination?.total ?? 0,
+    pages: movimentacoesData?.pagination?.pages ?? 1,
+    page: movimentacaoPage,
+    limit: movimentacaoPageSize,
+  };
+
   const rolosResumoFiltrados = useMemo(() => {
     if (!filtros.tipoMovimentacao) {
       return rolosCompletos;
     }
 
     const roloIdsComMovimentacao = new Set(
-      movimentacoes
+      movimentacoesResumo
         .map((mov) => mov.estoqueRoloId || mov.rolo?.id)
         .filter((id): id is string => !!id)
     );
 
     return rolosCompletos.filter((rolo) => roloIdsComMovimentacao.has(rolo.id));
-  }, [filtros.tipoMovimentacao, movimentacoes, rolosCompletos]);
+  }, [filtros.tipoMovimentacao, movimentacoesResumo, rolosCompletos]);
 
-  const isLoading = isFetchingRolos || isFetchingRolosCompletos || isFetchingKPIs || isFetchingMovimentacoes;
+  const isLoading = isFetchingRolos || isFetchingRolosCompletos || isFetchingKPIs || isFetchingMovimentacoes || isFetchingResumoMovimentacoes;
 
   const handleFilterChange = useCallback((nextFilters: IFiltroEstoqueRolo) => {
     setFiltros(nextFilters);
     setPage(1);
-  }, [setPage]);
+    setMovimentacaoPage(1);
+  }, [setMovimentacaoPage, setPage]);
 
   const handleClearFilters = useCallback(() => {
     setFiltros({});
     setPage(1);
-  }, [setPage]);
+    setMovimentacaoPage(1);
+  }, [setMovimentacaoPage, setPage]);
 
   const { mutate: criar, isPending: isCreating } = useCriarEstoqueTecido();
   const { mutate: atualizar, isPending: isUpdating } = useAtualizarEstoqueTecido();
@@ -331,6 +376,11 @@ export default function Estoque() {
               tecidos={tecidos}
               cores={cores}
               isLoading={isLoading}
+              pagination={movimentacoesPagination}
+              currentPage={movimentacaoPage}
+              onPageChange={setMovimentacaoPage}
+              pageSize={movimentacaoPageSize}
+              onPageSizeChange={setMovimentacaoPageSize}
             />
           </div>
           <div className="block md:hidden">

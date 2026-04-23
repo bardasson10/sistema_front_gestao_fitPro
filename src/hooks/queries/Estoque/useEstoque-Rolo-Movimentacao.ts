@@ -16,7 +16,7 @@ export const useGetListAllMovimentacoesEstoque = (filtros?: IFiltroEstoqueRolo, 
                     params: filtros
                 }
             );
-            return data.data
+            return data
         },
         enabled: options?.enabled ?? true,
     });
