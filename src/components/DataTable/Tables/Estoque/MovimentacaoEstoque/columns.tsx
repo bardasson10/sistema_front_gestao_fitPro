@@ -23,9 +23,12 @@ export const getStockMovementColumns = (
             header: 'Usuário',
             cell: ({ row }) => {
                 const responsavel = row.original.responsavel;
+                const responsavelLabel = typeof responsavel === 'string'
+                    ? responsavel
+                    : responsavel?.nome;
 
                 return (
-                    <span className="text-sm">{responsavel?.nome || '-'}</span>
+                    <span className="text-sm">{responsavelLabel || '-'}</span>
                 );
             },
         },

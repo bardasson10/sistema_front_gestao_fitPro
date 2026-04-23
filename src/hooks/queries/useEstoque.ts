@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { apiClient } from '@/services/api/api-client';
 import { toast } from 'sonner';
 import { EstoqueTecido, MovimentacaoEstoque, PaginatedResponse } from '@/types/production';
@@ -65,7 +65,7 @@ interface CriarEstoqueLotePayload {
 // ============ ESTOQUE ROLOS ============
 
 export const useEstoqueTecidos = (filtros?: { tecidoId?: string; situacao?: string; limit?: number }) => {
-    return useQuery({
+    return useSuspenseQuery({
         queryKey: ['estoque-rolos', filtros],
         queryFn: async () => {
             const params = new URLSearchParams();

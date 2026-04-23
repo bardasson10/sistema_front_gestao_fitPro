@@ -7,8 +7,7 @@ import { parseNumber } from "@/utils/Formatter/parse-number-format";
 import { RoloTecidoFormValues } from "@/schemas/rolo-tecido-schema";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, Plus, Trash2 } from "lucide-react";
-import { useGetListAllFornecedores } from "@/hooks/queries/Fornecedores/useFornecedores";
-import { useTecidos } from "@/hooks/queries/useMateriais";
+import { useFornecedores, useTecidos } from "@/hooks/queries/useMateriais";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
@@ -26,7 +25,7 @@ interface StockFabricFormProps {
 export function StockFabricForm({ cores, isEditing = false }: StockFabricFormProps) {
   const { control, setValue } = useFormContext<RoloTecidoFormValues>();
   const { user } = useAuth();
-  const isAdmin = user.perfil === "ADM";
+  const isAdmin = user?.perfil === "ADM";
   const { fields, append, remove } = useFieldArray({
     control,
     name: "rolos",
@@ -34,17 +33,23 @@ export function StockFabricForm({ cores, isEditing = false }: StockFabricFormPro
 
   const [selectedFornecedor, setSelectedFornecedor] = React.useState<string | null>(null);
 
-  const { data: fornecedores } = useGetListAllFornecedores();
-  const { data: tecidosResponse, isFetching: isFetchingTecidos } = useTecidos(
-    selectedFornecedor
-      ? {
-        fornecedorId: selectedFornecedor,
-        page: 1,
-        limit: 1000,
-      }
-      : undefined,
-    { enabled: !!selectedFornecedor && !isEditing }
+  const { data: fornecedores } = useFornecedores();
+
+  const tecidosFilters = React.useMemo(
+    () =>
+      selectedFornecedor
+        ? {
+            fornecedorId: selectedFornecedor,
+            page: 1,
+            limit: 1000,
+          }
+        : undefined,
+    [selectedFornecedor]
   );
+
+  const { data: tecidosResponse, isFetching: isFetchingTecidos } = useTecidos(tecidosFilters, {
+    enabled: !!selectedFornecedor && !isEditing,
+  });
 
   React.useEffect(() => {
     if (!isEditing) {

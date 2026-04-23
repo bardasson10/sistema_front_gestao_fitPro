@@ -70,7 +70,7 @@ const initialValues: RoloTecidoFormValues = {
 
 export default function Estoque() {
   const { user } = useAuth();
-  const isAdmin = user.perfil === "ADM";
+  const isAdmin = user?.perfil === "ADM";
   
   const [activeTab, setActiveTab] = useState("rolos-individuais");
   const [filtros, setFiltros] = useState<IFiltroEstoqueRolo>({});
@@ -117,8 +117,10 @@ export default function Estoque() {
 
   const { data: kpisEstoqueData, isFetching: isFetchingKPIs } = useGetKPIsEstoqueRolo(filtros);
 
+  const shouldFetchMovimentacoes = isTabMovimentacao || (isTabResumo && !!filtros.tipoMovimentacao);
+
   const { data: movimentacoesData, isFetching: isFetchingMovimentacoes } = useGetListAllMovimentacoesEstoque(filtros, {
-    enabled: isTabMovimentacao,
+    enabled: shouldFetchMovimentacoes,
   });
 
   const movimentacoes: IMovimentacaoRolo[] = (movimentacoesData || []).map((mov: any) => ({
@@ -129,10 +131,24 @@ export default function Estoque() {
       createdAt: mov.createdAt ?? new Date().toISOString(),
       rolo: mov.rolo, 
       responsavel: {
-        id: mov.responsavel?.id ?? "",
-        nome: mov.responsavel?.nome ?? "-",
+        id: mov.responsavel?.id ?? mov.reponsavel?.id ?? "",
+        nome: mov.responsavel?.nome ?? mov.reponsavel?.nome ?? "-",
       },
   }));
+
+  const rolosResumoFiltrados = useMemo(() => {
+    if (!filtros.tipoMovimentacao) {
+      return rolosCompletos;
+    }
+
+    const roloIdsComMovimentacao = new Set(
+      movimentacoes
+        .map((mov) => mov.estoqueRoloId || mov.rolo?.id)
+        .filter((id): id is string => !!id)
+    );
+
+    return rolosCompletos.filter((rolo) => roloIdsComMovimentacao.has(rolo.id));
+  }, [filtros.tipoMovimentacao, movimentacoes, rolosCompletos]);
 
   const isLoading = isFetchingRolos || isFetchingRolosCompletos || isFetchingKPIs || isFetchingMovimentacoes;
 
@@ -297,13 +313,13 @@ export default function Estoque() {
           <div className="hidden md:block">
             <ResumeStockTable
               isLoading={isLoading}
-              rolos={rolosCompletos}
+              rolos={rolosResumoFiltrados}
               cores={cores}
               tecidos={tecidos}
             />
           </div>
           <div className="block md:hidden">
-            <MobileViewStockResume isLoading={isLoading} rolos={rolosCompletos} tecidos={tecidos} cores={cores} />
+            <MobileViewStockResume isLoading={isLoading} rolos={rolosResumoFiltrados} tecidos={tecidos} cores={cores} />
           </div>
         </TabsContent>
 

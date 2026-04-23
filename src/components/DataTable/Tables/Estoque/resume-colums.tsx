@@ -14,38 +14,45 @@ export const getGroupedStockColumns = (
   cores: { id: string; nome: string; codigoHex: string }[]
 ): StockResume[] => {
   const safeRolos = Array.isArray(rolos) ? rolos : [];
-  const rolosAgrupados = safeRolos.reduce((acc, rolo) => {
+  const tecidosMap = new Map(tecidos.map((tecido) => [tecido.id, tecido]));
+
+  const grouped = safeRolos.reduce((acc, rolo) => {
     if (rolo.situacao !== 'disponivel') return acc;
 
-    if (!acc[rolo.tecidoId]) {
-      acc[rolo.tecidoId] = { rolos: 0, pesoKg: 0 };
+    const tecidoId = rolo.tecidoId || rolo.tecido?.id;
+    if (!tecidoId) return acc;
+
+    const tecidoFallback = tecidosMap.get(tecidoId);
+    const tecidoRolo = rolo.tecido;
+    const corId = tecidoRolo?.corId || tecidoFallback?.corId || '';
+    const corInfo = cores.find((cor) => cor.id === corId);
+    const valorPorKg = Number(tecidoRolo?.valorPorKg ?? tecidoFallback?.valorPorKg ?? 0);
+
+    if (!acc[tecidoId]) {
+      acc[tecidoId] = {
+        id: tecidoId,
+        codigoReferencia: tecidoRolo?.codigoReferencia || tecidoFallback?.codigoReferencia || '-',
+        cor: corInfo?.codigoHex || '',
+        nomeCor: corInfo?.nome || '',
+        rolos: 0,
+        pesoKg: 0,
+        valorTotal: 0,
+      };
     }
 
-    acc[rolo.tecidoId].rolos += 1;
     const pesoAtualKg = typeof rolo.pesoAtualKg === 'number'
       ? rolo.pesoAtualKg
       : Number(rolo.pesoAtualKg || 0);
-    acc[rolo.tecidoId].pesoKg += Number.isFinite(pesoAtualKg) ? pesoAtualKg : 0;
+    const pesoSeguro = Number.isFinite(pesoAtualKg) ? pesoAtualKg : 0;
+
+    acc[tecidoId].rolos += 1;
+    acc[tecidoId].pesoKg += pesoSeguro;
+    acc[tecidoId].valorTotal = acc[tecidoId].pesoKg * (Number.isFinite(valorPorKg) ? valorPorKg : 0);
 
     return acc;
-  }, {} as Record<string, { rolos: number; pesoKg: number }>);
+  }, {} as Record<string, StockResume>);
 
-
-  return tecidos
-    .map(tecido => {
-      const infoAgrupada = rolosAgrupados[tecido.id];
-
-      return {
-        id: tecido.id,
-        codigoReferencia: tecido.codigoReferencia,
-        cor: cores.find(c => c.id === tecido.corId)?.codigoHex || '',
-        nomeCor: cores.find(c => c.id === tecido.corId)?.nome || '',
-        rolos: infoAgrupada?.rolos || 0,
-        pesoKg: infoAgrupada?.pesoKg || 0,
-        valorTotal: (infoAgrupada?.pesoKg || 0) * tecido.valorPorKg,
-      };
-    })
-    .filter(e => e.rolos > 0);
+  return Object.values(grouped).filter((item) => item.rolos > 0);
 };
 
 export const getStockColumnsResume = (): ColumnDef<StockResume>[] => [

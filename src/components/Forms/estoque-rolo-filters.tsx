@@ -27,8 +27,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { X } from 'lucide-react';
 import { IFiltroEstoqueRolo } from '@/types/EstoqueRolo';
-import { useGetListAllFornecedores } from '@/hooks/queries/Fornecedores/useFornecedores';
-import { useCores } from '@/hooks/queries/useMateriais';
+import { useCores, useFornecedores, useTecidos } from '@/hooks/queries/useMateriais';
 
 const estoqueRoloFiltersSchema = z.object({
   estoqueRoloId: z.string().optional(),
@@ -64,8 +63,9 @@ export function EstoqueRoloFilters({ onFilter, onClear }: EstoqueRoloFiltersProp
     },
   });
 
-  const { data: fornecedoresData } = useGetListAllFornecedores();
+  const { data: fornecedoresData } = useFornecedores();
   const { data: coresData } = useCores();
+  const { data: tecidosResponse } = useTecidos();
 
   const coresMap = useMemo(
     () => new Map((coresData || []).map((cor) => [cor.id, cor])),
@@ -74,15 +74,13 @@ export function EstoqueRoloFilters({ onFilter, onClear }: EstoqueRoloFiltersProp
 
   const tecidos = useMemo(
     () =>
-      (fornecedoresData || []).flatMap((fornecedor) =>
-        fornecedor.tecidos.map((tecido) => ({
-          ...tecido,
-          fornecedorId: tecido.fornecedorId ?? fornecedor.id ?? '',
-          corNome: coresMap.get(tecido.corId)?.nome ?? 'Sem cor',
-          corHex: coresMap.get(tecido.corId)?.codigoHex ?? '#D4D4D8',
-        }))
-      ),
-    [fornecedoresData, coresMap]
+      (tecidosResponse?.data || []).map((tecido) => ({
+        ...tecido,
+        fornecedorId: tecido.fornecedorId ?? '',
+        corNome: coresMap.get(tecido.corId)?.nome ?? 'Sem cor',
+        corHex: coresMap.get(tecido.corId)?.codigoHex ?? '#D4D4D8',
+      })),
+    [tecidosResponse?.data, coresMap]
   );
 
   const fornecedorSelecionado = form.watch('fornecedorId');
