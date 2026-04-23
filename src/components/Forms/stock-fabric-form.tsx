@@ -117,20 +117,6 @@ export function StockFabricForm({ cores, isEditing = false }: StockFabricFormPro
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <FormField
               control={control}
-              name="prefixo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Prefixo do Lote</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="EX: SPP" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={control}
               name="dataLote"
               render={({ field }) => (
                 <FormItem>

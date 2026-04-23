@@ -8,7 +8,7 @@ const roloLoteSchema = z.object({
 
 export const roloTecidoSchema = z.object({
   tecidoId: z.uuid("ID de tecido inválido"),
-  prefixo: z.string().min(1, "Prefixo é obrigatório"),
+  prefixo: z.string().optional(),
   dataLote: z
     .string()
     .min(1, "Data do lote é obrigatória")

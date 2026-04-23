@@ -139,21 +139,27 @@ export default function Lotes() {
         dataFim: filtrosAplicados.dataFim.length ? filtrosAplicados.dataFim : undefined,
     }), [filtrosAplicados]);
 
-    const { data: lotesBaseData } = useGetListAllLotes({
+    const lotesBaseQuery = useMemo(() => ({
         page: 1,
         limit: 300,
-    });
+    }), []);
 
-    const { data: lotesData, isPending: isLoadingLotes } = useGetListAllLotes({
+    const lotesListQuery = useMemo(() => ({
         ...filtrosParaQuery,
         page: 1,
         limit: 300,
-    });
-    const { data: resumoPorCorData, isPending: isLoadingResumo } = useGetResumoPorCor({
+    }), [filtrosParaQuery]);
+
+    const resumoQuery = useMemo(() => ({
         ...filtrosParaQuery,
         page: resumoPage,
         limit: resumoLimit,
-    });
+    }), [filtrosParaQuery, resumoPage, resumoLimit]);
+
+    const { data: lotesBaseData } = useGetListAllLotes(lotesBaseQuery);
+
+    const { data: lotesData, isPending: isLoadingLotes } = useGetListAllLotes(lotesListQuery);
+    const { data: resumoPorCorData, isPending: isLoadingResumo } = useGetResumoPorCor(resumoQuery);
     const dataLote = lotesData || [];
     const sourceOptionsLote = lotesBaseData || dataLote;
 

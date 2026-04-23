@@ -130,7 +130,7 @@ export const useGetListByIdEstoqueRolo = (id: string) => {
 
 interface ICriarEstoqueLotePayload {
     tecidoId: string;
-    prefixo: string;
+    prefixo?: string;
     situacao: Exclude<SituacaoRolo, 'esgotado'>;
     dataLote: string;
     rolos: Array<{

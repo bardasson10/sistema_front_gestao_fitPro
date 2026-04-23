@@ -54,7 +54,7 @@ interface Movimentacao {
 
 interface CriarEstoqueLotePayload {
     tecidoId: string;
-    prefixo: string;
+    prefixo?: string;
     situacao: Exclude<SituacaoRolo, 'esgotado'>;
     dataLote: string;
     rolos: Array<{

@@ -61,7 +61,6 @@ const normalizeSituacaoForForm = (situacao: string): RoloTecidoFormValues["situa
 
 const initialValues: RoloTecidoFormValues = {
   tecidoId: "",
-  prefixo: "",
   dataLote: getTodayDate(),
   rolos: [{ pesoInicialKg: 0 }],
   codigoBarraRolo: "",
@@ -137,14 +136,12 @@ export default function Estoque() {
 
   const isLoading = isFetchingRolos || isFetchingRolosCompletos || isFetchingKPIs || isFetchingMovimentacoes;
 
-  const handleFilterChange = useMemo(() => {
-    return (nextFilters: IFiltroEstoqueRolo) => {
-      setFiltros(nextFilters);
-      setPage(1);
-    };
+  const handleFilterChange = useCallback((nextFilters: IFiltroEstoqueRolo) => {
+    setFiltros(nextFilters);
+    setPage(1);
   }, [setPage]);
 
-  const handleClearFilters = useMemo(() => {
+  const handleClearFilters = useCallback(() => {
     setFiltros({});
     setPage(1);
   }, [setPage]);
@@ -174,7 +171,6 @@ export default function Estoque() {
       form,
       transformItemToForm: (item) => ({
         tecidoId: item.tecidoId,
-        prefixo: item.codigoBarraRolo?.split("-")[0] || "ROL",
         dataLote: item.createdAt?.split("T")[0] || getTodayDate(),
         rolos: [{ pesoInicialKg: parseNumber(item.pesoInicialKg) }],
         codigoBarraRolo: item.codigoBarraRolo,
@@ -192,7 +188,6 @@ export default function Estoque() {
         } else {
           criar({
             tecidoId: values.tecidoId,
-            prefixo: values.prefixo.trim().toUpperCase(),
             situacao: normalizeSituacaoForApi(values.situacao),
             dataLote: values.dataLote,
             rolos: values.rolos.map((rolo) => ({
