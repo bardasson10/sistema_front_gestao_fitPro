@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CriarRemessaComponent } from '@/components/PageComponent/DirecionamentoProducao/criar-remessa-component';
 import { EstoqueCorte } from '@/types/EstoqueCorte';
 import { useGetFaccoes } from '@/hooks/queries/Faccao/useFaccao';
-import { usePostCriarDirecionamentoRemessa } from '@/hooks/queries/Direcionamento/useDirecionamento';
+import { usePostCriarDirecionamentoProducaoInterna, usePostCriarDirecionamentoRemessa } from '@/hooks/queries/Direcionamento/useDirecionamento';
 
 const InventoryDashboardContent = () => {
 
@@ -72,6 +72,7 @@ const InventoryDashboardContent = () => {
 
     //Remessa
     const criarDirecionamentoRemessaMutation = usePostCriarDirecionamentoRemessa();
+    const criarDirecionamentoProducaoInternaMutation = usePostCriarDirecionamentoProducaoInterna();
 
     const handleRemessaCriada = async () => {
         await refetchEstoqueCorte();
@@ -113,6 +114,7 @@ const InventoryDashboardContent = () => {
                         dataFaccoes={dataFaccoes ?? []} 
                         dataEstoqueCorte={dataEstoqueCorte} 
                         usePostCriarDirecionamentoRemessa={() => criarDirecionamentoRemessaMutation}
+                        usePostCriarDirecionamentoProducaoInterna={() => criarDirecionamentoProducaoInternaMutation}
                         onRemessaCriada={handleRemessaCriada}
                         />
                     </TabsContent>

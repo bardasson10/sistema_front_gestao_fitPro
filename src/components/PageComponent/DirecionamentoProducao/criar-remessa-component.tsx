@@ -35,7 +35,12 @@ import {
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 
-import type { ItemDirecionamento, DirecionamentoRequestBodyPayload, DirecionamentoRemessa } from "@/types/Direcionamento"
+import type {
+    ItemDirecionamento,
+    DirecionamentoRequestBodyPayload,
+    DirecionamentoRemessa,
+    DirecionamentoProducaoInternaRequestBodyPayload,
+} from "@/types/Direcionamento"
 import type { EstoqueCorte } from "@/types/EstoqueCorte"
 import { Faccao, ServicesValues } from "@/types/Faccao"
 import { UseMutationResult } from "@tanstack/react-query"
@@ -54,6 +59,10 @@ interface CriarRemessaComponentProps {
         data: DirecionamentoRemessa[];
         pagination: PaginatedResponse;
     }, any, DirecionamentoRequestBodyPayload, unknown>;
+    usePostCriarDirecionamentoProducaoInterna?: () => UseMutationResult<{
+        data: DirecionamentoRemessa[];
+        pagination: PaginatedResponse;
+    }, any, DirecionamentoProducaoInternaRequestBodyPayload, unknown>;
     onRemessaCriada?: () => void | Promise<void>;
 }
 
@@ -61,9 +70,15 @@ export function CriarRemessaComponent({
     dataFaccoes,
     dataEstoqueCorte,
     usePostCriarDirecionamentoRemessa,
+    usePostCriarDirecionamentoProducaoInterna,
     onRemessaCriada,
 }: CriarRemessaComponentProps) {
     const { mutate: criarRemessa, isPending: isCreating } = usePostCriarDirecionamentoRemessa();
+    const { mutate: criarProducaoInterna, isPending: isCreatingInterna } =
+        usePostCriarDirecionamentoProducaoInterna?.() ?? {
+            mutate: undefined,
+            isPending: false,
+        };
     const [faccaoId, setFaccaoId] = useState<string>("")
     const [tipoServico, setTipoServico] = useState<string>("")
     const [dataSaida, setDataSaida] = useState<Date | undefined>(new Date())
@@ -72,6 +87,8 @@ export function CriarRemessaComponent({
     const [quantidadeInputs, setQuantidadeInputs] = useState<Record<string, string>>({})
     const [busca, setBusca] = useState("")
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+    const [isProducaoInterna, setIsProducaoInterna] = useState<boolean>(false);
+    const [observacao, setObservacao] = useState<string>("");
 
 
 
@@ -185,13 +202,46 @@ export function CriarRemessaComponent({
         return itensSelecionados.find((item) => item.estoqueCorteId === estoqueCorteId)?.quantidade || 0
     }
 
-    const canSubmit =
-        faccaoId && tipoServico && dataSaida && dataPrevisaoRetorno && itensSelecionados.length > 0
+    const canSubmit = isProducaoInterna
+        ? itensSelecionados.length > 0
+        : !!(faccaoId && tipoServico && dataSaida && dataPrevisaoRetorno && itensSelecionados.length > 0)
 
     const handleSubmit = async () => {
         if (!canSubmit) return
 
         setIsSubmitting(true)
+
+        if (isProducaoInterna) {
+            if (!criarProducaoInterna) {
+                setIsSubmitting(false)
+                return
+            }
+
+            const payloadInterna: DirecionamentoProducaoInternaRequestBodyPayload = {
+                tipoServico: tipoServico.toLocaleLowerCase(),
+                observacao,
+                items: itensSelecionados.map((item) => ({
+                    estoqueCorteId: item.estoqueCorteId,
+                    quantidade: item.quantidade,
+                })),
+            }
+
+            criarProducaoInterna(payloadInterna, {
+                onSuccess: () => {
+                    onRemessaCriada?.()
+                    setTipoServico("")
+                    setItensSelecionados([])
+                    setQuantidadeInputs({})
+                    setObservacao("")
+                    setIsSubmitting(false)
+                },
+                onError: () => {
+                    setIsSubmitting(false)
+                }
+            })
+
+            return
+        }
 
         const payload: DirecionamentoRequestBodyPayload = {
             direcionamentos: [
@@ -218,6 +268,7 @@ export function CriarRemessaComponent({
                 setDataPrevisaoRetorno(undefined)
                 setItensSelecionados([])
                 setQuantidadeInputs({})
+                setObservacao("")
                 setIsSubmitting(false)
             },
             onError: () => {
@@ -260,10 +311,33 @@ export function CriarRemessaComponent({
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col gap-4">
+                        <div className="flex items-start gap-3 rounded-md border p-3">
+                            <Checkbox
+                                id="producao-interna"
+                                checked={isProducaoInterna}
+                                onCheckedChange={(checked) => {
+                                    const value = checked === true
+                                    setIsProducaoInterna(value)
+                                    if (value) {
+                                        setFaccaoId("")
+                                        setDataPrevisaoRetorno(undefined)
+                                        setTipoServico("costura")
+                                    } else {
+                                        setTipoServico("")
+                                    }
+                                }}
+                            />
+                            <div className="space-y-1">
+                                <Label htmlFor="producao-interna" className="cursor-pointer">
+                                    Criar como produção interna
+                                </Label>
+                            </div>
+                        </div>
+
                         {/* Facção */}
                         <div className="flex flex-col gap-2">
                             <Label htmlFor="faccao">Facção</Label>
-                            <Select value={faccaoId} onValueChange={(value) => {
+                            <Select disabled={isProducaoInterna} value={faccaoId} onValueChange={(value) => {
                                 setFaccaoId(value);
                                 setTipoServico("");
                             }}>
@@ -286,20 +360,40 @@ export function CriarRemessaComponent({
                             <Select
                                 value={tipoServico}
                                 onValueChange={setTipoServico}
-                                disabled={!faccaoId}
+                                disabled={isProducaoInterna || !faccaoId}
                             >
                                 <SelectTrigger id="tipoServico">
-                                    <SelectValue placeholder={faccaoId ? "Selecione o serviço" : "Selecione uma facção primeiro"} />
+                                    <SelectValue
+                                        placeholder={
+                                            isProducaoInterna
+                                                ? "Costura (fixo para produção interna)"
+                                                : faccaoId
+                                                    ? "Selecione o serviço"
+                                                    : "Selecione uma facção primeiro"
+                                        }
+                                    />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {ServicesValues.map((tipo) => (
-                                        <SelectItem key={tipo} value={tipo} className="capitalize">
+                                        <SelectItem key={tipo} value={tipo.toLowerCase()} className="capitalize">
                                             {tipo}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
+
+                        {isProducaoInterna && (
+                            <div className="flex flex-col gap-2">
+                                <Label htmlFor="observacao">Observação</Label>
+                                <Input
+                                    id="observacao"
+                                    value={observacao}
+                                    onChange={(event) => setObservacao(event.target.value)}
+                                    placeholder="Opcional"
+                                />
+                            </div>
+                        )}
 {/* 
                         Data de Saída
                         <div className="flex flex-col gap-2">
@@ -350,7 +444,7 @@ export function CriarRemessaComponent({
                         <div className="flex flex-col gap-2 sm:flex-row sm:justify-center sm:gap-3">
                             <Button
                                 onClick={handleSubmit}
-                                disabled={isCreating || isSubmitting}
+                                disabled={isCreating || isCreatingInterna || isSubmitting}
                                 className="w-full sm:min-w-32 sm:w-auto"
                             >
                                 {isSubmitting ? (

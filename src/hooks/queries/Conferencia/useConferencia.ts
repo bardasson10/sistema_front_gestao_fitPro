@@ -4,25 +4,34 @@ import { toast } from 'sonner';
 import { PaginatedResponse } from '@/types/production';
 import { Conferencia, ConferenciaRequestBodyPayload, ConferenciaStatusQualidade, ConferenciaUpdateRequestBodyPayload } from '@/types/Conferencia';
 
-
-export const useGetListAllConferencias = (filtros?: {
+export interface IFiltrosConferencia {
     statusQualidade?: ConferenciaStatusQualidade;
     liberadoPagamento?: boolean;
-}) => {
+    isProducaoInterna?: boolean;
+    direcionamentoId?: string;
+    faccaoId?: string;
+    responsavelId?: string;
+    dataInicio?: string;
+    dataFim?: string;
+    page?: number;
+    limit?: number;
+}
+
+export const useGetListAllConferencias = (filtros?: IFiltrosConferencia) => {
     return useSuspenseQuery({
         queryKey: ['conferencias', filtros],
         queryFn: async () => {
-            const params = new URLSearchParams();
-            if (filtros?.statusQualidade) params.append('statusQualidade', filtros.statusQualidade);
-            if (filtros?.liberadoPagamento !== undefined)
-                params.append('liberadoPagamento', String(filtros.liberadoPagamento));
-
-            const queryString = params.toString();
             const { data } = await apiClient.get<{data:Conferencia[], pagination: PaginatedResponse }>(
-                `/conferencias${queryString ? `?${queryString}` : ''}`
+                '/conferencias',
+                {
+                    params: filtros,
+                }
             );
 
-            return data.data;
+            return {
+                data: data.data,
+                pagination: data.pagination,
+            };
         },
     });
 };

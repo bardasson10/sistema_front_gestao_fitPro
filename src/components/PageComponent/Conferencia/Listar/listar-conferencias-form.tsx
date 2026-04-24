@@ -35,19 +35,36 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import type { Conferencia } from "@/types/Conferencia"
+import type { Conferencia, ConferenciaStatusQualidade } from "@/types/Conferencia"
 import { ConferenciaRow } from "./components/row-conferencia"
 
+export interface IFiltrosConferencia {
+    statusQualidade?: ConferenciaStatusQualidade;
+    liberadoPagamento?: boolean;
+    isProducaoInterna?: boolean;
+    direcionamentoId?: string;
+    faccaoId?: string;
+    responsavelId?: string;
+    dataInicio?: string;
+    dataFim?: string;
+    page?: number;
+    limit?: number;
+}
 
 interface ListarConferenciasProps {
   dataConferencias: Conferencia[]
 }
 
-
-  export function ListarConferencias({ dataConferencias }: ListarConferenciasProps) {
+export function ListarConferencias({ dataConferencias }: ListarConferenciasProps) {
   const [busca, setBusca] = useState("")
   const [statusFiltro, setStatusFiltro] = useState<string>("todos")
   const [pagamentoFiltro, setPagamentoFiltro] = useState<string>("todos")
+  const [isProducaoInternaFiltro, setIsProducaoInternaFiltro] = useState<string>("todos")
+  const [dataInicio, setDataInicio] = useState<string>("")
+  const [dataFim, setDataFim] = useState<string>("")
+  const [faccaoId, setFaccaoId] = useState<string>("")
+  const [responsavelId, setResponsavelId] = useState<string>("")
+  const [direcionamentoId, setDirecionamentoId] = useState<string>("")
 
   const conferenciasFiltradas = useMemo(() => {
     return dataConferencias.filter((conferencia) => {
@@ -69,9 +86,42 @@ interface ListarConferenciasProps {
         (pagamentoFiltro === "liberado" && conferencia.liberadoPagamento) ||
         (pagamentoFiltro === "pendente" && !conferencia.liberadoPagamento)
 
-      return matchBusca && matchStatus && matchPagamento
+      const matchProducaoInterna = 
+        isProducaoInternaFiltro === "todos" ||
+        (isProducaoInternaFiltro === "interna" && conferencia.isProducaoInterna) ||
+        (isProducaoInternaFiltro === "externa" && !conferencia.isProducaoInterna)
+
+      const matchDataInicio = !dataInicio || new Date(conferencia.dataConferencia) >= new Date(dataInicio)
+      const matchDataFim = !dataFim || new Date(conferencia.dataConferencia) <= new Date(`${dataFim}T23:59:59`)
+
+      const matchFaccaoId = !faccaoId || conferencia.direcionamento.faccao.id === faccaoId
+      const matchResponsavelId = !responsavelId || conferencia.responsavel.id === responsavelId
+      const matchDirecionamentoId = !direcionamentoId || conferencia.direcionamento.id === direcionamentoId
+
+      return (
+        matchBusca &&
+        matchStatus &&
+        matchPagamento &&
+        matchProducaoInterna &&
+        matchDataInicio &&
+        matchDataFim &&
+        matchFaccaoId &&
+        matchResponsavelId &&
+        matchDirecionamentoId
+      )
     })
-  }, [busca, statusFiltro, pagamentoFiltro])
+  }, [
+    busca, 
+    statusFiltro, 
+    pagamentoFiltro, 
+    isProducaoInternaFiltro, 
+    dataInicio, 
+    dataFim, 
+    faccaoId, 
+    responsavelId, 
+    direcionamentoId, 
+    dataConferencias
+  ])
 
   const estatisticas = useMemo(() => {
     const total = dataConferencias.length
@@ -88,7 +138,6 @@ interface ListarConferenciasProps {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight text-balance">
@@ -114,7 +163,6 @@ interface ListarConferenciasProps {
         </div>
       </div>
 
-      {/* Cards de Estatísticas */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -194,7 +242,6 @@ interface ListarConferenciasProps {
         </Card>
       </div>
 
-      {/* Filtros */}
       <Card>
         <CardHeader className="pb-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -204,50 +251,94 @@ interface ListarConferenciasProps {
                 Filtros
               </CardTitle>
               <CardDescription>
-                Encontre conferências por facção, responsável ou status
+                Encontre conferências por facção, responsável, datas ou status
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por facção, responsável ou produto..."
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Select value={statusFiltro} onValueChange={setStatusFiltro}>
+                <SelectTrigger className="w-full sm:w-[160px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos Status</SelectItem>
+                  <SelectItem value="recebido">Recebido</SelectItem>
+                  <SelectItem value="em_conferencia">Em Conferência</SelectItem>
+                  <SelectItem value="aprovado">Aprovado</SelectItem>
+                  <SelectItem value="aprovado_parcial">Aprovado Parcial</SelectItem>
+                  <SelectItem value="aprovado_defeito">Aprovado Defeito</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={pagamentoFiltro} onValueChange={setPagamentoFiltro}>
+                <SelectTrigger className="w-full sm:w-[160px]">
+                  <SelectValue placeholder="Pagamento" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos Pagamentos</SelectItem>
+                  <SelectItem value="liberado">Liberado</SelectItem>
+                  <SelectItem value="pendente">Pendente</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={isProducaoInternaFiltro} onValueChange={setIsProducaoInternaFiltro}>
+                <SelectTrigger className="w-full sm:w-[160px]">
+                  <SelectValue placeholder="Produção" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Toda Produção</SelectItem>
+                  <SelectItem value="interna">Interna</SelectItem>
+                  <SelectItem value="externa">Externa</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex flex-col gap-4 sm:flex-row">
               <Input
-                placeholder="Buscar por facção, responsável ou produto..."
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                className="pl-9"
+                type="date"
+                value={dataInicio}
+                onChange={(e) => setDataInicio(e.target.value)}
+                className="w-full sm:w-[160px]"
+              />
+              <Input
+                type="date"
+                value={dataFim}
+                onChange={(e) => setDataFim(e.target.value)}
+                className="w-full sm:w-[160px]"
+              />
+              <Input
+                placeholder="ID Facção"
+                value={faccaoId}
+                onChange={(e) => setFaccaoId(e.target.value)}
+                className="flex-1"
+              />
+              <Input
+                placeholder="ID Responsável"
+                value={responsavelId}
+                onChange={(e) => setResponsavelId(e.target.value)}
+                className="flex-1"
+              />
+              <Input
+                placeholder="ID Direcionamento"
+                value={direcionamentoId}
+                onChange={(e) => setDirecionamentoId(e.target.value)}
+                className="flex-1"
               />
             </div>
-            <Select value={statusFiltro} onValueChange={setStatusFiltro}>
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos Status</SelectItem>
-                <SelectItem value="recebido">Recebido</SelectItem>
-                <SelectItem value="em_conferencia">Em Conferência</SelectItem>
-                <SelectItem value="aprovado">Aprovado</SelectItem>
-                <SelectItem value="aprovado_parcial">Aprovado Parcial</SelectItem>
-                <SelectItem value="aprovado_defeito">Aprovado Defeito</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={pagamentoFiltro} onValueChange={setPagamentoFiltro}>
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue placeholder="Pagamento" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="liberado">Liberado</SelectItem>
-                <SelectItem value="pendente">Pendente</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Tabela de Conferencias */}
       <Card>
         <CardHeader className="pb-4">
           <CardTitle className="text-base">

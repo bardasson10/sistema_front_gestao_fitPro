@@ -9,6 +9,7 @@ import {
     DirecionamentoPutSkuPriceRequestBodyPayload,
     DirecionamentoPutStatusRequestBodyPayload,
     DirecionamentoRemessa,
+    DirecionamentoProducaoInternaRequestBodyPayload,
     DirecionamentoRequestBodyPayload,
 } from '@/types/Direcionamento';
 
@@ -71,7 +72,10 @@ export const useGetRemessasProntas = (filtros?: IFiltrosDirecionamentoPronto) =>
                     params:  filtros ,
                 }
             );
-            return data.data;
+            return {
+                data: data.data,
+                pagination: data.pagination,
+            };
         },
     });
 };
@@ -152,6 +156,30 @@ export const usePostCriarDirecionamentoRemessa = () => {
         onError: (error: any) => {
             const mensagem = error.response?.data?.details?.[0]?.mensage ||
                 error.response?.data?.error
+            toast.error(mensagem);
+        },
+    });
+};
+
+export const usePostCriarDirecionamentoProducaoInterna = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (dados: DirecionamentoProducaoInternaRequestBodyPayload) => {
+            const { data } = await apiClient.post<{ data: DirecionamentoRemessa[], pagination: PaginatedResponse }>(
+                '/direcionamentos/producao-interna',
+                dados,
+            );
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['direcionamentos'] });
+            queryClient.invalidateQueries({ queryKey: ['conferencias'] });
+            toast.success('Produção interna criada e conferência aprovada automaticamente!');
+        },
+        onError: (error: any) => {
+            const mensagem = error.response?.data?.details?.[0]?.mensage ||
+                error.response?.data?.error;
             toast.error(mensagem);
         },
     });

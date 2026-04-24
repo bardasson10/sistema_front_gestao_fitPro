@@ -65,6 +65,7 @@ export interface Conferencia {
     statusQualidade: ConferenciaStatusQualidade
     observacao: string | null
     liberadoPagamento: boolean
+    isProducaoInterna?: boolean
     pagamento?: ConferenciaPagamentoResumo
     responsavel: ConferenciaResponsavel
     direcionamento: ConferenciaDirecionamento

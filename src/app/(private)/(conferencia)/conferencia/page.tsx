@@ -2,6 +2,7 @@
 
 import { ListarConferencias } from "@/components/PageComponent/Conferencia/Listar/listar-conferencias-form";
 import { RemessasProntasCard } from "@/components/PageComponent/Conferencia/Listar/components/remessas-prontas-card";
+import { ConferenciasInternasCard } from "@/components/PageComponent/Conferencia/Listar/components/conferencias-internas-card";
 import { useGetListAllConferencias } from "@/hooks/queries/Conferencia/useConferencia";
 import { useGetRemessasProntas } from "@/hooks/queries/Direcionamento/useDirecionamento";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,11 +13,15 @@ const CheckUpContent = () => {
   const { data: dataConferencias } = useGetListAllConferencias();
   const { data: dataRemessasProntas } = useGetRemessasProntas();
 
+  const responseConferencias = dataConferencias?.data || [];
+  const responseRemessasProntas = dataRemessasProntas?.data || [];
+
   return (
     <main>
       <div className="flex flex-col gap-6">
-        <RemessasProntasCard remessas={dataRemessasProntas || []} />
-        <ListarConferencias dataConferencias={dataConferencias || []} />
+        <RemessasProntasCard remessas={responseRemessasProntas} />
+        <ListarConferencias dataConferencias={responseConferencias} />
+        <ConferenciasInternasCard conferencias={responseConferencias} />
       </div>
     </main>
   );

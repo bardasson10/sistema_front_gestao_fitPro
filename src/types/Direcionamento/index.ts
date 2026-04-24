@@ -68,6 +68,17 @@ export interface DirecionamentoPutItensRequestBodyPayload {
     itensRemover?: DirecionamentoPutItensPayloadItem[]
 }
 
+export interface DirecionamentoProducaoInternaItemPayload {
+    estoqueCorteId: string
+    quantidade: number
+}
+
+export interface DirecionamentoProducaoInternaRequestBodyPayload {
+    tipoServico: string
+    observacao?: string
+    items: DirecionamentoProducaoInternaItemPayload[]
+}
+
 // Types para listagem de remessas
 export interface RemessaFaccao {
     id: string
