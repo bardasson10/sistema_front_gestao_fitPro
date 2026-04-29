@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
 import { Label } from "@/components/ui/label";
 import { ApiLoteProducaoResponse } from "@/hooks/queries/useProducao";
@@ -6,21 +7,33 @@ import { CircleColorView } from "@/components/ui/circle-color-view";
 import { useEstoqueTecidos } from "@/hooks/queries/useEstoque";
 
 interface LoteProducaoFormProps {
-  lote: ApiLoteProducaoResponse
+  lote: ApiLoteProducaoResponse;
 }
 
 export function LoteProducaoFormInfo({ lote }: LoteProducaoFormProps) {
   const { data: estoqueRolosData = [] } = useEstoqueTecidos();
 
+  // Formatação de KG
+  const formatKg = (peso: number) => {
+    return parseNumber(peso).toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  // Normalizador para unificar tecidos com o mesmo nome
+  const normalizeTextKey = (value?: string): string => {
+    return (value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, " ");
+  };
+
+  // Busca do valor correto do Kg
   const getValorPorKgRolo = (
-    rolo: {
-      id: string;
-      valorPorKg?: number | string;
-      tecido?: {
-        valorPorKg?: number | string;
-        cor?: { valorTecido?: number | string };
-      };
-    },
+    rolo: any,
     valorTecidoDaCor?: number | string,
     fallbackValorPorKg = 0
   ) => {
@@ -37,205 +50,230 @@ export function LoteProducaoFormInfo({ lote }: LoteProducaoFormProps) {
     if (valorNoRolo > 0) return valorNoRolo;
 
     const valorDoEstoque = parseNumber(
-      estoqueRolosData.find((estoque) => estoque.id === rolo.id)?.tecido.cor?.valorTecido
+      estoqueRolosData.find((estoque: any) => estoque.id === rolo.id)?.tecido?.cor?.valorTecido
     );
     return valorDoEstoque > 0 ? valorDoEstoque : fallbackValorPorKg;
   };
 
-  const formatKg = (peso: number) => {
-    return parseNumber(peso).toLocaleString("pt-BR", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+  // Motor de Agrupamento
+  const resumoAgrupado = useMemo(() => {
+    const materiais = lote.materiais || [];
+    const agrupado = new Map();
+
+    materiais.forEach((mat) => {
+      const nomeTecido = (mat.nome || "Tecido Desconhecido").trim();
+      const keyTecido = normalizeTextKey(nomeTecido) || mat.tecidoId || "SEM-TECIDO";
+      
+      const valorMaterialFallback = parseNumber(mat.valorPorKg);
+
+      if (!agrupado.has(keyTecido)) {
+        agrupado.set(keyTecido, {
+          nome: nomeTecido,
+          rendimento: parseNumber(mat.rendimentoMetroKg),
+          largura: parseNumber(mat.larguraMetros),
+          gramatura: parseNumber(mat.gramatura),
+          cores: new Map(),
+          totalTecido: 0,
+        });
+      }
+
+      const grupoTecido = agrupado.get(keyTecido);
+
+      if (!grupoTecido.rendimento && mat.rendimentoMetroKg) grupoTecido.rendimento = parseNumber(mat.rendimentoMetroKg);
+      if (!grupoTecido.largura && mat.larguraMetros) grupoTecido.largura = parseNumber(mat.larguraMetros);
+      if (!grupoTecido.gramatura && mat.gramatura) grupoTecido.gramatura = parseNumber(mat.gramatura);
+
+      const coresMat = mat.cores || [];
+
+      coresMat.forEach((c) => {
+        const nomeCor = (c.nome || "Sem Cor").trim();
+        const keyCor = normalizeTextKey(nomeCor);
+        
+        const valorCorNoPayload = parseNumber(c.valorTecido);
+        const fallbackCor = valorCorNoPayload > 0 ? valorCorNoPayload : valorMaterialFallback;
+
+        if (!grupoTecido.cores.has(keyCor)) {
+          grupoTecido.cores.set(keyCor, {
+            nome: nomeCor,
+            hex: c.codigoHex,
+            valorKg: fallbackCor,
+            rolos: [],
+            totalCor: 0,
+            pesoCor: 0
+          });
+        }
+
+        const grupoCor = grupoTecido.cores.get(keyCor);
+        const rolosCor = c.rolos || [];
+
+        rolosCor.forEach((r) => {
+          const pesoReservado = parseNumber(r.pesoReservado);
+          const valorPorKgRolo = getValorPorKgRolo(r, c.valorTecido, fallbackCor);
+          const valorTotalRolo = valorPorKgRolo * pesoReservado;
+
+          grupoCor.rolos.push({
+            id: r.id,
+            codigo: r.codigoBarraRolo || "Sem Código",
+            peso: pesoReservado,
+            valor: valorTotalRolo,
+          });
+
+          // Se a cor ainda precisa definir o valor/kg baseado no primeiro rolo caso não tenha payload
+          if (grupoCor.valorKg === 0 && valorPorKgRolo > 0) {
+              grupoCor.valorKg = valorPorKgRolo;
+          }
+
+          grupoCor.totalCor += valorTotalRolo;
+          grupoCor.pesoCor += pesoReservado;
+          grupoTecido.totalTecido += valorTotalRolo;
+        });
+      });
     });
-  };
+
+    return Array.from(agrupado.values()).map((tec) => ({
+      ...tec,
+      cores: Array.from(tec.cores.values()),
+    }));
+  }, [lote.materiais, estoqueRolosData]);
+
+  // Calcula o valor total de todos os tecidos somados do Lote
+  const valorTotalLote = resumoAgrupado.reduce((acc, tec) => acc + tec.totalTecido, 0);
+
+  if (!lote.materiais || lote.materiais.length === 0) {
+    return (
+      <div className="p-6 text-center text-muted-foreground border rounded-lg bg-muted/20">
+        Nenhum material adicionado a este lote.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
 
-      {/* Materiais */}
       <div className="pt-2">
         <Label className="mb-3 block text-sm font-semibold">
           Informações dos Materiais
         </Label>
 
         <div className="space-y-5">
-          {lote.materiais?.map((m) => {
-            const valorMaterialFallback = parseNumber(m.valorPorKg);
-            const coresUnicas = Array.from(
-              new Map(
-                (m.cores || []).map((cor) => [
-                  cor.corId || cor.nome || cor.codigoHex || "sem-cor",
-                  cor,
-                ])
-              ).values()
-            );
+          {resumoAgrupado.map((tecido) => (
+            <div
+              key={tecido.nome}
+              className="rounded-xl border bg-background shadow-sm p-5 space-y-4"
+            >
+              {/* Nome e Specs do Material */}
+              <div className="border-b pb-3 text-center">
+                <h3 className="text-xl font-semibold tracking-tight">
+                  {tecido.nome}
+                </h3>
+                <div className="bg-muted/30 rounded-md p-4 mt-3">
+                  <div className="grid grid-cols-3 gap-6 text-center text-sm">
+                    <div>
+                      <span className="text-[10px] uppercase text-muted-foreground">
+                        Rendimento
+                      </span>
+                      <p className="font-medium">
+                        {formatKg(tecido.rendimento)} m/kg
+                      </p>
+                    </div>
 
-            const totalMaterialTecidos = coresUnicas.reduce((accCor, cor) => {
-              const rolosDaCor = cor.rolos || [];
-              const fallbackCor = parseNumber(cor.valorTecido) > 0
-                ? parseNumber(cor.valorTecido)
-                : valorMaterialFallback;
+                    <div>
+                      <span className="text-[10px] uppercase text-muted-foreground">
+                        Largura
+                      </span>
+                      <p className="font-medium">
+                        {formatKg(tecido.largura)} m
+                      </p>
+                    </div>
 
-              const totalValorCor = rolosDaCor.reduce((accRolo, rolo) => {
-                const valorPorKgRolo = getValorPorKgRolo(rolo, cor.valorTecido, fallbackCor);
-                return accRolo + valorPorKgRolo * parseNumber(rolo.pesoReservado);
-              }, 0);
-
-              return accCor + totalValorCor;
-            }, 0);
-
-            return (
-              <div
-                key={m.tecidoId}
-                className="rounded-xl border bg-background shadow-sm p-5 space-y-4"
-              >
-                {/* Nome do Material */}
-                <div className="border-b pb-3 text-center">
-                  <h3 className="text-xl font-semibold tracking-tight">
-                    {m.nome}
-                  </h3>
-                  {/* Informações Técnicas do Material */}
-                  <div className="bg-muted/30 rounded-md p-4 mt-3">
-                    <div className="grid grid-cols-3 gap-6 text-center text-sm">
-                      <div>
-                        <span className="text-[10px] uppercase text-muted-foreground">
-                          Rendimento
-                        </span>
-                        <p className="font-medium">
-                          {parseNumber(m.rendimentoMetroKg)} m/kg
-                        </p>
-                      </div>
-
-                      <div>
-                        <span className="text-[10px] uppercase text-muted-foreground">
-                          Largura
-                        </span>
-                        <p className="font-medium">
-                          {parseNumber(m.larguraMetros)} m
-                        </p>
-                      </div>
-
-                      <div>
-                        <span className="text-[10px] uppercase text-muted-foreground">
-                          Gramatura
-                        </span>
-                        <p className="font-medium">
-                          {parseNumber(m.gramatura)} g/m²
-                        </p>
-                      </div>
+                    <div>
+                      <span className="text-[10px] uppercase text-muted-foreground">
+                        Gramatura
+                      </span>
+                      <p className="font-medium">
+                        {formatKg(tecido.gramatura)} g/m²
+                      </p>
                     </div>
                   </div>
                 </div>
-
-                {/* Cores - Separadas por cor */}
-                <div className="space-y-4">
-                  <Label className="text-xs text-muted-foreground block">
-                    Cores dos rolos de tecido
-                  </Label>
-
-                  {m.cores?.map((c) => {
-                    const rolosDaCor = c.rolos || [];
-                    const valorCorNoPayload = parseNumber(c.valorTecido);
-                    const fallbackCor = valorCorNoPayload > 0 ? valorCorNoPayload : valorMaterialFallback;
-
-                    const totalPesoCor = rolosDaCor.reduce(
-                      (acc, rolo) => acc + parseNumber(rolo.pesoReservado),
-                      0
-                    );
-
-                    const totalValorCor = rolosDaCor.reduce((acc, rolo) => {
-                      const valorPorKgRolo = getValorPorKgRolo(rolo, c.valorTecido, fallbackCor);
-                      return acc + valorPorKgRolo * parseNumber(rolo.pesoReservado);
-                    }, 0);
-
-                    const valorCorPorKg = valorCorNoPayload > 0
-                      ? valorCorNoPayload
-                      : totalPesoCor > 0
-                        ? totalValorCor / totalPesoCor
-                        : fallbackCor;
-
-                    return (
-                      <div
-                        key={c.corId}
-                        className="border rounded-lg p-4 bg-card space-y-3"
-                      >
-                        {/* Cabecalho da Cor */}
-                        <div className="flex items-center gap-3 border-b pb-3">
-                          <CircleColorView
-                            color={c.codigoHex}
-                            height={24}
-                            width={24}
-                          />
-                          <div>
-                            <p className="text-sm font-semibold">
-                              {c.nome}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Valor do Tecido: <span className="font-medium">{formatNumberToBRL(valorCorPorKg)}/kg</span>
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Rolos da Cor */}
-                        <div className="space-y-2">
-                          <Label className="text-xs text-muted-foreground">
-                            Rolos dessa cor
-                          </Label>
-                          <div className="space-y-2">
-                            {rolosDaCor.map((r) => {
-                              const pesoReservado = parseNumber(r.pesoReservado);
-                              const valorPorKgRolo = getValorPorKgRolo(r, c.valorTecido, fallbackCor);
-                              const valorTotalRolo = valorPorKgRolo * pesoReservado;
-
-                              return (
-                                <div key={r.codigoBarraRolo} className="flex justify-between items-center text-xs bg-muted/40 p-2 rounded">
-                                  <span className="font-medium">{r.codigoBarraRolo}</span>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-muted-foreground">Peso:</span>
-                                    <span className="font-medium">{formatKg(pesoReservado)}kg</span>
-                                    <span className="text-muted-foreground">|</span>
-                                    <span className="text-muted-foreground">Valor:</span>
-                                    <span className="font-medium text-primary">{formatNumberToBRL(valorTotalRolo)}</span>
-                                  </div>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        </div>
-
-                        <div className="flex justify-end border-t pt-2">
-                          <p className="text-xs font-semibold text-primary">
-                            Total da Cor: {formatNumberToBRL(totalValorCor)}
-                          </p>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-
-                <div className="border-t pt-3 flex justify-between items-center">
-                  <span className="text-sm font-semibold">Valor Total dos Tecidos:</span>
-                  <span className="text-base font-bold text-primary">{formatNumberToBRL(totalMaterialTecidos)}</span>
-                </div>
               </div>
-            )
-          })}
+
+              {/* Cores - Separadas por cor */}
+              <div className="space-y-4">
+                <Label className="text-xs text-muted-foreground block">
+                  Cores dos rolos de tecido
+                </Label>
+
+                {tecido.cores.map((cor: any) => (
+                  <div
+                    key={cor.nome}
+                    className="border rounded-lg p-4 bg-card space-y-3"
+                  >
+                    {/* Cabecalho da Cor */}
+                    <div className="flex items-center gap-3 border-b pb-3">
+                      <CircleColorView
+                        color={cor.hex}
+                        height={24}
+                        width={24}
+                      />
+                      <div>
+                        <p className="text-sm font-semibold">
+                          {cor.nome}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Valor do Tecido: <span className="font-medium">{formatNumberToBRL(cor.valorKg)}/kg</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Rolos da Cor */}
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">
+                        Rolos dessa cor
+                      </Label>
+                      <div className="space-y-2">
+                        {cor.rolos.map((rolo: any) => (
+                          <div key={rolo.id} className="flex justify-between items-center text-xs bg-muted/40 p-2 rounded">
+                            <span className="font-medium">{rolo.codigo}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-muted-foreground">Peso Disp:</span>
+                              <span className="font-medium">{formatKg(rolo.peso)}kg</span>
+                              <span className="text-muted-foreground">|</span>
+                              <span className="text-muted-foreground">Valor:</span>
+                              <span className="font-medium text-primary">{formatNumberToBRL(rolo.valor)}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Subtotal da Cor */}
+                    <div className="flex justify-end border-t pt-2">
+                      <p className="text-xs font-semibold text-primary">
+                        Total da Cor: {formatNumberToBRL(cor.totalCor)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Subtotal do Tecido */}
+              <div className="border-t pt-3 flex justify-between items-center bg-muted/10 p-3 rounded-md mt-2">
+                <span className="text-sm font-semibold">Total do Tecido ({tecido.nome}):</span>
+                <span className="text-base font-bold text-primary">{formatNumberToBRL(tecido.totalTecido)}</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Observações */}
-      {/* <div>
-        <Label className="mb-2 block text-sm font-semibold">
-          Observações
-        </Label>
-
-        <Textarea
-          value={lote.observacao || ''}
-          readOnly
-          className="resize-none h-24 bg-muted/30"
-          placeholder="Nenhuma observação para este lote."
-        />
-      </div> */}
+      {/* TOTAL GERAL */}
+      {resumoAgrupado.length > 0 && (
+        <div className="p-5 bg-primary/10 border-2 border-primary/30 rounded-lg flex justify-between items-center mt-6 shadow-sm">
+          <span className="font-bold text-xl text-foreground">Valor Total dos Tecidos:</span>
+          <span className="text-3xl font-black text-primary">{formatNumberToBRL(valorTotalLote)}</span>
+        </div>
+      )}
 
     </div>
   );

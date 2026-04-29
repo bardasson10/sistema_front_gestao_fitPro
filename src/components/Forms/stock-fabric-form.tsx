@@ -39,10 +39,10 @@ export function StockFabricForm({ cores, isEditing = false }: StockFabricFormPro
     () =>
       selectedFornecedor
         ? {
-            fornecedorId: selectedFornecedor,
-            page: 1,
-            limit: 1000,
-          }
+          fornecedorId: selectedFornecedor,
+          page: 1,
+          limit: 1000,
+        }
         : undefined,
     [selectedFornecedor]
   );
@@ -184,11 +184,38 @@ export function StockFabricForm({ cores, isEditing = false }: StockFabricFormPro
                       <FormItem>
                         <FormControl>
                           <Input
-                            type="number"
-                            step="0.01"
+                            type="text" // Usamos text para o navegador não bloquear a vírgula visualmente
+                            inputMode="decimal" // Força o celular a abrir o teclado numérico (com vírgula)
                             placeholder={`Peso do rolo ${index + 1}`}
-                            value={pesoField.value ?? ""}
-                            onChange={(e) => pesoField.onChange(parseNumber(e.target.value))}
+                            // Transforma o número do form (15.25) em string com vírgula (15,25) para a tela
+                            value={pesoField.value !== undefined ? String(pesoField.value).replace(".", ",") : ""}
+                            onChange={(e) => {
+                              // 1. Pega o que o usuário digitou e troca vírgula por ponto (formato universal)
+                              let rawValue = e.target.value.replace(",", ".");
+
+                              // 2. Remove letras ou símbolos indesejados (garante que só tenha números e ponto)
+                              rawValue = rawValue.replace(/[^0-9.]/g, "");
+
+                              // 3. Impede a digitação de mais de uma vírgula (ex: 15.25.3)
+                              const parts = rawValue.split(".");
+                              if (parts.length > 2) return;
+
+                              // 4. Se o usuário apagou tudo
+                              if (rawValue === "") {
+                                pesoField.onChange(undefined);
+                                return;
+                              }
+
+                              // 5. TRUQUE DA VÍRGULA: Se o valor terminar com ponto (ex: "15."), 
+                              // mandamos a string temporariamente para o hook-form. Isso evita que 
+                              // o React corte a vírgula visual enquanto ele não digita o próximo número.
+                              if (rawValue.endsWith(".")) {
+                                pesoField.onChange(rawValue);
+                              } else {
+                                // Se for um número completo (ex: "15.25"), passamos pela sua função parseNumber
+                                pesoField.onChange(parseNumber(rawValue));
+                              }
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
