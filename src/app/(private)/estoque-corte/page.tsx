@@ -134,7 +134,7 @@ const InventoryDashboard = () => {
         <Suspense
             fallback={
                 <div className="space-y-6" role="status" aria-live="polite" aria-busy="true">
-                    <div className="flex min-h-[180px] flex-col items-center justify-center gap-3 rounded-lg border border-border bg-card px-6 text-center">
+                    <div className="flex min-h-45 flex-col items-center justify-center gap-3 rounded-lg border border-border bg-card px-6 text-center">
                         <Spinner className="size-6 text-primary" />
                         <div className="space-y-1">
                             <p className="text-sm font-medium text-foreground">Carregando estoque de corte</p>

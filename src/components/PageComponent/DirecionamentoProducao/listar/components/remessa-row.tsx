@@ -12,7 +12,6 @@ import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
 import { DirecionamentoRemessa } from "@/types/Direcionamento"
 import { ptBR } from "date-fns/locale"
 import { ChevronDown, ChevronRight, Eye } from "lucide-react"
@@ -20,6 +19,7 @@ import { format } from "date-fns"
 import { useMemo, useState } from "react"
 import { StatusBadge } from "./listar-statusBadge"
 import { ServiceFaccao } from "@/types/Faccao"
+import { formatNumberToBRL } from "@/utils/Formatter/moeda-brasil-format"
 import {
     usePutDirecionamento,
     usePutDirecionamentoSkuPrice,
@@ -35,12 +35,20 @@ const tipoServicoLabels: Record<string, ServiceFaccao> = {
 
 type RemessaItemCompat = DirecionamentoRemessa["items"][number] & {
     estoqueCorteId?: string
+    valorFaccaoPorPeca?: number
     estoqueCorte?: {
         id?: string
-        produto?: { nome?: string; sku?: string }
+        produto?: { nome?: string; sku?: string; valorFaccaoPorPeca?: number }
         tamanho?: { nome?: string }
         cor?: { nome?: string; codigoHex?: string }
         lote?: { codigoLote?: string }
+    }
+    produto?: {
+        nome?: string
+        sku?: string
+        valorFaccaoPorPeca?: number
+        tamanho?: string
+        cor?: { nome?: string; codigoHex?: string }
     }
 }
 
@@ -80,6 +88,14 @@ export const RemessaRow = ({ remessa }: { remessa: DirecionamentoRemessa }) => {
     const getCodigoLote = (item: RemessaItemCompat) =>
         item.lote?.codigoLote ?? item.estoqueCorte?.lote?.codigoLote ?? "-"
 
+    const getValorFaccaoPorPeca = (item: RemessaItemCompat) =>
+        Number(
+            item.valorFaccaoPorPeca ??
+            item.produto?.valorFaccaoPorPeca ??
+            item.estoqueCorte?.produto?.valorFaccaoPorPeca ??
+            0
+        )
+
     const parseDate = (value?: string | null) => {
         if (!value) return null
         const parsed = new Date(value)
@@ -88,6 +104,33 @@ export const RemessaRow = ({ remessa }: { remessa: DirecionamentoRemessa }) => {
 
     const dataSaida = parseDate(remessa.dataSaida)
     const dataPrevisaoRetorno = parseDate(remessa.dataPrevisaoRetorno)
+
+    const getInitialValorFaccaoPorSku = (sku: string) => {
+        const matchedItem = remessa.items.find(
+            (item) => getSkuProduto(item as RemessaItemCompat) === sku
+        ) as RemessaItemCompat | undefined
+
+        return Number(
+            matchedItem?.valorFaccaoPorPeca ??
+            matchedItem?.produto?.valorFaccaoPorPeca ??
+            matchedItem?.estoqueCorte?.produto?.valorFaccaoPorPeca ??
+            0
+        )
+    }
+
+    const skuPriceList = useMemo(
+        () =>
+            Array.from(new Set(remessa.items.map((item) => getSkuProduto(item as RemessaItemCompat))))
+                .filter((sku) => sku && sku !== "-")
+                .map((sku) => ({
+                    sku,
+                    valorFaccaoPorPeca:
+                        skuPricesEdit[sku] !== undefined
+                            ? skuPricesEdit[sku]
+                            : getInitialValorFaccaoPorSku(sku),
+                })),
+        [remessa.items, skuPricesEdit]
+    )
 
     const itensComQtdEdit = useMemo(
         () =>
@@ -199,6 +242,9 @@ export const RemessaRow = ({ remessa }: { remessa: DirecionamentoRemessa }) => {
                                 {tipoServicoLabels[remessa.tipoServico] || remessa.tipoServico}
                             </Badge>
                         </div>
+                        <span className="mt-1 text-[11px] font-medium text-muted-foreground sm:hidden">
+                            Total estimado: {formatNumberToBRL(Number(remessa.valorTotalEstimado || 0))}
+                        </span>
                         <span className="mt-1 text-[11px] text-muted-foreground sm:hidden">
                             Saida: {format(new Date(remessa.dataSaida), "dd/MM", { locale: ptBR })} | Retorno: {format(new Date(remessa.dataPrevisaoRetorno), "dd/MM", { locale: ptBR })}
                         </span>
@@ -210,7 +256,12 @@ export const RemessaRow = ({ remessa }: { remessa: DirecionamentoRemessa }) => {
                     </Badge>
                 </TableCell>
                 <TableCell className="hidden sm:table-cell">
-                    <StatusBadge status={remessa.status} />
+                    <div className="flex flex-col gap-1">
+                        <StatusBadge status={remessa.status} />
+                        <span className="text-xs font-medium text-muted-foreground">
+                            Total estimado: {formatNumberToBRL(Number(remessa.valorTotalEstimado || 0))}
+                        </span>
+                    </div>
                 </TableCell>
                 <TableCell className="text-right font-medium">
                     {remessa.quantidade}
@@ -312,6 +363,47 @@ export const RemessaRow = ({ remessa }: { remessa: DirecionamentoRemessa }) => {
                             <h4 className="mb-3 text-sm font-medium text-muted-foreground">
                                 Itens da Remessa ({remessa.items.length})
                             </h4>
+
+                            <div className="mb-4 rounded-md border bg-muted/20 p-3">
+                                <div className="mb-3 flex items-center justify-between gap-2">
+                                    <div>
+                                        <p className="text-sm font-medium">Valores por SKU</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Edite o valor da facção por peça para cada SKU da remessa.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                                    {skuPriceList.map((skuItem) => (
+                                        <div key={skuItem.sku} className="rounded-md border bg-card p-3">
+                                            <div className="mb-2 flex items-start justify-between gap-3">
+                                                <div className="min-w-0">
+                                                    <p className="truncate text-sm font-medium">{skuItem.sku}</p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {formatNumberToBRL(Number(skuItem.valorFaccaoPorPeca || 0))}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <Input
+                                                type="number"
+                                                min={0}
+                                                step={0.01}
+                                                className="text-right"
+                                                placeholder="0,00"
+                                                value={skuPricesEdit[skuItem.sku] ?? skuItem.valorFaccaoPorPeca ?? ""}
+                                                onChange={(e) =>
+                                                    setSkuPricesEdit((prev) => ({
+                                                        ...prev,
+                                                        [skuItem.sku]: Number(e.target.value || 0),
+                                                    }))
+                                                }
+                                                disabled={!canEditSkuPrice || isLocked}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
                             <div className="space-y-2 md:hidden">
                                 {remessa.items.map((item) => (
                                     <div key={item.id} className="rounded-md border bg-card p-3">
@@ -329,6 +421,7 @@ export const RemessaRow = ({ remessa }: { remessa: DirecionamentoRemessa }) => {
                                                 {getCorNomeProduto(item as RemessaItemCompat)}
                                             </span>
                                             <span>Lote: {getCodigoLote(item as RemessaItemCompat)}</span>
+                                            <span>Preço: {formatNumberToBRL(getValorFaccaoPorPeca(item as RemessaItemCompat))}</span>
                                         </div>
                                         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                                             <Input
@@ -347,20 +440,6 @@ export const RemessaRow = ({ remessa }: { remessa: DirecionamentoRemessa }) => {
                                                 }
                                                 disabled={!canEditAll || isLocked}
                                             />
-                                            <Input
-                                                type="number"
-                                                min={0}
-                                                step={0.01}
-                                                placeholder="Preço facção / peça"
-                                                value={skuPricesEdit[getSkuProduto(item as RemessaItemCompat)] ?? ""}
-                                                onChange={(e) =>
-                                                    setSkuPricesEdit((prev) => ({
-                                                        ...prev,
-                                                        [getSkuProduto(item as RemessaItemCompat)]: Number(e.target.value || 0),
-                                                    }))
-                                                }
-                                                disabled={!canEditSkuPrice || isLocked}
-                                            />
                                         </div>
                                     </div>
                                 ))}
@@ -374,8 +453,8 @@ export const RemessaRow = ({ remessa }: { remessa: DirecionamentoRemessa }) => {
                                             <TableHead>Tamanho</TableHead>
                                             <TableHead>Cor</TableHead>
                                             <TableHead>Lote</TableHead>
-                                            <TableHead className="text-right">Quantidade</TableHead>
                                             <TableHead className="text-right">Preço SKU</TableHead>
+                                            <TableHead className="text-right">Quantidade</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -403,6 +482,9 @@ export const RemessaRow = ({ remessa }: { remessa: DirecionamentoRemessa }) => {
                                                 </TableCell>
                                                 <TableCell>{getCodigoLote(item as RemessaItemCompat)}</TableCell>
                                                 <TableCell className="text-right font-medium">
+                                                    {formatNumberToBRL(getValorFaccaoPorPeca(item as RemessaItemCompat))}
+                                                </TableCell>
+                                                <TableCell className="text-right font-medium">
                                                     <Input
                                                         type="number"
                                                         min={1}
@@ -419,23 +501,6 @@ export const RemessaRow = ({ remessa }: { remessa: DirecionamentoRemessa }) => {
                                                             }))
                                                         }
                                                         disabled={!canEditAll || isLocked}
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="text-right font-medium">
-                                                    <Input
-                                                        type="number"
-                                                        min={0}
-                                                        step={0.01}
-                                                        className="ml-auto w-32 text-right"
-                                                        placeholder="0,00"
-                                                        value={skuPricesEdit[getSkuProduto(item as RemessaItemCompat)] ?? ""}
-                                                        onChange={(e) =>
-                                                            setSkuPricesEdit((prev) => ({
-                                                                ...prev,
-                                                                [getSkuProduto(item as RemessaItemCompat)]: Number(e.target.value || 0),
-                                                            }))
-                                                        }
-                                                        disabled={!canEditSkuPrice || isLocked}
                                                     />
                                                 </TableCell>
                                             </TableRow>

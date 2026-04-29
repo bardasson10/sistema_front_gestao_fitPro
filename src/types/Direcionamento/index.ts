@@ -114,6 +114,7 @@ export interface RemessaItem {
 
 export interface DirecionamentoRemessa {
     id: string
+    valorTotalEstimado: number;
     status: string
     tipoServico: ServiceFaccao;
     quantidade: number

@@ -6,14 +6,15 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { BookType, Cable, CirclePile, House, LayoutDashboard, NotebookPen, PackageOpen, PackageSearch, PaintBucket, Scissors, Shirt, SquareChartGantt, User } from "lucide-react"
+import { BookType, Cable, CirclePile, House, LayoutDashboard, NotebookPen, PackageOpen, PackageSearch, PaintBucket, Scissors, Shirt, ShoppingBag, SquareChartGantt, User } from "lucide-react"
 import { NavMain } from "./components/nav-main"
 import { NavUser } from "./components/nav-user"
+import { title } from "process"
 
 const data = {
   navMain: [
     {
-      groupTitle: "Analise",
+      groupTitle: "Análise",
       items: [
         {
           title: "Dashboard",
@@ -23,7 +24,7 @@ const data = {
       ],
     },
     {
-      groupTitle: "Gestão",
+      groupTitle: "Cadastros",
       items: [
         {
           title: "Colaboradores",
@@ -40,12 +41,7 @@ const data = {
           url: "/faccoes",
           icon: House,
         },
-      ],
-    },
-    {
-      groupTitle: "Materiais",
-      items: [
-        {
+          {
           title: "Cores",
           url: "/cor",
           icon: PaintBucket,
@@ -55,11 +51,6 @@ const data = {
           url: "/tecidos",
           icon: Shirt,
         },
-      ],
-    },
-    {
-      groupTitle: "Estoque",
-      items: [
         {
           title: "Tamanhos",
           url: "/tamanhos",
@@ -70,6 +61,11 @@ const data = {
           url: "/tipos-produtos",
           icon: BookType,
         },
+      ],
+    },
+    {
+      groupTitle: "Estoque",
+      items: [
         {
           title: "Produtos",
           url: "/produtos",
@@ -91,9 +87,14 @@ const data = {
           icon: Scissors,
         },
         {
-          title: "Estoque Peças",
+          title: "Peças em estoque",
           url: "/estoque-corte",
           icon: PackageSearch,
+        },
+        {
+          title: "Produção Interna",
+          url: "/producao",
+          icon: ShoppingBag,
         },
         {
           title: "Remessas",
