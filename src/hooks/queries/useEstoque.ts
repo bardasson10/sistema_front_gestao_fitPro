@@ -79,6 +79,11 @@ export const useEstoqueTecidos = (filtros?: { tecidoId?: string; situacao?: stri
             );
             return data.data;
         },
+        staleTime: 5 * 60 * 1000,
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
+        refetchOnReconnect: false,
+        retry: false,
     });
 };
 
@@ -104,6 +109,11 @@ export const useEstoqueTecidosPaginado = (filtros?: {
 
             return data;
         },
+        staleTime: 5 * 60 * 1000,
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
+        refetchOnReconnect: false,
+        retry: false,
     });
 };
 
@@ -187,6 +197,11 @@ export const useRelatorioEstoque = () => {
             );
             return data;
         },
+        staleTime: 5 * 60 * 1000,
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
+        refetchOnReconnect: false,
+        retry: false,
     });
 };
 

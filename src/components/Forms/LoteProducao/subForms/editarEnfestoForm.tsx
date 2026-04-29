@@ -188,7 +188,7 @@ export const EnfestoEditarForm = ({
     setCoresSelecionadas(coresIniciais)
     setGradeItens(enfestoBase?.itens || [])
     setProdutosSelecionados(enfestoBase?.produtosSelecionados || [])
-  }, [loteId, form])
+  }, [loteId])
 
   function addCor(corId: string) {
     const corInfo = corById.get(corId)

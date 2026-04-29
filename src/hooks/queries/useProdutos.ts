@@ -63,6 +63,11 @@ export const useTiposProduto = () => {
       );
       return data;
     },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    retry: false,
   });
 };
 
@@ -144,6 +149,11 @@ export const useTamanhos = () => {
       return [];
     },
     enabled: true,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    retry: false,
   });
 };
 
@@ -226,6 +236,11 @@ export const useProdutos = (filtros?: { tipoProdutoId?: string }) => {
       const { data } = await apiClient.get<{ data: Produto[]; pagination: PaginatedResponse }>(`/produtos${queryString ? `?${queryString}` : ``}`);
       return data as { data: Produto[]; pagination: PaginatedResponse };
     },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    retry: false,
   });
 };
 
@@ -314,6 +329,11 @@ export const useTamanhosPorTipo = (tipoProdutoId: string) => {
       return data;
     },
     enabled: !!tipoProdutoId,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    retry: false,
   });
 };
 

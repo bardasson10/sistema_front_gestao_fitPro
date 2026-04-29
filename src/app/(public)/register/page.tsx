@@ -63,7 +63,7 @@ export default function RegisterPage() {
 
     return (
         <main className="min-h-screen flex items-center justify-center0 px-4">
-            <div className="w-full max-w-md  p-6 rounded-lg shadow">
+            {/* <div className="w-full max-w-md  p-6 rounded-lg shadow">
                 <h1 className="text-2xl font-semibold mb-6 text-center">
                     Criar usuário
                 </h1>
@@ -181,7 +181,7 @@ export default function RegisterPage() {
                         </p>
                     </form>
                 </Form>
-            </div>
+            </div> */}
         </main>
     );
 }

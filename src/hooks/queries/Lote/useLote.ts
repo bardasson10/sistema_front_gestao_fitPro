@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/services/api/api-client';
 import { toast } from 'sonner';
 import { PaginatedResponse } from '@/types/production';
@@ -69,7 +69,7 @@ const buildLoteParams = (filtros?: Partial<IFiltrosLote>) => ({
     limit: filtros?.limit,
 });
 export const useGetListAllLotes = (filtros?: Partial<IFiltrosLote>) => {
-    return useSuspenseQuery({
+    return useQuery({
         queryKey: ['lotes-producao', 'list-all' , filtros],
         queryFn: async () => {
             const { data } = await apiClient.get<{ data: ILoteResponse[]; pagination: PaginatedResponse }>(
@@ -81,11 +81,17 @@ export const useGetListAllLotes = (filtros?: Partial<IFiltrosLote>) => {
             );
             return data.data
         },
+        placeholderData: [],
+        staleTime: 5 * 60 * 1000,
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
+        refetchOnReconnect: false,
+        retry: false,
     });
 };
 
 export const useGetResumoPorCor = (filtros?: Partial<IFiltrosLote>) => {
-    return useSuspenseQuery({
+    return useQuery({
         queryKey: ['lotes-producao', 'resumo-por-cor', filtros],
         queryFn: async () => {
             const { data } = await apiClient.get<{ data?: IResumoPorCorResponse; pagination?: PaginatedResponse } | IResumoPorCorResponse>(
@@ -115,6 +121,15 @@ export const useGetResumoPorCor = (filtros?: Partial<IFiltrosLote>) => {
                 pagination: defaultPagination,
             };
         },
+        placeholderData: {
+            resumo: defaultResumo,
+            pagination: defaultPagination,
+        },
+        staleTime: 5 * 60 * 1000,
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
+        refetchOnReconnect: false,
+        retry: false,
     });
 };
 

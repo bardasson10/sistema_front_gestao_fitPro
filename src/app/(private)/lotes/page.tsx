@@ -139,11 +139,6 @@ export default function Lotes() {
         dataFim: filtrosAplicados.dataFim.length ? filtrosAplicados.dataFim : undefined,
     }), [filtrosAplicados]);
 
-    const lotesBaseQuery = useMemo(() => ({
-        page: 1,
-        limit: 300,
-    }), []);
-
     const lotesListQuery = useMemo(() => ({
         ...filtrosParaQuery,
         page: 1,
@@ -156,12 +151,10 @@ export default function Lotes() {
         limit: resumoLimit,
     }), [filtrosParaQuery, resumoPage, resumoLimit]);
 
-    const { data: lotesBaseData } = useGetListAllLotes(lotesBaseQuery);
-
     const { data: lotesData, isPending: isLoadingLotes } = useGetListAllLotes(lotesListQuery);
     const { data: resumoPorCorData, isPending: isLoadingResumo } = useGetResumoPorCor(resumoQuery);
     const dataLote = lotesData || [];
-    const sourceOptionsLote = lotesBaseData || dataLote;
+    const sourceOptionsLote = dataLote;
 
     const { mutate: deletarLote, isPending: isDeleting } = useDeletarLoteProducao();
     const { handleEditLoteCabeçalho, isSubmitting } = useProducaoActions();

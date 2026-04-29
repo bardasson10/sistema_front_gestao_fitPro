@@ -40,6 +40,11 @@ export const useColaboradores = (params?: UseColaboradoresParams) => {
         
             return data;
         },
+        staleTime: 5 * 60 * 1000,
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
+        refetchOnReconnect: false,
+        retry: false,
     });
 };
 

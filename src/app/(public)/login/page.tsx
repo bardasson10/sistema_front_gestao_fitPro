@@ -1,5 +1,5 @@
 "use client";
-import { useRouter } from 'next/navigation'; 
+import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -39,7 +39,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const authResponse = await AutenticacaoService({ email: values.email, senha: values.senha });
-      
+
       // Salvar dados do usuário nos cookies
       await saveAuthCookies({
         id: authResponse.id,
@@ -50,7 +50,7 @@ export default function LoginPage() {
       });
 
       toast.success('Login realizado com sucesso!');
-      
+
       // Redirecionar para dashboard
       router.push('/');
       router.refresh();
@@ -67,11 +67,10 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <Form {...form}>
           <CardHeader>
+
             <CardTitle>Acesse a conta atraves do Login</CardTitle>
             <CardDescription>Insira suas credenciais para continuar.</CardDescription>
-            <CardAction>
-             <Link href="/register" className="text-sm text-emerald-400 hover:underline">Crie sua conta</Link>
-            </CardAction>
+
           </CardHeader>
           <CardContent>
             <LoginForm />

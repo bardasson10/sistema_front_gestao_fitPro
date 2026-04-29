@@ -19,16 +19,20 @@ interface BaseModalProps {
 }
 
 export function BaseModal({ trigger, Icon, title, description, children, open, onOpenChange }: BaseModalProps) {
+  const shouldRenderContent = open === undefined || open;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          {title && <DialogTitle className="flex items-center">{Icon}{title}</DialogTitle>}
-          {description && <DialogDescription>{description}</DialogDescription>}
-        </DialogHeader>
-        {children}
-      </DialogContent>
+      {shouldRenderContent && (
+        <DialogContent className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            {title && <DialogTitle className="flex items-center">{Icon}{title}</DialogTitle>}
+            {description && <DialogDescription>{description}</DialogDescription>}
+          </DialogHeader>
+          {children}
+        </DialogContent>
+      )}
     </Dialog>
   )
 }
