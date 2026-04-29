@@ -14,6 +14,7 @@ import { formatNumberToBRL } from "@/utils/Formatter/moeda-brasil-format";
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
 import { EstoqueRolo } from "@/types/EstoqueRolo";
 import { ILoteResponse } from "@/types/Lote";
+import { useDeleteRoloLote } from "@/hooks/queries/Lote/useLote";
 
 
 type RoloFormValue = {
@@ -70,6 +71,7 @@ export const DadosTecido = ({ form, lote }: DadosTecidoProps) => {
   const rolosTecido = roloTecidoData || [];
 
   const { handleAdicionarRolos, isSubmitting } = useProducaoActions();
+  const { mutate: removeRoloLote, isPending: isRemovingRolo } = useDeleteRoloLote();
 
   const [rolosSelecionados, setRolosSelecionados] = useState<RoloFormValue[]>([]);
 
@@ -338,6 +340,22 @@ export const DadosTecido = ({ form, lote }: DadosTecidoProps) => {
                     disabled={true}
                   />
                 </div>
+
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="shrink-0"
+                  disabled={isRemovingRolo}
+                  onClick={() => {
+                    const loteId = form.getValues('id');
+
+                    if (!loteId) return;
+
+                    removeRoloLote({ id: loteId, estoqueRoloId: item.estoqueRoloId });
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             ))}
           </div>

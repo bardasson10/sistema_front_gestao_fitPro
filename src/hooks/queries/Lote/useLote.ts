@@ -221,6 +221,27 @@ export const usePostAddRolosLote = () => {
 };
 
 
+export const useDeleteRoloLote = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ id, estoqueRoloId }: { id: string; estoqueRoloId: string }) => {
+            await apiClient.delete(`/lotes-producao/${id}/rolos/${estoqueRoloId}`);
+        },
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['lotes-producao'] });
+            queryClient.invalidateQueries({ queryKey: ['lotes-producao', variables.id] });
+            toast.success('Rolo removido do lote com sucesso!');
+        },
+        onError: (error: any) => {
+            const mensagem = error.response?.data?.details?.[0]?.mensage ||
+                error.response?.data?.error ||
+                'Erro ao remover rolo do lote';
+            toast.error(mensagem);
+        },
+    });
+};
+
 
 export const usePostUpdateLote = () => {
     const queryClient = useQueryClient();
