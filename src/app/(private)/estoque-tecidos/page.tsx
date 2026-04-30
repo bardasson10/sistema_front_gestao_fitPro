@@ -62,7 +62,7 @@ const normalizeSituacaoForForm = (situacao: string): RoloTecidoFormValues["situa
 const initialValues: RoloTecidoFormValues = {
   tecidoId: "",
   dataLote: getTodayDate(),
-  rolos: [{ pesoInicialKg: 0 }],
+  rolos: [{ pesoInicialKg: undefined as unknown as number }],
   codigoBarraRolo: "",
   pesoAtualKg: 0,
   situacao: "disponivel",

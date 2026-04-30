@@ -167,7 +167,7 @@ export function StockFabricForm({ cores, isEditing = false }: StockFabricFormPro
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => append({ pesoInicialKg: 0 })}
+                onClick={() => append({ pesoInicialKg: undefined as unknown as number })}
               >
                 <Plus className="mr-1 h-4 w-4" />
                 Adicionar Peso

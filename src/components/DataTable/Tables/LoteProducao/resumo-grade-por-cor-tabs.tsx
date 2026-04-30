@@ -40,6 +40,23 @@ function getQuantidadeByTamanho(produto: IResumoPorCorProduto, tamanhoId: string
     return produto.linhas.find((linha) => linha.tamanhoId === tamanhoId)?.quantidade || 0;
 }
 
+function getOrdemTamanho(tamanho: { ordem?: number; nome: string }) {
+    const ordemPorNome = {
+        P: 1,
+        M: 2,
+        G: 3,
+        GG: 4,
+    };
+
+    const ordemNumerica = Number(tamanho.ordem);
+
+    if (Number.isFinite(ordemNumerica) && ordemNumerica > 0) {
+        return ordemNumerica;
+    }
+
+    return ordemPorNome[tamanho.nome as keyof typeof ordemPorNome] ?? Number.MAX_SAFE_INTEGER;
+}
+
 function AggregateTable({ secao }: { secao: IResumoPorCorSecao }) {
     const produtos = React.useMemo(
         () =>
@@ -54,7 +71,10 @@ function AggregateTable({ secao }: { secao: IResumoPorCorSecao }) {
             [...(secao.tamanhos || [])]
                 .filter((size) => size.total > 0)
                 .sort((a, b) => {
-                    if (a.ordem !== b.ordem) return a.ordem - b.ordem;
+                    const ordemA = getOrdemTamanho(a);
+                    const ordemB = getOrdemTamanho(b);
+
+                    if (ordemA !== ordemB) return ordemA - ordemB;
                     return a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base", numeric: true });
                 }),
         [secao.tamanhos],

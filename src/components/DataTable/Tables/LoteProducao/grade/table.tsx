@@ -25,6 +25,23 @@ interface CorGradeGroup {
 
 const SEM_COR_ID = "__sem_cor__";
 
+const getOrdemTamanho = (tamanho: { ordem: number; nome: string }) => {
+  const ordemPorNome = {
+    P: 1,
+    M: 2,
+    G: 3,
+    GG: 4,
+  };
+
+  const ordemNumerica = Number(tamanho.ordem);
+
+  if (Number.isFinite(ordemNumerica) && ordemNumerica > 0) {
+    return ordemNumerica;
+  }
+
+  return ordemPorNome[tamanho.nome as keyof typeof ordemPorNome] ?? Number.MAX_SAFE_INTEGER;
+};
+
 export const LoteProducaoTableGrade = ({
   isFormEditable = false,
   isGradeEditMode = false,
@@ -41,7 +58,10 @@ export const LoteProducaoTableGrade = ({
 
   const produtos = produtosData?.data || [];
   const tamanhos = useMemo(
-    () => (tamanhosData || []).slice().sort((a, b) => a.ordem - b.ordem),
+    () =>
+      (tamanhosData || [])
+        .slice()
+        .sort((a, b) => getOrdemTamanho(a) - getOrdemTamanho(b)),
     [tamanhosData]
   );
 

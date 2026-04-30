@@ -109,10 +109,14 @@ export const EnfestoEditarForm = ({
   }, [produtosDaGrade, produtosDoCatalogo])
 
   const tamanhos = useMemo(() => {
-    const tamanhosDaGrade = gradeItens.map((item, itemIndex) => ({
+    const tamanhosDoCatalogoPorId = new Map(
+      tamanhosApi.map((tamanho) => [tamanho.id, tamanho])
+    )
+
+    const tamanhosDaGrade = gradeItens.map((item) => ({
       id: item.tamanhoId,
       label: item.tamanhoNome,
-      ordem: itemIndex + 1,
+      ordem: tamanhosDoCatalogoPorId.get(item.tamanhoId)?.ordem ?? Number.MAX_SAFE_INTEGER,
     }))
 
     const tamanhosDoCatalogo = tamanhosApi.map((tamanho) => ({

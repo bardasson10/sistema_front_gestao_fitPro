@@ -22,6 +22,7 @@ type ProductMeta = {
 
 type SizeMeta = {
   nome: string;
+  ordem?: number;
 };
 
 type Aggregate = {
@@ -113,6 +114,23 @@ function sortByName<T extends { nome: string }>(a: [string, T], b: [string, T]) 
   return a[1].nome.localeCompare(b[1].nome, "pt-BR", { numeric: true, sensitivity: "base" });
 }
 
+function getOrdemTamanho(size: SizeMeta) {
+  const fallbackOrder: Record<string, number> = {
+    P: 1,
+    M: 2,
+    G: 3,
+    GG: 4,
+  };
+
+  const ordemNumerica = Number(size.ordem);
+
+  if (Number.isFinite(ordemNumerica) && ordemNumerica > 0) {
+    return ordemNumerica;
+  }
+
+  return fallbackOrder[size.nome] ?? Number.MAX_SAFE_INTEGER;
+}
+
 function AggregateTable({ aggregate }: { aggregate: Aggregate }) {
   const products = React.useMemo(
     () => Array.from(aggregate.products.entries()).sort(sortByName),
@@ -120,7 +138,7 @@ function AggregateTable({ aggregate }: { aggregate: Aggregate }) {
   );
 
   const sizes = React.useMemo(
-    () => Array.from(aggregate.sizes.entries()).sort(sortByName),
+    () => Array.from(aggregate.sizes.entries()).sort((a, b) => getOrdemTamanho(a[1]) - getOrdemTamanho(b[1])),
     [aggregate],
   );
 
