@@ -35,7 +35,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { useForm } from "react-hook-form";
-import { ILoteResponse, STATUS_LOTE_OPTIONS_FILTER } from "@/types/Lote";
+import { ILoteResponse } from "@/types/Lote";
 import { IFiltrosLote, useGetListAllLotes, useGetResumoPorCor } from "@/hooks/queries/Lote/useLote";
 import { ResumoGradePorCorTabs } from "@/components/DataTable/Tables/LoteProducao/resumo-grade-por-cor-tabs";
 
@@ -209,13 +209,6 @@ export default function Lotes() {
         return Array.from(produtoMap.entries()).map(([id, nome]) => ({ id, nome }));
     }, [sourceOptionsLote]);
 
-    const opcoesStatus = useMemo(
-        () => Object.entries(STATUS_LOTE_OPTIONS_FILTER)
-            .filter(([statusKey]) => statusKey !== "todos")
-            .map(([id, nome]) => ({ id, nome })),
-        [],
-    );
-
     const opcoesResponsavel = useMemo(
         () => (colaboradoresData?.data || []).map((colaborador) => ({
             id: colaborador.id,
@@ -364,6 +357,16 @@ export default function Lotes() {
         });
     };
 
+    const lotesPrincipais = useMemo(
+        () => dataLote.filter((lote) => lote.status !== "cortado"),
+        [dataLote],
+    );
+
+    const lotesCortados = useMemo(
+        () => dataLote.filter((lote) => lote.status === "cortado"),
+        [dataLote],
+    );
+
     return (
         <main className="space-y-6">
             <Tabs defaultValue="lotes-cadastrados" className="w-full">
@@ -390,15 +393,6 @@ export default function Lotes() {
                     <div className="mb-3 text-sm font-medium">Filtros</div>
 
                     <div className="w-full not-first:grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-7">
-                        <MultiSelectFilter
-                            label="Status"
-                            placeholder="Selecione"
-                            options={opcoesStatus}
-                            selectedValues={filtrosRascunho.status}
-                            onToggle={(value) => toggleFiltro("status", value)}
-                            onClear={() => updateFiltro("status", [])}
-                        />
-
                         <MultiSelectFilter
                             label="Codigo Lote"
                             placeholder="Selecione"
@@ -483,7 +477,7 @@ export default function Lotes() {
                 <TabsContent value="lotes-cadastrados">
                     <div className="hidden md:block">
                         <LoteProducaoTable
-                            lotesProducao={dataLote}
+                            lotesProducao={lotesPrincipais}
                             isLoading={isLoadingLotes || isDeleting}
                             onView={handleEdit}
                             onRemove={handleRemove}
@@ -492,7 +486,7 @@ export default function Lotes() {
 
                     <div className="block md:hidden">
                         <MobileViewLoteProducao
-                            lotesProducao={dataLote}
+                            lotesProducao={lotesPrincipais}
                             isLoading={isLoadingLotes || isDeleting}
                             onView={handleEdit}
                             onRemove={handleRemove}
@@ -500,7 +494,7 @@ export default function Lotes() {
                     </div>
 
                     {/* Histórico de lotes cortados */}
-                    {dataLote && dataLote.length > 0 && (
+                    {lotesCortados.length > 0 && (
                         <div className="mt-6">
                             <Card>
                                 <CardHeader>
@@ -508,12 +502,11 @@ export default function Lotes() {
                                 </CardHeader>
                                 <CardContent>
                                     {(() => {
-                                        const cortados = (dataLote || []).filter(l => l.status === 'cortado');
-                                        if (cortados.length === 0) {
+                                        if (lotesCortados.length === 0) {
                                             return <div className="text-sm text-muted-foreground">Nenhum lote cortado encontrado.</div>;
                                         }
 
-                                        const cortadosFiltered = cortados.filter(l => {
+                                        const cortadosFiltered = lotesCortados.filter(l => {
                                             const dateOnly = l.createdAt ? l.createdAt.slice(0, 10) : '';
                                             if (histDateFilter && dateOnly !== histDateFilter) return false;
                                             if (histCodigoFilter && l.codigoLote !== histCodigoFilter) return false;
