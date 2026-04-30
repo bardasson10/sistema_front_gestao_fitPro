@@ -183,12 +183,14 @@ export function StockFabricForm({ cores, isEditing = false }: StockFabricFormPro
                     render={({ field: pesoField }) => (
                       <FormItem>
                         <FormControl>
-                          <Input
-                            type="text" // Usamos text para o navegador não bloquear a vírgula visualmente
-                            inputMode="decimal" // Força o celular a abrir o teclado numérico (com vírgula)
-                            placeholder={`Peso do rolo ${index + 1}`}
+                          <div className="flex items-center">
+                            <span className="mr-2 w-8 text-right text-sm text-muted-foreground">{index + 1}-</span>
+                            <Input
+                              type="text" // Usamos text para o navegador não bloquear a vírgula visualmente
+                              inputMode="decimal" // Força o celular a abrir o teclado numérico (com vírgula)
+                              placeholder={`Peso do rolo ${index + 1}`}
                             // Transforma o número do form (15.25) em string com vírgula (15,25) para a tela
-                            value={pesoField.value !== undefined ? String(pesoField.value).replace(".", ",") : ""}
+                              value={pesoField.value !== undefined ? String(pesoField.value).replace(".", ",") : ""}
                             onChange={(e) => {
                               // 1. Pega o que o usuário digitou e troca vírgula por ponto (formato universal)
                               let rawValue = e.target.value.replace(",", ".");
@@ -216,7 +218,8 @@ export function StockFabricForm({ cores, isEditing = false }: StockFabricFormPro
                                 pesoField.onChange(parseNumber(rawValue));
                               }
                             }}
-                          />
+                            />
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>

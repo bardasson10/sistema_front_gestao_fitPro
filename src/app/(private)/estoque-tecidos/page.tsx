@@ -314,7 +314,7 @@ export default function Estoque() {
             isViewSaveOrCancel={true}
             trigger={
               <Button onClick={handleOpen}>
-                <Plus className="mr-2 h-4 w-4" /> Novo Lote
+                <Plus className="mr-2 h-4 w-4" /> Entrada
               </Button>
             }
           >
