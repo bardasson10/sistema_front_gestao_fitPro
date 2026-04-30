@@ -22,6 +22,8 @@ export interface StockProps {
 export interface StockResume {
   id: string;
   codigoReferencia: string;
+  nomeFornecedor: string;
+  nomeTecido: string;
   cor: string;
   nomeCor: string;
   rolos: number;

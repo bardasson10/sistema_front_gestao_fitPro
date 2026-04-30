@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -30,6 +30,7 @@ import { IFiltroEstoqueRolo } from '@/types/EstoqueRolo';
 import { useCores, useFornecedores, useTecidos } from '@/hooks/queries/useMateriais';
 import { useTamanhos } from '@/hooks/queries/useProdutos';
 import { useLotesProducaoCompleto } from '@/hooks/queries/useProducao';
+import { cn } from '@/lib/utils';
 
 const estoqueRoloFiltersSchema = z.object({
   estoqueRoloId: z.string().optional(),
@@ -107,6 +108,77 @@ export function EstoqueRoloFilters({ onFilter, onClear }: EstoqueRoloFiltersProp
 
   const lotes = useMemo(() => lotesResponse?.data || [], [lotesResponse?.data]);
 
+  function SearchablePopoverSelect<T extends { id: string; label: string; color?: string }>({
+    label,
+    options,
+    value,
+    onChange,
+    placeholder,
+    disabled,
+  }: {
+    label: string;
+    options: T[];
+    value?: string | undefined;
+    onChange: (v?: string) => void;
+    placeholder?: string;
+    disabled?: boolean;
+  }) {
+    const [search, setSearch] = useState('');
+
+    const filtered = useMemo(() => {
+      const term = search.trim().toLowerCase();
+      if (!term) return options;
+      return options.filter((o) => o.label.toLowerCase().includes(term));
+    }, [options, search]);
+
+    const selectedLabel = options.find((o) => o.id === value)?.label ?? 'Todos';
+
+    return (
+      <div>
+        <label className="text-xs">{label}</label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className={cn('h-10 w-full justify-between text-left font-normal', disabled && 'opacity-60')} disabled={disabled}>
+              <span className="truncate">{label}: {selectedLabel}</span>
+              <span className="text-xs text-muted-foreground">Selecionar</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-72 p-3" align="start">
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">{label}</p>
+                <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={placeholder} />
+              </div>
+              <div className="max-h-56 overflow-auto rounded-md border">
+                <button type="button" onClick={() => onChange(undefined)} className={"flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"}>
+                  <span>Todos</span>
+                </button>
+                {filtered.length === 0 ? (
+                  <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum resultado</div>
+                ) : (
+                  filtered.map((opt) => (
+                    <button key={opt.id} type="button" onClick={() => onChange(opt.id)} className={"flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"}>
+                      <span className="flex items-center gap-2">
+                        {opt.color ? <span className="h-2.5 w-2.5 rounded-full border" style={{ backgroundColor: opt.color }} /> : null}
+                        <span className="truncate">{opt.label}</span>
+                      </span>
+                      {opt.id === value ? <span className="text-xs text-muted-foreground">Selecionado</span> : null}
+                    </button>
+                  ))
+                )}
+              </div>
+              {value ? (
+                <Button type="button" variant="ghost" className="w-full" onClick={() => onChange(undefined)}>
+                  Limpar seleção
+                </Button>
+              ) : null}
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
+    );
+  }
+
   const formatDateLabel = (value?: string) => {
     if (!value) return 'Selecionar data';
 
@@ -174,27 +246,13 @@ export function EstoqueRoloFilters({ onFilter, onClear }: EstoqueRoloFiltersProp
             name="corId"
             render={({ field }) => (
               <FormItem className="w-full">
-                <FormLabel className="text-xs">Cor</FormLabel>
-                <Select value={field.value ?? ''} onValueChange={(value) => field.onChange(value || undefined)}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecionar..." />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {(coresData || []).map((cor) => (
-                      <SelectItem key={cor.id} value={cor.id}>
-                        <span className="flex items-center gap-2">
-                          <span
-                            className="h-2.5 w-2.5 rounded-full border"
-                            style={{ backgroundColor: cor.codigoHex }}
-                          />
-                          {cor.nome}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SearchablePopoverSelect
+                  label="Cor"
+                  options={(coresData || []).map((c) => ({ id: c.id, label: c.nome, color: c.codigoHex }))}
+                  value={field.value}
+                  onChange={(v) => field.onChange(v || undefined)}
+                  placeholder="Buscar cor"
+                />
               </FormItem>
             )}
           />
@@ -270,21 +328,13 @@ export function EstoqueRoloFilters({ onFilter, onClear }: EstoqueRoloFiltersProp
             name="fornecedorId"
             render={({ field }) => (
               <FormItem className="w-full">
-                <FormLabel className="text-xs">Fornecedor</FormLabel>
-                <Select value={field.value ?? ''} onValueChange={(value) => field.onChange(value || undefined)}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecionar..." />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {(fornecedoresData || []).map((fornecedor) => (
-                      <SelectItem key={fornecedor.id ?? fornecedor.nome} value={fornecedor.id ?? ''}>
-                        {fornecedor.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SearchablePopoverSelect
+                  label="Fornecedor"
+                  options={(fornecedoresData || []).map((f) => ({ id: f.id ?? '', label: f.nome }))}
+                  value={field.value}
+                  onChange={(v) => field.onChange(v || undefined)}
+                  placeholder="Buscar fornecedor"
+                />
               </FormItem>
             )}
           />
@@ -294,27 +344,14 @@ export function EstoqueRoloFilters({ onFilter, onClear }: EstoqueRoloFiltersProp
             name="tecidoId"
             render={({ field }) => (
               <FormItem className="w-full">
-                <FormLabel className="text-xs">Tecido</FormLabel>
-                <Select value={field.value ?? ''} onValueChange={(value) => field.onChange(value || undefined)}>
-                  <FormControl>
-                    <SelectTrigger className="w-full" disabled={!fornecedorSelecionado}>
-                      <SelectValue placeholder="Selecionar..." />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {tecidosFiltrados.map((tecido) => (
-                      <SelectItem key={tecido.id} value={tecido.id}>
-                        <span className="flex items-center gap-2">
-                          <span
-                            className="h-2.5 w-2.5 rounded-full border"
-                            style={{ backgroundColor: tecido.corHex }}
-                          />
-                          {tecido.nome} - {tecido.corNome}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SearchablePopoverSelect
+                  label="Tecido"
+                  options={tecidosFiltrados.map((t) => ({ id: t.id, label: `${t.nome} - ${t.corNome}`, color: t.corHex }))}
+                  value={field.value}
+                  onChange={(v) => field.onChange(v || undefined)}
+                  placeholder="Buscar tecido"
+                  disabled={!fornecedorSelecionado}
+                />
               </FormItem>
             )}
           />

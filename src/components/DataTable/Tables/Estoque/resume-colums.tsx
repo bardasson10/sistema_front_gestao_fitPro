@@ -1,4 +1,3 @@
-import { EstoqueTecido } from "@/types/production";
 import { ColumnDef } from "@tanstack/table-core";
 import { StockResume } from "@/types/StockComponents/stock-components";
 
@@ -10,7 +9,7 @@ import { EstoqueRolo } from "@/types/EstoqueRolo";
 
 export const getGroupedStockColumns = (
   rolos: EstoqueRolo[],
-  tecidos: { id: string; codigoReferencia: string; corId: string, valorPorKg: number }[],
+  tecidos: { id: string; nome: string; codigoReferencia: string; corId: string, valorPorKg: number }[],
   cores: { id: string; nome: string; codigoHex: string }[]
 ): StockResume[] => {
   const safeRolos = Array.isArray(rolos) ? rolos : [];
@@ -26,12 +25,16 @@ export const getGroupedStockColumns = (
     const tecidoRolo = rolo.tecido;
     const corId = tecidoRolo?.corId || tecidoFallback?.corId || '';
     const corInfo = cores.find((cor) => cor.id === corId);
+    const nomeTecido = tecidoRolo?.nome || tecidoFallback?.nome || '-';
     const valorPorKg = Number(tecidoRolo?.valorPorKg ?? tecidoFallback?.valorPorKg ?? 0);
+    const nomeFornecedor = tecidoRolo?.fornecedor?.nome || '-';
 
     if (!acc[tecidoId]) {
       acc[tecidoId] = {
         id: tecidoId,
+        nomeTecido: nomeTecido, 
         codigoReferencia: tecidoRolo?.codigoReferencia || tecidoFallback?.codigoReferencia || '-',
+        nomeFornecedor,
         cor: corInfo?.codigoHex || '',
         nomeCor: corInfo?.nome || '',
         rolos: 0,
@@ -56,11 +59,20 @@ export const getGroupedStockColumns = (
 };
 
 export const getStockColumnsResume = (): ColumnDef<StockResume>[] => [
-
+  {
+    accessorKey: 'nomeTecido',
+    header: 'Tecido',
+    cell: ({ row }) => <span className="font-medium text-foreground">{row.original.nomeTecido}</span>,
+  },
   {
     accessorKey: 'codigoReferencia',
-    header: 'Tecido',
+    header: 'Cod Referência',
     cell: ({ row }) => <span className="font-medium text-foreground">{row.original.codigoReferencia}</span>,
+  },
+  {
+    accessorKey: 'nomeFornecedor',
+    header: 'Fornecedor',
+    cell: ({ row }) => <span className="text-muted-foreground">{row.original.nomeFornecedor}</span>,
   },
   {
     accessorKey: 'cor',

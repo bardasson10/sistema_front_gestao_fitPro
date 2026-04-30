@@ -31,6 +31,9 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDownIcon, PlusIcon } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { useForm } from "react-hook-form";
 import { ILoteResponse, STATUS_LOTE_OPTIONS_FILTER } from "@/types/Lote";
 import { IFiltrosLote, useGetListAllLotes, useGetResumoPorCor } from "@/hooks/queries/Lote/useLote";
@@ -337,6 +340,9 @@ export default function Lotes() {
         setIsRemoveOpen(true);
     };
 
+    const [histDateFilter, setHistDateFilter] = useState('');
+    const [histCodigoFilter, setHistCodigoFilter] = useState('');
+
     const updateFiltro = (key: IFiltroLoteKey, value: string[]) => {
         setFiltrosRascunho((prev) => ({
             ...prev,
@@ -492,6 +498,85 @@ export default function Lotes() {
                             onRemove={handleRemove}
                         />
                     </div>
+
+                    {/* Histórico de lotes cortados */}
+                    {dataLote && dataLote.length > 0 && (
+                        <div className="mt-6">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Histórico — Lotes Cortados</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    {(() => {
+                                        const cortados = (dataLote || []).filter(l => l.status === 'cortado');
+                                        if (cortados.length === 0) {
+                                            return <div className="text-sm text-muted-foreground">Nenhum lote cortado encontrado.</div>;
+                                        }
+
+                                        const cortadosFiltered = cortados.filter(l => {
+                                            const dateOnly = l.createdAt ? l.createdAt.slice(0, 10) : '';
+                                            if (histDateFilter && dateOnly !== histDateFilter) return false;
+                                            if (histCodigoFilter && l.codigoLote !== histCodigoFilter) return false;
+                                            return true;
+                                        });
+
+                                        const grouped = cortadosFiltered.reduce<Record<string, typeof cortadosFiltered>>((acc, lote) => {
+                                            const dateOnly = lote.createdAt ? lote.createdAt.slice(0, 10) : 'Sem data';
+                                            acc[dateOnly] = acc[dateOnly] || [];
+                                            acc[dateOnly].push(lote);
+                                            return acc;
+                                        }, {});
+
+                                        const dates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+
+                                        return (
+                                            <div>
+                                                <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                    <div>
+                                                        <Label className="text-sm">Data</Label>
+                                                        <Select value={histDateFilter || '__all__'} onValueChange={(v) => setHistDateFilter(v === '__all__' ? '' : v)}>
+                                                            <SelectTrigger className="w-full"><SelectValue placeholder="Filtrar por data" /></SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="__all__">Todos</SelectItem>
+                                                                {opcoesDatas.map(d => <SelectItem key={d.id} value={d.id}>{d.nome}</SelectItem>)}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+
+                                                    <div>
+                                                        <Label className="text-sm">Código do Lote</Label>
+                                                        <Select value={histCodigoFilter || '__all__'} onValueChange={(v) => setHistCodigoFilter(v === '__all__' ? '' : v)}>
+                                                            <SelectTrigger className="w-full"><SelectValue placeholder="Filtrar por código do lote" /></SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="__all__">Todos</SelectItem>
+                                                                {opcoesCodigoLote.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                </div>
+
+                                                {dates.map(date => (
+                                                    <div key={date} className="mb-6">
+                                                        <div className="mb-2 flex items-center justify-between">
+                                                            <h4 className="text-sm font-medium">{new Date(`${date}T00:00:00`).toLocaleDateString('pt-BR')}</h4>
+                                                            <span className="text-xs text-muted-foreground">{grouped[date].length} lote(s)</span>
+                                                        </div>
+
+                                                        <LoteProducaoTable
+                                                            lotesProducao={grouped[date]}
+                                                            isLoading={isLoadingLotes || isDeleting}
+                                                            onView={handleEdit}
+                                                            onRemove={handleRemove}
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        );
+                                    })()}
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
                 </TabsContent>
 
                 <TabsContent value="resumo-grade-por-cor">
