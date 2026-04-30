@@ -11,6 +11,7 @@ import {
   Search,
   Truck,
   Users,
+  ChevronDown,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -33,6 +34,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { DirecionamentoRemessa } from "@/types/Direcionamento"
 import { RemessaRow } from "./components/remessa-row"
 
@@ -108,12 +114,31 @@ export function ListarRemessas({
             Gerencie os direcionamentos para facções
           </p>
         </div>
-        <Link href="/" className="w-full sm:w-auto">
-          <Button className="w-full sm:w-auto">
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Remessa
-          </Button>
-        </Link>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button className="w-full sm:w-auto">
+              <Plus className="mr-2 h-4 w-4" />
+              Nova Remessa
+              <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-48 p-2" align="end">
+            <div className="flex flex-col gap-1">
+              <Link href="/direcionamentos/producao-interna" className="w-full">
+                <Button variant="ghost" className="w-full justify-start">
+                  <Truck className="mr-2 h-4 w-4" />
+                  Remessa Interna
+                </Button>
+              </Link>
+              <Link href="/estoque-corte" className="w-full">
+                <Button variant="ghost" className="w-full justify-start">
+                  <Package className="mr-2 h-4 w-4" />
+                  Remessa Externa
+                </Button>
+              </Link>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* Cards de Estatísticas */}
