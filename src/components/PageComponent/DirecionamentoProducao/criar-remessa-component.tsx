@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, Fragment } from "react"
 import { CalendarIcon, Package, Truck, Plus, Trash2, Search, List, Ban } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
@@ -43,8 +43,8 @@ import type {
 } from "@/types/Direcionamento"
 import type { EstoqueCorte } from "@/types/EstoqueCorte"
 import { Faccao, ServicesValues } from "@/types/Faccao"
-import { UseMutationResult } from "@tanstack/react-query"
 import { PaginatedResponse } from "@/types/production"
+import { UseMutationResult } from "@tanstack/react-query"
 import { Spinner } from "@/components/ui/spinner"
 
 
@@ -52,9 +52,98 @@ interface ItemSelecionado extends ItemDirecionamento {
     estoqueCorte: EstoqueCorte
 }
 
+interface OptionFilterProps {
+    label: string
+    placeholder: string
+    value: string
+    options: string[]
+    onChange: (value: string) => void
+}
+
+function SearchableOptionFilter({
+    label,
+    placeholder,
+    value,
+    options,
+    onChange,
+}: OptionFilterProps) {
+    const [search, setSearch] = useState("")
+
+    const filteredOptions = useMemo(() => {
+        const term = search.trim().toLowerCase()
+        if (!term) return options
+        return options.filter((option) => option.toLowerCase().includes(term))
+    }, [options, search])
+
+    const selectedLabel = value || "Todos"
+
+    return (
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button variant="outline" className="h-10 w-full justify-between text-left font-normal">
+                    <span className="truncate">
+                        {label}: {selectedLabel}
+                    </span>
+                    <span className="text-xs text-muted-foreground">Selecionar</span>
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72 p-3" align="start">
+                <div className="space-y-3">
+                    <div className="space-y-1">
+                        <p className="text-sm font-medium">{label}</p>
+                        <Input
+                            value={search}
+                            onChange={(event) => setSearch(event.target.value)}
+                            placeholder={placeholder}
+                        />
+                    </div>
+                    <div className="max-h-56 overflow-auto rounded-md border">
+                        <button
+                            type="button"
+                            onClick={() => onChange("")}
+                            className={cn(
+                                "flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground",
+                                !value && "bg-accent/60"
+                            )}
+                        >
+                            <span>Todos</span>
+                        </button>
+                        {filteredOptions.length === 0 ? (
+                            <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum resultado</div>
+                        ) : (
+                            filteredOptions.map((option) => {
+                                const active = option === value
+
+                                return (
+                                    <button
+                                        key={option}
+                                        type="button"
+                                        onClick={() => onChange(option)}
+                                        className={cn(
+                                            "flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground",
+                                            active && "bg-accent/60 font-medium"
+                                        )}
+                                    >
+                                        <span className="truncate">{option}</span>
+                                        {active ? <span className="text-xs text-muted-foreground">Selecionado</span> : null}
+                                    </button>
+                                )
+                            })
+                        )}
+                    </div>
+                    {value ? (
+                        <Button type="button" variant="ghost" className="w-full" onClick={() => onChange("")}>Limpar seleção</Button>
+                    ) : null}
+                </div>
+            </PopoverContent>
+        </Popover>
+    )
+}
+
 interface CriarRemessaComponentProps {
     dataFaccoes: Partial<Faccao>[];
     dataEstoqueCorte: EstoqueCorte[];
+    isProducaoInterna?: boolean;
     usePostCriarDirecionamentoRemessa: () => UseMutationResult<{
         data: DirecionamentoRemessa[];
         pagination: PaginatedResponse;
@@ -69,6 +158,7 @@ interface CriarRemessaComponentProps {
 export function CriarRemessaComponent({
     dataFaccoes,
     dataEstoqueCorte,
+    isProducaoInterna = false,
     usePostCriarDirecionamentoRemessa,
     usePostCriarDirecionamentoProducaoInterna,
     onRemessaCriada,
@@ -80,50 +170,82 @@ export function CriarRemessaComponent({
             isPending: false,
         };
     const [faccaoId, setFaccaoId] = useState<string>("")
-    const [tipoServico, setTipoServico] = useState<string>("")
-    const [dataSaida, setDataSaida] = useState<Date | undefined>(new Date())
-    const [dataPrevisaoRetorno, setDataPrevisaoRetorno] = useState<Date>()
+    const [tipoServico, setTipoServico] = useState<string>("costura")
+    const [filtroSku, setFiltroSku] = useState("")
+    const [filtroTamanho, setFiltroTamanho] = useState("")
+    const [filtroCor, setFiltroCor] = useState("")
+    const [filtroLote, setFiltroLote] = useState("")
     const [itensSelecionados, setItensSelecionados] = useState<ItemSelecionado[]>([])
     const [quantidadeInputs, setQuantidadeInputs] = useState<Record<string, string>>({})
     const [busca, setBusca] = useState("")
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-    const [isProducaoInterna, setIsProducaoInterna] = useState<boolean>(false);
     const [observacao, setObservacao] = useState<string>("");
 
+    const skuOptions = useMemo(
+        () => Array.from(new Set(dataEstoqueCorte.map((estoque) => estoque.produto.sku))).sort(),
+        [dataEstoqueCorte]
+    )
 
+    const tamanhoOptions = useMemo(
+        () => Array.from(new Set(dataEstoqueCorte.map((estoque) => estoque.tamanho.nome))).sort(),
+        [dataEstoqueCorte]
+    )
 
-    useEffect(() => {
-        if (!dataSaida || !faccaoId) {
-            setDataPrevisaoRetorno(undefined)
-            return
-        }
+    const corOptions = useMemo(
+        () => Array.from(new Set(dataEstoqueCorte.map((estoque) => estoque.cor.nome))).sort(),
+        [dataEstoqueCorte]
+    )
 
-        const faccao = dataFaccoes.find((f) => f.id === faccaoId)
-        if (!faccao) {
-            setDataPrevisaoRetorno(undefined)
-            return
-        }
-
-        const prazoMedio = faccao?.prazoMedio ?? faccao?.prazoMedioDias ?? 0
-        const novaDataPrevisao = new Date(dataSaida)
-        novaDataPrevisao.setDate(novaDataPrevisao.getDate() + prazoMedio)
-
-        setDataPrevisaoRetorno(novaDataPrevisao)
-    }, [faccaoId, dataSaida, dataFaccoes])
+    const loteOptions = useMemo(
+        () => Array.from(new Set(dataEstoqueCorte.map((estoque) => estoque.lote.codigoLote))).sort(),
+        [dataEstoqueCorte]
+    )
 
 
     const estoquesFiltrados = useMemo(() => {
-        if (!busca) return dataEstoqueCorte
-        const termo = busca.toLowerCase()
-        return dataEstoqueCorte.filter(
-            (e) =>
+        if (!busca && !filtroSku && !filtroTamanho && !filtroCor && !filtroLote) return dataEstoqueCorte
+        const termo = busca.trim().toLowerCase()
+        return dataEstoqueCorte.filter((e) => {
+            const correspondeBusca = !termo ||
                 e.produto.nome.toLowerCase().includes(termo) ||
                 e.produto.sku.toLowerCase().includes(termo) ||
                 e.tamanho.nome.toLowerCase().includes(termo) ||
                 e.cor.nome.toLowerCase().includes(termo) ||
                 e.lote.codigoLote.toLowerCase().includes(termo)
-        )
-    }, [busca])
+
+            const correspondeSku = !filtroSku || e.produto.sku === filtroSku
+            const correspondeTamanho = !filtroTamanho || e.tamanho.nome === filtroTamanho
+            const correspondeCor = !filtroCor || e.cor.nome === filtroCor
+            const correspondeLote = !filtroLote || e.lote.codigoLote === filtroLote
+
+            return (
+                correspondeBusca &&
+                correspondeSku &&
+                correspondeTamanho &&
+                correspondeCor &&
+                correspondeLote
+            )
+        })
+    }, [busca, filtroSku, filtroTamanho, filtroCor, filtroLote, dataEstoqueCorte])
+
+    const estoquesAgrupadosPorSku = useMemo(() => {
+        const grupos = new Map<string, EstoqueCorte[]>()
+
+        estoquesFiltrados.forEach((estoque) => {
+            const sku = estoque.produto.sku
+            const itens = grupos.get(sku) ?? []
+            itens.push(estoque)
+            grupos.set(sku, itens)
+        })
+
+        return Array.from(grupos.entries())
+            .map(([sku, itens]) => ({
+                sku,
+                itens,
+                totalDisponivel: itens.reduce((acc, item) => acc + item.quantidadeDisponivel, 0),
+            }))
+            .sort((a, b) => a.sku.localeCompare(b.sku))
+    }, [estoquesFiltrados])
 
     const totalItens = useMemo(() => {
         return itensSelecionados.reduce((acc, item) => acc + item.quantidade, 0)
@@ -194,6 +316,27 @@ export function CriarRemessaComponent({
         )
     }
 
+    const handleRemoveSku = (sku: string) => {
+        // Remove todos os itens com esse SKU
+        const itemsToRemove = itensSelecionados
+            .filter((item) => item.estoqueCorte.produto.sku === sku)
+            .map((item) => item.estoqueCorteId)
+
+        // Limpar inputs de quantidade
+        setQuantidadeInputs((prev) => {
+            const newInputs = { ...prev }
+            itemsToRemove.forEach((id) => {
+                delete newInputs[id]
+            })
+            return newInputs
+        })
+
+        // Remover itens
+        setItensSelecionados((prev) =>
+            prev.filter((item) => item.estoqueCorte.produto.sku !== sku)
+        )
+    }
+
     const isItemSelecionado = (estoqueCorteId: string) => {
         return itensSelecionados.some((item) => item.estoqueCorteId === estoqueCorteId)
     }
@@ -204,7 +347,7 @@ export function CriarRemessaComponent({
 
     const canSubmit = isProducaoInterna
         ? itensSelecionados.length > 0
-        : !!(faccaoId && tipoServico && dataSaida && dataPrevisaoRetorno && itensSelecionados.length > 0)
+        : !!(faccaoId && tipoServico && itensSelecionados.length > 0)
 
     const handleSubmit = async () => {
         if (!canSubmit) return
@@ -229,7 +372,7 @@ export function CriarRemessaComponent({
             criarProducaoInterna(payloadInterna, {
                 onSuccess: () => {
                     onRemessaCriada?.()
-                    setTipoServico("")
+                    setTipoServico("costura")
                     setItensSelecionados([])
                     setQuantidadeInputs({})
                     setObservacao("")
@@ -243,13 +386,20 @@ export function CriarRemessaComponent({
             return
         }
 
+        const dataSaida = new Date()
+        
+        const faccao = dataFaccoes.find((f) => f.id === faccaoId)
+        const prazoMedio = faccao?.prazoMedio ?? faccao?.prazoMedioDias ?? 0
+        const dataPrevisaoRetorno = new Date(dataSaida)
+        dataPrevisaoRetorno.setDate(dataPrevisaoRetorno.getDate() + prazoMedio)
+
         const payload: DirecionamentoRequestBodyPayload = {
             direcionamentos: [
                 {
                     faccaoId: faccaoId,
                     tipoServico: tipoServico.toLocaleLowerCase(),
-                    dataSaida: dataSaida!.toISOString(),
-                    dataPrevisaoRetorno: dataPrevisaoRetorno!.toISOString(),
+                    dataSaida: dataSaida.toISOString(),
+                    dataPrevisaoRetorno: dataPrevisaoRetorno.toISOString(),
                     items: itensSelecionados.map((item) => ({
                         estoqueCorteId: item.estoqueCorteId,
                         quantidade: item.quantidade,
@@ -263,9 +413,7 @@ export function CriarRemessaComponent({
                 onRemessaCriada?.()
                 // Reset form
                 setFaccaoId("")
-                setTipoServico("")
-                setDataSaida(undefined)
-                setDataPrevisaoRetorno(undefined)
+                setTipoServico("costura")
                 setItensSelecionados([])
                 setQuantidadeInputs({})
                 setObservacao("")
@@ -311,134 +459,59 @@ export function CriarRemessaComponent({
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col gap-4">
-                        <div className="flex items-start gap-3 rounded-md border p-3">
-                            <Checkbox
-                                id="producao-interna"
-                                checked={isProducaoInterna}
-                                onCheckedChange={(checked) => {
-                                    const value = checked === true
-                                    setIsProducaoInterna(value)
-                                    if (value) {
-                                        setFaccaoId("")
-                                        setDataPrevisaoRetorno(undefined)
-                                        setTipoServico("costura")
-                                    } else {
-                                        setTipoServico("")
-                                    }
-                                }}
-                            />
-                            <div className="space-y-1">
-                                <Label htmlFor="producao-interna" className="cursor-pointer">
-                                    Criar como produção interna
-                                </Label>
-                            </div>
-                        </div>
-
-                        {/* Facção */}
-                        <div className="flex flex-col gap-2">
-                            <Label htmlFor="faccao">Facção</Label>
-                            <Select disabled={isProducaoInterna} value={faccaoId} onValueChange={(value) => {
-                                setFaccaoId(value);
-                                setTipoServico("");
-                            }}>
-                                <SelectTrigger id="faccao">
-                                    <SelectValue placeholder="Selecione uma facção" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {dataFaccoes.map((faccao) => (
-                                        <SelectItem key={faccao.id} value={faccao.id ?? ""}>
-                                            {faccao.nome}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        {/* Tipo de Serviço */}
-                        <div className="flex flex-col gap-2">
-                            <Label htmlFor="tipoServico">Tipo de Serviço</Label>
-                            <Select
-                                value={tipoServico}
-                                onValueChange={setTipoServico}
-                                disabled={isProducaoInterna || !faccaoId}
-                            >
-                                <SelectTrigger id="tipoServico">
-                                    <SelectValue
-                                        placeholder={
-                                            isProducaoInterna
-                                                ? "Costura (fixo para produção interna)"
-                                                : faccaoId
-                                                    ? "Selecione o serviço"
-                                                    : "Selecione uma facção primeiro"
-                                        }
-                                    />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {ServicesValues.map((tipo) => (
-                                        <SelectItem key={tipo} value={tipo.toLowerCase()} className="capitalize">
-                                            {tipo}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        {isProducaoInterna && (
+                        {!isProducaoInterna ? (
                             <div className="flex flex-col gap-2">
-                                <Label htmlFor="observacao">Observação</Label>
-                                <Input
-                                    id="observacao"
-                                    value={observacao}
-                                    onChange={(event) => setObservacao(event.target.value)}
-                                    placeholder="Opcional"
-                                />
+                                <Label htmlFor="faccao">Facção</Label>
+                                <Select value={faccaoId} onValueChange={setFaccaoId}>
+                                    <SelectTrigger id="faccao">
+                                        <SelectValue placeholder="Selecione uma facção" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {dataFaccoes.map((faccao) => (
+                                            <SelectItem key={faccao.id} value={faccao.id ?? ""}>
+                                                {faccao.nome}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
-                        )}
-{/* 
-                        Data de Saída
-                        <div className="flex flex-col gap-2">
-                            <Label>Data de Saída</Label>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        className={cn(
-                                            "justify-start text-left font-normal",
-                                            !dataSaida && "text-muted-foreground"
-                                        )}
-                                    >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {dataSaida ? format(dataSaida, "dd/MM/yyyy", { locale: ptBR }) : "Selecione a data"}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                        mode="single"
-                                        selected={dataSaida}
-                                        onSelect={setDataSaida}
-                                        locale={ptBR}
-                                    />
-                                </PopoverContent>
-                            </Popover>
-                        </div> */}
+                        ) : null}
 
-                        {/* Data de Previsão de Retorno */}
-                        {/* <div className="flex flex-col gap-2">
-                            <Label>Previsão de Retorno</Label>
+                        <div className="flex flex-col gap-2">
+                            <Label>Data de Hoje</Label>
                             <div className="relative">
                                 <CalendarIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input
                                     disabled
                                     readOnly
                                     className="pl-9"
-                                    value={
-                                        dataPrevisaoRetorno
-                                            ? format(dataPrevisaoRetorno, "dd/MM/yyyy", { locale: ptBR })
-                                            : "Aguardando Facção"
-                                    }
+                                    value={format(new Date(), "dd/MM/yyyy", { locale: ptBR })}
                                 />
                             </div>
-                        </div> */}
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <Label htmlFor="tipoServico">Tipo de Serviço</Label>
+                            <Select value={tipoServico} onValueChange={setTipoServico}>
+                                <SelectTrigger id="tipoServico">
+                                    <SelectValue placeholder="Selecione" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="costura">Costura</SelectItem>
+                                    <SelectItem value="corte">Corte</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <Label htmlFor="observacao">Observação</Label>
+                            <Input
+                                id="observacao"
+                                value={observacao}
+                                onChange={(event) => setObservacao(event.target.value)}
+                                placeholder="Opcional"
+                            />
+                        </div>
 
                         {/* Botão de Submit */}
                         <div className="flex flex-col gap-2 sm:flex-row sm:justify-center sm:gap-3">
@@ -487,6 +560,36 @@ export function CriarRemessaComponent({
                                 />
                             </div>
                         </div>
+                        <div className="grid gap-3 pt-4 sm:grid-cols-2 xl:grid-cols-4">
+                            <SearchableOptionFilter
+                                label="SKU"
+                                placeholder="Buscar SKU"
+                                value={filtroSku}
+                                options={skuOptions}
+                                onChange={setFiltroSku}
+                            />
+                            <SearchableOptionFilter
+                                label="Cor"
+                                placeholder="Buscar cor"
+                                value={filtroCor}
+                                options={corOptions}
+                                onChange={setFiltroCor}
+                            />
+                            <SearchableOptionFilter
+                                label="Tamanho"
+                                placeholder="Buscar tamanho"
+                                value={filtroTamanho}
+                                options={tamanhoOptions}
+                                onChange={setFiltroTamanho}
+                            />
+                            <SearchableOptionFilter
+                                label="Lote"
+                                placeholder="Buscar lote"
+                                value={filtroLote}
+                                options={loteOptions}
+                                onChange={setFiltroLote}
+                            />
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <div className="max-h-[320px] overflow-auto rounded-md border sm:max-h-[340px]">
@@ -503,79 +606,88 @@ export function CriarRemessaComponent({
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {estoquesFiltrados.length === 0 ? (
+                                    {estoquesAgrupadosPorSku.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                                                 Nenhum item encontrado
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        estoquesFiltrados.map((estoque) => {
-                                            const selecionado = isItemSelecionado(estoque.id)
-                                            const quantidade = getQuantidadeSelecionada(estoque.id)
-
-                                            return (
-                                                <TableRow
-                                                    key={estoque.id}
-                                                    className={cn(selecionado && "bg-primary/5")}
-                                                >
-                                                    <TableCell>
-                                                        <Checkbox
-                                                            checked={selecionado}
-                                                            onCheckedChange={(checked) =>
-                                                                handleToggleItem(estoque, checked as boolean)
-                                                            }
-                                                        />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div className="flex flex-col">
-                                                            <span className="font-medium">{estoque.produto.nome}</span>
-                                                            <span className="text-xs text-muted-foreground">
-                                                                {estoque.produto.sku}
-                                                            </span>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge variant="secondary">{estoque.tamanho.nome}</Badge>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div className="flex items-center gap-2">
-                                                            <div
-                                                                className="h-4 w-4 rounded-full border"
-                                                                style={{ backgroundColor: estoque.cor.codigoHex }}
-                                                            />
-                                                            <span>{estoque.cor.nome}</span>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div className="flex flex-col">
-                                                            <span className="text-sm">{estoque.lote.codigoLote}</span>
-                                                            <span className="text-xs text-muted-foreground">
-                                                                {estoque.lote.tecido.nome}
-                                                            </span>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="text-right font-medium">
-                                                        {estoque.quantidadeDisponivel}
-                                                    </TableCell>
-                                                    <TableCell className="text-right">
-                                                        {selecionado ? (
-                                                            <Input
-                                                                type="number"
-                                                                min={1}
-                                                                max={estoque.quantidadeDisponivel}
-                                                                value={quantidadeInputs[estoque.id] ?? String(quantidade)}
-                                                                onChange={(e) => handleQuantidadeInputChange(estoque.id, e.target.value)}
-                                                                onBlur={() => handleQuantidadeBlur(estoque.id, estoque.quantidadeDisponivel)}
-                                                                className="h-8 w-20 text-right ml-auto"
-                                                            />
-                                                        ) : (
-                                                            <span className="text-muted-foreground">-</span>
-                                                        )}
+                                        estoquesAgrupadosPorSku.map((grupo) => (
+                                            <Fragment key={grupo.sku}>
+                                                <TableRow className="bg-muted/40">
+                                                    <TableCell colSpan={7} className="py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                                        SKU {grupo.sku} - {grupo.itens.length} item(ns) - {grupo.totalDisponivel} disponível(is)
                                                     </TableCell>
                                                 </TableRow>
-                                            )
-                                        })
+                                                {grupo.itens.map((estoque) => {
+                                                    const selecionado = isItemSelecionado(estoque.id)
+                                                    const quantidade = getQuantidadeSelecionada(estoque.id)
+
+                                                    return (
+                                                        <TableRow
+                                                            key={estoque.id}
+                                                            className={cn(selecionado && "bg-primary/5")}
+                                                        >
+                                                            <TableCell>
+                                                                <Checkbox
+                                                                    checked={selecionado}
+                                                                    onCheckedChange={(checked) =>
+                                                                        handleToggleItem(estoque, checked as boolean)
+                                                                    }
+                                                                />
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-medium">{estoque.produto.nome}</span>
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        {estoque.produto.sku}
+                                                                    </span>
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <Badge variant="secondary">{estoque.tamanho.nome}</Badge>
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <div className="flex items-center gap-2">
+                                                                    <div
+                                                                        className="h-4 w-4 rounded-full border"
+                                                                        style={{ backgroundColor: estoque.cor.codigoHex }}
+                                                                    />
+                                                                    <span>{estoque.cor.nome}</span>
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-sm">{estoque.lote.codigoLote}</span>
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        {estoque.lote.tecido.nome}
+                                                                    </span>
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className="text-right font-medium">
+                                                                {estoque.quantidadeDisponivel}
+                                                            </TableCell>
+                                                            <TableCell className="text-right">
+                                                                {selecionado ? (
+                                                                    <Input
+                                                                        type="number"
+                                                                        min={1}
+                                                                        max={estoque.quantidadeDisponivel}
+                                                                        value={quantidadeInputs[estoque.id] ?? String(quantidade)}
+                                                                        onChange={(e) => handleQuantidadeInputChange(estoque.id, e.target.value)}
+                                                                        onBlur={() => handleQuantidadeBlur(estoque.id, estoque.quantidadeDisponivel)}
+                                                                        className="h-8 w-20 text-right ml-auto"
+                                                                    />
+                                                                ) : (
+                                                                    <span className="text-muted-foreground">-</span>
+                                                                )}
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    )
+                                                })}
+                                            </Fragment>
+                                        ))
                                     )}
                                 </TableBody>
                             </Table>
@@ -594,25 +706,56 @@ export function CriarRemessaComponent({
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex flex-wrap gap-2">
-                            {itensSelecionados.map((item) => (
-                                <Badge
-                                    key={item.estoqueCorteId}
-                                    variant="secondary"
-                                    className="flex items-center gap-2 py-1.5 pl-3 pr-1.5"
-                                >
-                                    <span>
-                                        {item.estoqueCorte.produto.nome} - {item.estoqueCorte.tamanho.nome} - {item.estoqueCorte.cor.nome}
-                                    </span>
-                                    <span className="font-semibold">({item.quantidade})</span>
-                                    <button
-                                        onClick={() => handleRemoveItem(item.estoqueCorteId)}
-                                        className="ml-1 rounded-full p-0.5 hover:bg-destructive/20"
-                                    >
-                                        <Trash2 className="h-3 w-3" />
-                                    </button>
-                                </Badge>
-                            ))}
+                        <div className="space-y-3">
+                            {useMemo(() => {
+                                // Agrupar por SKU
+                                const skuGroups = new Map<string, typeof itensSelecionados>()
+                                itensSelecionados.forEach((item) => {
+                                    const sku = item.estoqueCorte.produto.sku
+                                    if (!skuGroups.has(sku)) {
+                                        skuGroups.set(sku, [])
+                                    }
+                                    skuGroups.get(sku)!.push(item)
+                                })
+
+                                // Calcular disponível total por SKU (somando de todos os estoques com esse SKU)
+                                const skuDisponivel = new Map<string, number>()
+                                dataEstoqueCorte.forEach((estoque) => {
+                                    const sku = estoque.produto.sku
+                                    if (!skuDisponivel.has(sku)) {
+                                        skuDisponivel.set(sku, 0)
+                                    }
+                                    skuDisponivel.set(sku, skuDisponivel.get(sku)! + estoque.quantidadeDisponivel)
+                                })
+
+                                return Array.from(skuGroups.entries()).map(([sku, items]) => (
+                                    <div key={sku} className="space-y-2 rounded-md border p-3">
+                                        <div className="flex items-center justify-between">
+                                            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                                SKU {sku} - {items.length} item(ns) - {skuDisponivel.get(sku) || 0} disponível(is)
+                                            </div>
+                                            <button
+                                                onClick={() => handleRemoveSku(sku)}
+                                                className="rounded-full p-0.5 hover:bg-destructive/20"
+                                            >
+                                                <Trash2 className="h-3 w-3" />
+                                            </button>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {items.map((item) => (
+                                                <Badge
+                                                    key={item.estoqueCorteId}
+                                                    variant="outline"
+                                                    className="text-xs"
+                                                >
+                                                    {item.estoqueCorte.tamanho.nome} - {item.estoqueCorte.cor.nome}
+                                                    <span className="ml-1 font-semibold">({item.quantidade})</span>
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))
+                            }, [itensSelecionados, dataEstoqueCorte])}
                         </div>
                     </CardContent>
                 </Card>

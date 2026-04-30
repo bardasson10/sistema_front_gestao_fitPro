@@ -28,6 +28,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { X } from 'lucide-react';
 import { IFiltroEstoqueRolo } from '@/types/EstoqueRolo';
 import { useCores, useFornecedores, useTecidos } from '@/hooks/queries/useMateriais';
+import { useTamanhos } from '@/hooks/queries/useProdutos';
+import { useLotesProducaoCompleto } from '@/hooks/queries/useProducao';
 
 const estoqueRoloFiltersSchema = z.object({
   estoqueRoloId: z.string().optional(),
@@ -36,6 +38,10 @@ const estoqueRoloFiltersSchema = z.object({
   dataFim: z.string().optional(),
   tecidoId: z.string().optional(),
   fornecedorId: z.string().optional(),
+  corId: z.string().optional(),
+  tamanhoId: z.string().optional(),
+  loteProducaoId: z.string().optional(),
+  codigoLote: z.string().optional(),
 });
 
 export type EstoqueRoloFiltersValues = z.infer<typeof estoqueRoloFiltersSchema>;
@@ -60,12 +66,18 @@ export function EstoqueRoloFilters({ onFilter, onClear }: EstoqueRoloFiltersProp
       dataFim: undefined,
       tecidoId: undefined,
       fornecedorId: undefined,
+      corId: undefined,
+      tamanhoId: undefined,
+      loteProducaoId: undefined,
+      codigoLote: undefined,
     },
   });
 
   const { data: fornecedoresData } = useFornecedores();
   const { data: coresData } = useCores();
   const { data: tecidosResponse } = useTecidos();
+  const { data: tamanhosData } = useTamanhos();
+  const { data: lotesResponse } = useLotesProducaoCompleto({ limit: 1000 });
 
   const coresMap = useMemo(
     () => new Map((coresData || []).map((cor) => [cor.id, cor])),
@@ -93,6 +105,8 @@ export function EstoqueRoloFilters({ onFilter, onClear }: EstoqueRoloFiltersProp
     return tecidos.filter((tecido) => tecido.fornecedorId === fornecedorSelecionado);
   }, [fornecedorSelecionado, tecidos]);
 
+  const lotes = useMemo(() => lotesResponse?.data || [], [lotesResponse?.data]);
+
   const formatDateLabel = (value?: string) => {
     if (!value) return 'Selecionar data';
 
@@ -110,6 +124,10 @@ export function EstoqueRoloFilters({ onFilter, onClear }: EstoqueRoloFiltersProp
       dataFim: values.dataFim || undefined,
       tecidoId: values.tecidoId || undefined,
       fornecedorId: values.fornecedorId || undefined,
+      corId: values.corId || undefined,
+      tamanhoId: values.tamanhoId || undefined,
+      loteProducaoId: values.loteProducaoId || undefined,
+      codigoLote: values.codigoLote || undefined,
     });
   };
 
@@ -121,6 +139,10 @@ export function EstoqueRoloFilters({ onFilter, onClear }: EstoqueRoloFiltersProp
       dataFim: undefined,
       tecidoId: undefined,
       fornecedorId: undefined,
+      corId: undefined,
+      tamanhoId: undefined,
+      loteProducaoId: undefined,
+      codigoLote: undefined,
     });
     onClear();
   };
@@ -139,6 +161,102 @@ export function EstoqueRoloFilters({ onFilter, onClear }: EstoqueRoloFiltersProp
                   <Input
                     className="w-full"
                     placeholder="Filtrar por ID"
+                    value={field.value ?? ''}
+                    onChange={(event) => field.onChange(event.target.value || undefined)}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="corId"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormLabel className="text-xs">Cor</FormLabel>
+                <Select value={field.value ?? ''} onValueChange={(value) => field.onChange(value || undefined)}>
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecionar..." />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {(coresData || []).map((cor) => (
+                      <SelectItem key={cor.id} value={cor.id}>
+                        <span className="flex items-center gap-2">
+                          <span
+                            className="h-2.5 w-2.5 rounded-full border"
+                            style={{ backgroundColor: cor.codigoHex }}
+                          />
+                          {cor.nome}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="tamanhoId"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormLabel className="text-xs">Tamanho</FormLabel>
+                <Select value={field.value ?? ''} onValueChange={(value) => field.onChange(value || undefined)}>
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecionar..." />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {(tamanhosData || []).map((tamanho) => (
+                      <SelectItem key={tamanho.id} value={tamanho.id}>
+                        {tamanho.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="loteProducaoId"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormLabel className="text-xs">Lote</FormLabel>
+                <Select value={field.value ?? ''} onValueChange={(value) => field.onChange(value || undefined)}>
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecionar..." />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {lotes.map((lote) => (
+                      <SelectItem key={lote.id} value={lote.id}>
+                        {lote.codigoLote}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="codigoLote"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormLabel className="text-xs">Código do Lote</FormLabel>
+                <FormControl>
+                  <Input
+                    className="w-full"
+                    placeholder="Filtrar por código"
                     value={field.value ?? ''}
                     onChange={(event) => field.onChange(event.target.value || undefined)}
                   />

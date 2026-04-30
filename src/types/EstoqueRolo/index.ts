@@ -78,6 +78,10 @@ export interface IFiltroEstoqueRolo {
     dataInicio?: string,
     dataFim?: string,
     tecidoId?: string,
+    corId?: string,
+    tamanhoId?: string,
+    loteProducaoId?: string,
+    codigoLote?: string,
     situacao?: string
     fornecedorId?: string,
     page?: number | string,
