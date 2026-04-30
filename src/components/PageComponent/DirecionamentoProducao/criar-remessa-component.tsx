@@ -251,6 +251,34 @@ export function CriarRemessaComponent({
         return itensSelecionados.reduce((acc, item) => acc + item.quantidade, 0)
     }, [itensSelecionados])
 
+    const itensSelecionadosAgrupadosPorSku = useMemo(() => {
+        // Agrupar por SKU
+        const skuGroups = new Map<string, typeof itensSelecionados>()
+        itensSelecionados.forEach((item) => {
+            const sku = item.estoqueCorte.produto.sku
+            if (!skuGroups.has(sku)) {
+                skuGroups.set(sku, [])
+            }
+            skuGroups.get(sku)!.push(item)
+        })
+
+        // Calcular disponível total por SKU (somando de todos os estoques com esse SKU)
+        const skuDisponivel = new Map<string, number>()
+        dataEstoqueCorte.forEach((estoque) => {
+            const sku = estoque.produto.sku
+            if (!skuDisponivel.has(sku)) {
+                skuDisponivel.set(sku, 0)
+            }
+            skuDisponivel.set(sku, skuDisponivel.get(sku)! + estoque.quantidadeDisponivel)
+        })
+
+        return Array.from(skuGroups.entries()).map(([sku, items]) => ({
+            sku,
+            items,
+            disponivel: skuDisponivel.get(sku) || 0,
+        }))
+    }, [itensSelecionados, dataEstoqueCorte])
+
     const handleToggleItem = (estoque: EstoqueCorte, checked: boolean) => {
         if (checked) {
             setQuantidadeInputs((prev) => ({ ...prev, [estoque.id]: "1" }))
@@ -492,15 +520,13 @@ export function CriarRemessaComponent({
 
                         <div className="flex flex-col gap-2">
                             <Label htmlFor="tipoServico">Tipo de Serviço</Label>
-                            <Select value={tipoServico} onValueChange={setTipoServico}>
-                                <SelectTrigger id="tipoServico">
-                                    <SelectValue placeholder="Selecione" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="costura">Costura</SelectItem>
-                                    <SelectItem value="corte">Corte</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <Input
+                                id="tipoServico"
+                                disabled
+                                readOnly
+                                className="bg-muted capitalize"
+                                value="Costura"
+                            />
                         </div>
 
                         <div className="flex flex-col gap-2">
@@ -707,55 +733,33 @@ export function CriarRemessaComponent({
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-3">
-                            {useMemo(() => {
-                                // Agrupar por SKU
-                                const skuGroups = new Map<string, typeof itensSelecionados>()
-                                itensSelecionados.forEach((item) => {
-                                    const sku = item.estoqueCorte.produto.sku
-                                    if (!skuGroups.has(sku)) {
-                                        skuGroups.set(sku, [])
-                                    }
-                                    skuGroups.get(sku)!.push(item)
-                                })
-
-                                // Calcular disponível total por SKU (somando de todos os estoques com esse SKU)
-                                const skuDisponivel = new Map<string, number>()
-                                dataEstoqueCorte.forEach((estoque) => {
-                                    const sku = estoque.produto.sku
-                                    if (!skuDisponivel.has(sku)) {
-                                        skuDisponivel.set(sku, 0)
-                                    }
-                                    skuDisponivel.set(sku, skuDisponivel.get(sku)! + estoque.quantidadeDisponivel)
-                                })
-
-                                return Array.from(skuGroups.entries()).map(([sku, items]) => (
-                                    <div key={sku} className="space-y-2 rounded-md border p-3">
-                                        <div className="flex items-center justify-between">
-                                            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                                                SKU {sku} - {items.length} item(ns) - {skuDisponivel.get(sku) || 0} disponível(is)
-                                            </div>
-                                            <button
-                                                onClick={() => handleRemoveSku(sku)}
-                                                className="rounded-full p-0.5 hover:bg-destructive/20"
-                                            >
-                                                <Trash2 className="h-3 w-3" />
-                                            </button>
+                            {itensSelecionadosAgrupadosPorSku.map(({ sku, items, disponivel }) => (
+                                <div key={sku} className="space-y-2 rounded-md border p-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                            SKU {sku} - {items.length} item(ns) - {disponivel} disponível(is)
                                         </div>
-                                        <div className="flex flex-wrap gap-2">
-                                            {items.map((item) => (
-                                                <Badge
-                                                    key={item.estoqueCorteId}
-                                                    variant="outline"
-                                                    className="text-xs"
-                                                >
-                                                    {item.estoqueCorte.tamanho.nome} - {item.estoqueCorte.cor.nome}
-                                                    <span className="ml-1 font-semibold">({item.quantidade})</span>
-                                                </Badge>
-                                            ))}
-                                        </div>
+                                        <button
+                                            onClick={() => handleRemoveSku(sku)}
+                                            className="rounded-full p-0.5 hover:bg-destructive/20"
+                                        >
+                                            <Trash2 className="h-3 w-3" />
+                                        </button>
                                     </div>
-                                ))
-                            }, [itensSelecionados, dataEstoqueCorte])}
+                                    <div className="flex flex-wrap gap-2">
+                                        {items.map((item) => (
+                                            <Badge
+                                                key={item.estoqueCorteId}
+                                                variant="outline"
+                                                className="text-xs"
+                                            >
+                                                {item.estoqueCorte.tamanho.nome} - {item.estoqueCorte.cor.nome}
+                                                <span className="ml-1 font-semibold">({item.quantidade})</span>
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </CardContent>
                 </Card>
