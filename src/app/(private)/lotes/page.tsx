@@ -476,12 +476,19 @@ export default function Lotes() {
 
                 <TabsContent value="lotes-cadastrados">
                     <div className="hidden md:block">
-                        <LoteProducaoTable
-                            lotesProducao={lotesPrincipais}
-                            isLoading={isLoadingLotes || isDeleting}
-                            onView={handleEdit}
-                            onRemove={handleRemove}
-                        />
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Histórico — Lotes em Andamento</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <LoteProducaoTable
+                                    lotesProducao={lotesPrincipais}
+                                    isLoading={isLoadingLotes || isDeleting}
+                                    onView={handleEdit}
+                                    onRemove={handleRemove}
+                                />
+                            </CardContent>
+                        </Card>
                     </div>
 
                     <div className="block md:hidden">
