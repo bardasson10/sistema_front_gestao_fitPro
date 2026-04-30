@@ -478,7 +478,7 @@ export default function Lotes() {
                     <div className="hidden md:block">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Histórico — Lotes em Andamento</CardTitle>
+                                <CardTitle>Lotes em Andamento</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <LoteProducaoTable
