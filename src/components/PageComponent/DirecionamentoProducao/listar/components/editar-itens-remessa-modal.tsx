@@ -10,6 +10,21 @@ import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Spinner } from "@/components/ui/spinner"
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table"
+import {
     Dialog,
     DialogContent,
     DialogDescription,
@@ -41,6 +56,9 @@ const getEstoqueCorteId = (item: DirecionamentoRemessa["items"][number]) => {
 export function EditarItensRemessaModal({ remessa, disabled }: EditarItensRemessaModalProps) {
     const [open, setOpen] = useState(false)
     const [busca, setBusca] = useState("")
+    const [skuFiltro, setSkuFiltro] = useState("todos")
+    const [corFiltro, setCorFiltro] = useState("todos")
+    const [tamanhoFiltro, setTamanhoFiltro] = useState("todos")
     const [quantidadesEditadas, setQuantidadesEditadas] = useState<QuantidadeMap>({})
 
     const { data: estoquesData, isFetching } = useGetEstoqueCorteLista(undefined, {
@@ -72,6 +90,20 @@ export function EditarItensRemessaModal({ remessa, disabled }: EditarItensRemess
         return Math.max(min, Math.min(quantidadeTratada, max))
     }
 
+    const normalizarTexto = (valor?: string | null) => (valor ?? "").trim().toLowerCase()
+
+    const filtraPorCampos = (campos: { sku?: string | null; cor?: string | null; tamanho?: string | null }) => {
+        const matchSku = skuFiltro === "todos" || normalizarTexto(campos.sku) === normalizarTexto(skuFiltro)
+        const matchCor = corFiltro === "todos" || normalizarTexto(campos.cor) === normalizarTexto(corFiltro)
+        const matchTamanho =
+            tamanhoFiltro === "todos" || normalizarTexto(campos.tamanho) === normalizarTexto(tamanhoFiltro)
+
+        return matchSku && matchCor && matchTamanho
+    }
+
+    const buildOptions = (values: string[]) =>
+        Array.from(new Set(values.filter(Boolean))).sort((a, b) => a.localeCompare(b, "pt-BR"))
+
     const handleOpenChange = (nextOpen: boolean) => {
         setOpen(nextOpen)
 
@@ -80,6 +112,9 @@ export function EditarItensRemessaModal({ remessa, disabled }: EditarItensRemess
         }
 
         setBusca("")
+        setSkuFiltro("todos")
+        setCorFiltro("todos")
+        setTamanhoFiltro("todos")
         setQuantidadesEditadas(
             Object.entries(quantidadesOriginais).reduce<QuantidadeMap>((acc, [id, quantidade]) => {
                 acc[id] = String(quantidade)
@@ -113,11 +148,63 @@ export function EditarItensRemessaModal({ remessa, disabled }: EditarItensRemess
         return estoques.filter((estoque) => !quantidadesOriginais[estoque.id])
     }, [estoques, quantidadesOriginais])
 
+    const skuOptions = useMemo(() => {
+        const skusRemessa = remessa.items.map((item) => item.produto?.sku ?? "")
+        const skusEstoque = estoquesDisponiveis.map((estoque) => estoque.produto.sku)
+        return buildOptions([...skusRemessa, ...skusEstoque])
+    }, [remessa.items, estoquesDisponiveis])
+
+    const corOptions = useMemo(() => {
+        const coresRemessa = remessa.items.map((item) => item.produto?.cor?.nome ?? "")
+        const coresEstoque = estoquesDisponiveis.map((estoque) => estoque.cor.nome)
+        return buildOptions([...coresRemessa, ...coresEstoque])
+    }, [remessa.items, estoquesDisponiveis])
+
+    const tamanhoOptions = useMemo(() => {
+        const tamanhosRemessa = remessa.items.map((item) => item.produto?.tamanho ?? "")
+        const tamanhosEstoque = estoquesDisponiveis.map((estoque) => estoque.tamanho.nome)
+        return buildOptions([...tamanhosRemessa, ...tamanhosEstoque])
+    }, [remessa.items, estoquesDisponiveis])
+
+    const remessaItemsFiltradosComCampos = useMemo(() => {
+        return remessaItemsFiltrados.filter((item) =>
+            filtraPorCampos({
+                sku: item.produto?.sku,
+                cor: item.produto?.cor?.nome,
+                tamanho: item.produto?.tamanho,
+            }),
+        )
+    }, [remessaItemsFiltrados, skuFiltro, corFiltro, tamanhoFiltro])
+
+    const remessaItensAgrupadosPorSku = useMemo(() => {
+        return remessaItemsFiltradosComCampos.reduce<Record<string, DirecionamentoRemessa["items"]>>((acc, item) => {
+            const sku = item.produto?.sku || "Sem SKU"
+            if (!acc[sku]) {
+                acc[sku] = []
+            }
+            acc[sku].push(item)
+            return acc
+        }, {})
+    }, [remessaItemsFiltradosComCampos])
+
+    const skusOrdenados = useMemo(
+        () => Object.keys(remessaItensAgrupadosPorSku).sort((a, b) => a.localeCompare(b, "pt-BR")),
+        [remessaItensAgrupadosPorSku],
+    )
+
     const estoquesDisponiveisFiltrados = useMemo(() => {
-        if (!busca) return estoquesDisponiveis
+        const estoquesComFiltroDeCampos = estoquesDisponiveis.filter((estoque) =>
+            filtraPorCampos({
+                sku: estoque.produto.sku,
+                cor: estoque.cor.nome,
+                tamanho: estoque.tamanho.nome,
+            }),
+        )
+
+        if (!busca) return estoquesComFiltroDeCampos
 
         const termo = busca.toLowerCase()
-        return estoquesDisponiveis.filter((estoque) => {
+        return estoquesComFiltroDeCampos.filter((estoque) => {
             return (
                 estoque.produto.nome.toLowerCase().includes(termo) ||
                 estoque.produto.sku.toLowerCase().includes(termo) ||
@@ -126,7 +213,7 @@ export function EditarItensRemessaModal({ remessa, disabled }: EditarItensRemess
                 estoque.lote.codigoLote.toLowerCase().includes(termo)
             )
         })
-    }, [busca, estoquesDisponiveis])
+    }, [busca, corFiltro, estoquesDisponiveis, skuFiltro, tamanhoFiltro])
 
     const handleQuantidadeRemessaChange = (itemId: string, valor: string) => {
         if (valor !== "" && !/^\d+$/.test(valor)) return
@@ -274,26 +361,72 @@ export function EditarItensRemessaModal({ remessa, disabled }: EditarItensRemess
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="relative w-full sm:max-w-md">
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                                value={busca}
-                                onChange={(e) => setBusca(e.target.value)}
-                                placeholder="Buscar por produto, SKU, tamanho, cor ou lote..."
-                                className="pl-9"
-                            />
+                    <div className="flex flex-col gap-3">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="relative w-full sm:max-w-md">
+                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    value={busca}
+                                    onChange={(e) => setBusca(e.target.value)}
+                                    placeholder="Buscar por produto, SKU, tamanho, cor ou lote..."
+                                    className="pl-9"
+                                />
+                            </div>
+
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Badge variant="secondary">{estoquesDisponiveisFiltrados.length} item(ns) no estoque</Badge>
+                                <span>Remessa: {remessa.quantidade} peças</span>
+                            </div>
                         </div>
 
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Badge variant="secondary">{estoquesDisponiveisFiltrados.length} item(ns) no estoque</Badge>
-                            <span>Remessa: {remessa.quantidade} peças</span>
+                        <div className="grid gap-2 sm:grid-cols-3">
+                            <Select value={skuFiltro} onValueChange={setSkuFiltro}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Filtrar por SKU" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="todos">Todos os SKUs</SelectItem>
+                                    {skuOptions.map((sku) => (
+                                        <SelectItem key={sku} value={sku}>
+                                            {sku}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+
+                            <Select value={corFiltro} onValueChange={setCorFiltro}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Filtrar por cor" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="todos">Todas as cores</SelectItem>
+                                    {corOptions.map((cor) => (
+                                        <SelectItem key={cor} value={cor}>
+                                            {cor}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+
+                            <Select value={tamanhoFiltro} onValueChange={setTamanhoFiltro}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Filtrar por tamanho" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="todos">Todos os tamanhos</SelectItem>
+                                    {tamanhoOptions.map((tamanho) => (
+                                        <SelectItem key={tamanho} value={tamanho}>
+                                            {tamanho}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
 
                     <Tabs defaultValue="remessa" className="gap-3">
                         <TabsList className="grid h-auto w-full grid-cols-2">
-                            <TabsTrigger value="remessa">Itens na remessa ({remessaItemsFiltrados.length})</TabsTrigger>
+                            <TabsTrigger value="remessa">Itens na remessa ({remessaItemsFiltradosComCampos.length})</TabsTrigger>
                             <TabsTrigger value="estoque">Estoque disponível ({estoquesDisponiveisFiltrados.length})</TabsTrigger>
                         </TabsList>
 
@@ -304,70 +437,83 @@ export function EditarItensRemessaModal({ remessa, disabled }: EditarItensRemess
                                         <div className="flex min-h-70 items-center justify-center">
                                             <Spinner className="size-8" />
                                         </div>
-                                    ) : remessaItemsFiltrados.length === 0 ? (
+                                    ) : remessaItemsFiltradosComCampos.length === 0 ? (
                                         <div className="flex min-h-70 items-center justify-center px-6 text-sm text-muted-foreground">
                                             Nenhum item permanece na remessa.
                                         </div>
                                     ) : (
                                         <div className="grid gap-3 p-4">
-                                            {remessaItemsFiltrados.map((itemRemessa) => {
-                                                const itemId = getEstoqueCorteId(itemRemessa)
-                                                if (!itemId) return null
-                                                const quantidadeOriginal = quantidadesOriginais[itemId] ?? 0
-                                                const quantidadeDisponivel = estoqueById[itemId]?.quantidadeDisponivel ?? 0
-                                                const valorAtual = quantidadesEditadas[itemId] ?? String(quantidadeOriginal)
-                                                const maxQuantidade = quantidadeOriginal + quantidadeDisponivel
-
-                                                return (
-                                                    <div
-                                                        key={itemId}
-                                                        className="grid gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4 md:grid-cols-[minmax(0,1fr)_160px_160px] md:items-center"
-                                                    >
-                                                        <div className="min-w-0 space-y-1">
-                                                            <div className="flex flex-wrap items-center gap-2">
-                                                                <p className="truncate text-sm font-medium">
-                                                                    {itemRemessa.produto?.nome ?? "Produto"}
-                                                                </p>
-                                                                <Badge variant="secondary" className="font-mono text-[11px]">
-                                                                    {itemRemessa.produto?.sku ?? "-"}
-                                                                </Badge>
-                                                                <Badge variant="outline">Atual: {quantidadeOriginal}</Badge>
-                                                            </div>
-                                                            <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                                                                <span>Tamanho: {itemRemessa.produto?.tamanho ?? "-"}</span>
-                                                                <span>Cor: {itemRemessa.produto?.cor?.nome ?? "-"}</span>
-                                                                <span>Lote: {itemRemessa.lote?.codigoLote ?? "-"}</span>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="space-y-1">
-                                                            <Label htmlFor={`quantidade-remessa-${itemId}`}>Quantidade final</Label>
-                                                            <Input
-                                                                id={`quantidade-remessa-${itemId}`}
-                                                                type="number"
-                                                                min={0}
-                                                                max={maxQuantidade}
-                                                                value={valorAtual}
-                                                                onChange={(e) => handleQuantidadeRemessaChange(itemId, e.target.value)}
-                                                            />
-                                                            <p className="text-[11px] text-muted-foreground">
-                                                                Máximo permitido: {maxQuantidade}
-                                                            </p>
-                                                        </div>
-
-                                                        <div className="flex items-center justify-end">
-                                                            <Button
-                                                                type="button"
-                                                                variant="destructive"
-                                                                onClick={() => handleRemoverItem(itemId)}
-                                                            >
-                                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                                Remover
-                                                            </Button>
-                                                        </div>
+                                            {skusOrdenados.map((sku) => (
+                                                <div key={sku} className="rounded-lg border border-primary/30 bg-primary/5">
+                                                    <div className="border-b px-4 py-3">
+                                                        <Badge variant="secondary" className="font-mono text-xs">
+                                                            SKU: {sku}
+                                                        </Badge>
                                                     </div>
-                                                )
-                                            })}
+
+                                                    <Table>
+                                                        <TableHeader>
+                                                            <TableRow>
+                                                                <TableHead>Produto</TableHead>
+                                                                <TableHead>Tamanho</TableHead>
+                                                                <TableHead>Cor</TableHead>
+                                                                <TableHead>Lote</TableHead>
+                                                                <TableHead className="text-right">Atual</TableHead>
+                                                                <TableHead className="text-right">Qtd. final</TableHead>
+                                                                <TableHead className="text-right">Ações</TableHead>
+                                                            </TableRow>
+                                                        </TableHeader>
+                                                        <TableBody>
+                                                            {remessaItensAgrupadosPorSku[sku].map((itemRemessa) => {
+                                                                const itemId = getEstoqueCorteId(itemRemessa)
+                                                                if (!itemId) return null
+
+                                                                const quantidadeOriginal = quantidadesOriginais[itemId] ?? 0
+                                                                const quantidadeDisponivel = estoqueById[itemId]?.quantidadeDisponivel ?? 0
+                                                                const valorAtual = quantidadesEditadas[itemId] ?? String(quantidadeOriginal)
+                                                                const maxQuantidade = quantidadeOriginal + quantidadeDisponivel
+
+                                                                return (
+                                                                    <TableRow key={itemId}>
+                                                                        <TableCell className="font-medium">{itemRemessa.produto?.nome ?? "Produto"}</TableCell>
+                                                                        <TableCell>{itemRemessa.produto?.tamanho ?? "-"}</TableCell>
+                                                                        <TableCell>{itemRemessa.produto?.cor?.nome ?? "-"}</TableCell>
+                                                                        <TableCell>{itemRemessa.lote?.codigoLote ?? "-"}</TableCell>
+                                                                        <TableCell className="text-right">{quantidadeOriginal}</TableCell>
+                                                                        <TableCell>
+                                                                            <div className="ml-auto w-28">
+                                                                                <Input
+                                                                                    id={`quantidade-remessa-${itemId}`}
+                                                                                    type="number"
+                                                                                    min={0}
+                                                                                    max={maxQuantidade}
+                                                                                    value={valorAtual}
+                                                                                    onChange={(e) => handleQuantidadeRemessaChange(itemId, e.target.value)}
+                                                                                    className="text-right"
+                                                                                />
+                                                                                <p className="mt-1 text-[11px] text-muted-foreground text-right">
+                                                                                    Max: {maxQuantidade}
+                                                                                </p>
+                                                                            </div>
+                                                                        </TableCell>
+                                                                        <TableCell className="text-right">
+                                                                            <Button
+                                                                                type="button"
+                                                                                variant="destructive"
+                                                                                size="sm"
+                                                                                onClick={() => handleRemoverItem(itemId)}
+                                                                            >
+                                                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                                                Remover
+                                                                            </Button>
+                                                                        </TableCell>
+                                                                    </TableRow>
+                                                                )
+                                                            })}
+                                                        </TableBody>
+                                                    </Table>
+                                                </div>
+                                            ))}
                                         </div>
                                     )}
                                 </ScrollArea>

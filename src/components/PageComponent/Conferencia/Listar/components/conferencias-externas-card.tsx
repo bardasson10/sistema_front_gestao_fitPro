@@ -10,18 +10,20 @@ import { StatusQualidadeBadge } from './statusBagde-conferencia';
 import { dataFormatter } from '@/utils/Formatter/data-brasil-format';
 import { ConferenciaDetalhesModal } from './conferencia-detalhes-modal';
 
-interface ConferenciasInternasCardProps {
+interface ConferenciasExternasCardProps {
   conferencias: Conferencia[];
 }
 
-const isConferenciaInterna = (conferencia: Conferencia) => conferencia.isProducaoInterna === true;
+const isConferenciaExterna = (conferencia: Conferencia) => conferencia.isProducaoInterna === false;
+const statusFinalizadosExternos: Conferencia['statusQualidade'][] = ['aprovado', 'aprovado_defeito'];
 
-export function ConferenciasInternasCard({ conferencias }: ConferenciasInternasCardProps) {
+export function ConferenciasExternasCard({ conferencias }: ConferenciasExternasCardProps) {
   const [selectedConferencia, setSelectedConferencia] = useState<Conferencia | null>(null);
 
-  const conferenciasInternas = useMemo(() => {
+  const conferenciasExternas = useMemo(() => {
     return (conferencias || [])
-      .filter(isConferenciaInterna)
+      .filter(isConferenciaExterna)
+      .filter((conferencia) => statusFinalizadosExternos.includes(conferencia.statusQualidade))
       .sort((a, b) => new Date(b.dataConferencia).getTime() - new Date(a.dataConferencia).getTime());
   }, [conferencias]);
 
@@ -30,10 +32,10 @@ export function ConferenciasInternasCard({ conferencias }: ConferenciasInternasC
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-base">
           <History className="h-4 w-4" />
-          Histórico de Conferências Internas
+          Histórico de Conferências Externas
         </CardTitle>
         <CardDescription>
-          Listagem interna sem informações de pagamento ou preço por SKU
+          Listagem externa finalizada sem informações de pagamento ou preço por SKU
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -50,14 +52,14 @@ export function ConferenciasInternasCard({ conferencias }: ConferenciasInternasC
               </TableRow>
             </TableHeader>
             <TableBody>
-              {conferenciasInternas.length === 0 ? (
+              {conferenciasExternas.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="h-16 text-center text-muted-foreground">
-                    Nenhuma conferência interna encontrada
+                    Nenhuma conferência externa finalizada encontrada
                   </TableCell>
                 </TableRow>
               ) : (
-                conferenciasInternas.map((conferencia) => {
+                conferenciasExternas.map((conferencia) => {
                   const totalEnviado = conferencia.items.reduce((acc, item) => acc + item.quantidadeEnviada, 0);
                   const totalRecebido = conferencia.items.reduce((acc, item) => acc + item.qtdRecebida, 0);
 

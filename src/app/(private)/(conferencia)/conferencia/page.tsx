@@ -1,8 +1,8 @@
 'use client';
 
 import { ListarConferencias } from "@/components/PageComponent/Conferencia/Listar/listar-conferencias-form";
-import { RemessasProntasCard } from "@/components/PageComponent/Conferencia/Listar/components/remessas-prontas-card";
 import { ConferenciasInternasCard } from "@/components/PageComponent/Conferencia/Listar/components/conferencias-internas-card";
+import { ConferenciasExternasCard } from "@/components/PageComponent/Conferencia/Listar/components/conferencias-externas-card";
 import { useGetListAllConferencias } from "@/hooks/queries/Conferencia/useConferencia";
 import { useGetRemessasProntas } from "@/hooks/queries/Direcionamento/useDirecionamento";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,9 +19,11 @@ const CheckUpContent = () => {
   return (
     <main>
       <div className="flex flex-col gap-6">
-        <RemessasProntasCard remessas={responseRemessasProntas} />
-        <ListarConferencias dataConferencias={responseConferencias} />
-        <ConferenciasInternasCard conferencias={responseConferencias} />
+        <ListarConferencias dataConferencias={responseConferencias} responseRemessasProntas={responseRemessasProntas} />
+        <div className="grid gap-6 lg:grid-cols-2">
+          <ConferenciasInternasCard conferencias={responseConferencias} />
+          <ConferenciasExternasCard conferencias={responseConferencias} />
+        </div>
       </div>
     </main>
   );

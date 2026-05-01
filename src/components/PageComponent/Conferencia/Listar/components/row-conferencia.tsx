@@ -74,7 +74,7 @@ const getInitialDateAndTime = (value: string) => {
   }
 }
 
-export const ConferenciaRow = ({ conferencia }: { conferencia: Conferencia }) => {
+export const ConferenciaRow = ({ conferencia, hidePagamento = false }: { conferencia: Conferencia; hidePagamento?: boolean }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [statusEdit, setStatusEdit] = useState(conferencia.statusQualidade)
@@ -212,19 +212,21 @@ export const ConferenciaRow = ({ conferencia }: { conferencia: Conferencia }) =>
         <TableCell>
           <StatusQualidadeBadge status={conferencia.statusQualidade} />
         </TableCell>
-        <TableCell>
-          {conferencia.liberadoPagamento ? (
-            <Badge variant="outline" className="gap-1 bg-success/15 text-success border-success/30">
-              <DollarSign className="h-3 w-3" />
-              Liberado
-            </Badge>
-          ) : (
-            <Badge variant="outline" className="gap-1 bg-muted text-muted-foreground">
-              <DollarSign className="h-3 w-3" />
-              Pendente
-            </Badge>
-          )}
-        </TableCell>
+        {!hidePagamento && (
+          <TableCell>
+            {conferencia.liberadoPagamento ? (
+              <Badge variant="outline" className="gap-1 bg-success/15 text-success border-success/30">
+                <DollarSign className="h-3 w-3" />
+                Liberado
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="gap-1 bg-muted text-muted-foreground">
+                <DollarSign className="h-3 w-3" />
+                Pendente
+              </Badge>
+            )}
+          </TableCell>
+        )}
         <TableCell className="text-right">
           <div className="flex flex-col items-end">
             <span className="font-medium">{totalRecebido}/{totalEnviado}</span>
@@ -246,7 +248,7 @@ export const ConferenciaRow = ({ conferencia }: { conferencia: Conferencia }) =>
       </TableRow>
       {isOpen && (
         <TableRow className="bg-muted/20 hover:bg-muted/30">
-          <TableCell colSpan={7} className="p-0">
+          <TableCell colSpan={hidePagamento ? 6 : 7} className="p-0">
             <div className="p-4">
               {conferencia.observacao && (
                 <div className="mb-4 rounded-md bg-muted/50 p-3">
@@ -283,18 +285,20 @@ export const ConferenciaRow = ({ conferencia }: { conferencia: Conferencia }) =>
                         </Select>
                       </div>
 
-                      <div className="space-y-1">
-                        <Label>Pagamento</Label>
-                        <div className="flex items-center gap-2 rounded-md border p-2">
-                          <input
-                            type="checkbox"
-                            checked={liberadoPagamentoEfetivo}
-                            onChange={(e) => setLiberadoPagamentoEdit(e.target.checked)}
-                            disabled={!canEditPagamento}
-                          />
-                          <span className="text-sm text-muted-foreground">Editável apenas em status Aprovado</span>
+                      {!hidePagamento && (
+                        <div className="space-y-1">
+                          <Label>Pagamento</Label>
+                          <div className="flex items-center gap-2 rounded-md border p-2">
+                            <input
+                              type="checkbox"
+                              checked={liberadoPagamentoEfetivo}
+                              onChange={(e) => setLiberadoPagamentoEdit(e.target.checked)}
+                              disabled={!canEditPagamento}
+                            />
+                            <span className="text-sm text-muted-foreground">Editável apenas em status Aprovado</span>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
 
                     <div className="space-y-1">
@@ -332,30 +336,32 @@ export const ConferenciaRow = ({ conferencia }: { conferencia: Conferencia }) =>
                       <Textarea value={observacaoEdit} onChange={(e) => setObservacaoEdit(e.target.value)} rows={2} />
                     </div>
 
-                    <div className="space-y-2 rounded-md border p-3">
-                      <Label>Valor por peça por SKU</Label>
-                      {skuPriceList.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">Sem SKU disponível para precificação.</p>
-                      ) : (
-                        skuPriceList.map((skuItem) => (
-                          <div key={skuItem.sku} className="grid items-center gap-2 sm:grid-cols-[1fr_180px]">
-                            <span className="text-sm font-medium">{skuItem.sku}</span>
-                            <Input
-                              type="number"
-                              min={0}
-                              step={0.01}
-                              value={skuPricesEdit[skuItem.sku] ?? 0}
-                              onChange={(e) =>
-                                setSkuPricesEdit((prev) => ({
-                                  ...prev,
-                                  [skuItem.sku]: Number(e.target.value || 0),
-                                }))
-                              }
-                            />
-                          </div>
-                        ))
-                      )}
-                    </div>
+                    {!hidePagamento && (
+                      <div className="space-y-2 rounded-md border p-3">
+                        <Label>Valor por peça por SKU</Label>
+                        {skuPriceList.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">Sem SKU disponível para precificação.</p>
+                        ) : (
+                          skuPriceList.map((skuItem) => (
+                            <div key={skuItem.sku} className="grid items-center gap-2 sm:grid-cols-[1fr_180px]">
+                              <span className="text-sm font-medium">{skuItem.sku}</span>
+                              <Input
+                                type="number"
+                                min={0}
+                                step={0.01}
+                                value={skuPricesEdit[skuItem.sku] ?? 0}
+                                onChange={(e) =>
+                                  setSkuPricesEdit((prev) => ({
+                                    ...prev,
+                                    [skuItem.sku]: Number(e.target.value || 0),
+                                  }))
+                                }
+                              />
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
 
                     {itensSemDirecionamentoItemId.length > 0 && (
                       <div className="rounded-md border border-destructive/40 bg-destructive/10 p-2 text-sm text-destructive">
@@ -479,7 +485,7 @@ export const ConferenciaRow = ({ conferencia }: { conferencia: Conferencia }) =>
                 </div>
               </div>
 
-              {pagamentoResumo && (
+              {!hidePagamento && pagamentoResumo && (
                 <div className="mt-4 rounded-md border bg-card p-3">
                   <h5 className="mb-3 text-sm font-medium text-muted-foreground">Resumo Financeiro</h5>
                   <div className="mb-3 grid gap-2 text-sm sm:grid-cols-3">

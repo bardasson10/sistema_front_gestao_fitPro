@@ -10,8 +10,6 @@ import {
   CheckCircle2,
   AlertTriangle,
   Clock,
-  DollarSign,
-  PackageCheck,
 } from "lucide-react"
 
 import Link from "next/link"
@@ -43,7 +41,6 @@ import { RemessasProntasCard } from "@/components/PageComponent/Conferencia/List
 
 export interface IFiltrosConferencia {
   statusQualidade?: ConferenciaStatusQualidade;
-  liberadoPagamento?: boolean;
   isProducaoInterna?: boolean;
   direcionamentoId?: string;
   faccaoId?: string;
@@ -59,11 +56,10 @@ interface ListarConferenciasProps {
   responseRemessasProntas: DirecionamentoRemessa[];
 }
 
-export function ListarConferencias({ dataConferencias, responseRemessasProntas }: ListarConferenciasProps) {
+export function ListarConferenciasExterna({ dataConferencias, responseRemessasProntas }: ListarConferenciasProps) {
   const [busca, setBusca] = useState("")
   const [statusFiltro, setStatusFiltro] = useState<string>("todos")
-  const [pagamentoFiltro, setPagamentoFiltro] = useState<string>("todos")
-  const [isProducaoInternaFiltro, setIsProducaoInternaFiltro] = useState<string>("todos")
+  const [isProducaoInternaFiltro, setIsProducaoInternaFiltro] = useState<string>("externa")
   const [dataInicio, setDataInicio] = useState<string>("")
   const [dataFim, setDataFim] = useState<string>("")
   const [faccaoId, setFaccaoId] = useState<string>("")
@@ -85,11 +81,6 @@ export function ListarConferencias({ dataConferencias, responseRemessasProntas }
       const matchStatus =
         statusFiltro === "todos" || conferencia.statusQualidade === statusFiltro
 
-      const matchPagamento =
-        pagamentoFiltro === "todos" ||
-        (pagamentoFiltro === "liberado" && conferencia.liberadoPagamento) ||
-        (pagamentoFiltro === "pendente" && !conferencia.liberadoPagamento)
-
       const matchProducaoInterna =
         isProducaoInternaFiltro === "todos" ||
         (isProducaoInternaFiltro === "interna" && conferencia.isProducaoInterna) ||
@@ -105,7 +96,6 @@ export function ListarConferencias({ dataConferencias, responseRemessasProntas }
       return (
         matchBusca &&
         matchStatus &&
-        matchPagamento &&
         matchProducaoInterna &&
         matchDataInicio &&
         matchDataFim &&
@@ -117,7 +107,6 @@ export function ListarConferencias({ dataConferencias, responseRemessasProntas }
   }, [
     busca,
     statusFiltro,
-    pagamentoFiltro,
     isProducaoInternaFiltro,
     dataInicio,
     dataFim,
@@ -135,9 +124,8 @@ export function ListarConferencias({ dataConferencias, responseRemessasProntas }
     const aprovadosComRessalva = dataConferencias.filter(
       (c) => c.statusQualidade === "aprovado_parcial" || c.statusQualidade === "aprovado_defeito"
     ).length
-    const liberadosPagamento = dataConferencias.filter((c) => c.liberadoPagamento).length
 
-    return { total, recebido, emConferencia, aprovados, aprovadosComRessalva, liberadosPagamento }
+    return { total, recebido, emConferencia, aprovados, aprovadosComRessalva }
   }, [dataConferencias])
 
   return (
@@ -145,10 +133,10 @@ export function ListarConferencias({ dataConferencias, responseRemessasProntas }
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight text-balance">
-            Conferências
+            Histórico - Produção Externa
           </h1>
           <p className="text-muted-foreground">
-            Gerencie as conferências de remessas retornadas
+            Listagem das conferências de produção externa (sem informações financeiras)
           </p>
         </div>
         <div className="flex gap-2">
@@ -168,7 +156,7 @@ export function ListarConferencias({ dataConferencias, responseRemessasProntas }
       </div>
 
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -185,7 +173,7 @@ export function ListarConferencias({ dataConferencias, responseRemessasProntas }
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Recebido
             </CardTitle>
-            <PackageCheck className="h-4 w-4 text-primary" />
+            <Package className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">
@@ -232,19 +220,6 @@ export function ListarConferencias({ dataConferencias, responseRemessasProntas }
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Pagto. Liberado
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-success" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-success">
-              {estatisticas.liberadosPagamento}
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       <div>
@@ -252,11 +227,10 @@ export function ListarConferencias({ dataConferencias, responseRemessasProntas }
       </div>
 
 
-
       <Card>
         <CardHeader className="pb-4">
           <CardTitle className="text-base">
-            Lista de Conferências
+            Lista de Conferências - Produção Externa
           </CardTitle>
           <CardDescription>
             {conferenciasFiltradas.length} conferência(s) encontrada(s)
@@ -273,7 +247,7 @@ export function ListarConferencias({ dataConferencias, responseRemessasProntas }
                       Filtros
                     </CardTitle>
                     <CardDescription>
-                      Encontre conferências por facção, responsável, datas ou status
+                      Encontre conferências por serviço, responsável ou datas
                     </CardDescription>
                   </div>
                 </div>
@@ -284,7 +258,7 @@ export function ListarConferencias({ dataConferencias, responseRemessasProntas }
                     <div className="relative flex-1">
                       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
-                        placeholder="Buscar por facção, responsável ou produto..."
+                        placeholder="Buscar por serviço, responsável ou produto..."
                         value={busca}
                         onChange={(e) => setBusca(e.target.value)}
                         className="pl-9"
@@ -301,16 +275,6 @@ export function ListarConferencias({ dataConferencias, responseRemessasProntas }
                         <SelectItem value="aprovado">Aprovado</SelectItem>
                         <SelectItem value="aprovado_parcial">Aprovado Parcial</SelectItem>
                         <SelectItem value="aprovado_defeito">Aprovado Defeito</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Select value={pagamentoFiltro} onValueChange={setPagamentoFiltro}>
-                      <SelectTrigger className="w-full sm:w-[160px]">
-                        <SelectValue placeholder="Pagamento" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="todos">Todos Pagamentos</SelectItem>
-                        <SelectItem value="liberado">Liberado</SelectItem>
-                        <SelectItem value="pendente">Pendente</SelectItem>
                       </SelectContent>
                     </Select>
                     <Select value={isProducaoInternaFiltro} onValueChange={setIsProducaoInternaFiltro}>
@@ -364,10 +328,9 @@ export function ListarConferencias({ dataConferencias, responseRemessasProntas }
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12"></TableHead>
-                  <TableHead>Facção / Serviço</TableHead>
+                  <TableHead>Serviço</TableHead>
                   <TableHead>Responsável</TableHead>
                   <TableHead>Qualidade</TableHead>
-                  <TableHead>Pagamento</TableHead>
                   <TableHead className="text-right">Recebido/Enviado</TableHead>
                   <TableHead>Data Conferência</TableHead>
                 </TableRow>
@@ -376,15 +339,15 @@ export function ListarConferencias({ dataConferencias, responseRemessasProntas }
                 {conferenciasFiltradas.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={6}
                       className="h-24 text-center text-muted-foreground"
                     >
-                      Nenhuma conferência encontrada
+                      Nenhuma conferência externa encontrada
                     </TableCell>
                   </TableRow>
                 ) : (
                   conferenciasFiltradas.map((conferencia) => (
-                    <ConferenciaRow key={conferencia.id} conferencia={conferencia} />
+                    <ConferenciaRow key={conferencia.id} conferencia={conferencia} hidePagamento />
                   ))
                 )}
               </TableBody>

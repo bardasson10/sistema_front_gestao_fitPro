@@ -177,6 +177,10 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
   const [itensConferencia, setItensConferencia] = useState<ItemConferencia[]>([])
   const [skuPricesEdit, setSkuPricesEdit] = useState<Record<string, number>>({})
   const [busca, setBusca] = useState("")
+  const [buscaItensConferencia, setBuscaItensConferencia] = useState("")
+  const [skuFiltroItensConferencia, setSkuFiltroItensConferencia] = useState("todos")
+  const [corFiltroItensConferencia, setCorFiltroItensConferencia] = useState("todos")
+  const [tamanhoFiltroItensConferencia, setTamanhoFiltroItensConferencia] = useState("todos")
 
   const remessaSelecionada = useMemo(() => {
     return remessasDisponiveis.find((r) => r.id === remessaSelecionadaId)
@@ -301,6 +305,68 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
       valorFaccaoPorPeca: Number(skuPricesEdit[sku] ?? 0),
     }))
   }, [itensConferencia, skuPricesEdit])
+
+  const normalizarTextoFiltro = (valor?: string | null) => (valor ?? "").trim().toLowerCase()
+
+  const itemOptions = useMemo(() => {
+    const buildOptions = (values: string[]) =>
+      Array.from(new Set(values.filter(Boolean))).sort((a, b) => a.localeCompare(b, "pt-BR"))
+
+    return {
+      skus: buildOptions(itensConferencia.map((item) => item.produto.sku || "")),
+      cores: buildOptions(itensConferencia.map((item) => item.cor.nome || "")),
+      tamanhos: buildOptions(itensConferencia.map((item) => item.tamanho || "")),
+    }
+  }, [itensConferencia])
+
+  const itensConferenciaFiltrados = useMemo(() => {
+    return itensConferencia.filter((item) => {
+      const termo = buscaItensConferencia.toLowerCase().trim()
+      const matchBusca =
+        !termo ||
+        item.produto.nome.toLowerCase().includes(termo) ||
+        item.produto.sku.toLowerCase().includes(termo) ||
+        item.cor.nome.toLowerCase().includes(termo) ||
+        item.tamanho.toLowerCase().includes(termo) ||
+        item.lote.toLowerCase().includes(termo)
+
+      const matchSku =
+        skuFiltroItensConferencia === "todos" ||
+        normalizarTextoFiltro(item.produto.sku) === normalizarTextoFiltro(skuFiltroItensConferencia)
+
+      const matchCor =
+        corFiltroItensConferencia === "todos" ||
+        normalizarTextoFiltro(item.cor.nome) === normalizarTextoFiltro(corFiltroItensConferencia)
+
+      const matchTamanho =
+        tamanhoFiltroItensConferencia === "todos" ||
+        normalizarTextoFiltro(item.tamanho) === normalizarTextoFiltro(tamanhoFiltroItensConferencia)
+
+      return matchBusca && matchSku && matchCor && matchTamanho
+    })
+  }, [
+    buscaItensConferencia,
+    corFiltroItensConferencia,
+    itensConferencia,
+    skuFiltroItensConferencia,
+    tamanhoFiltroItensConferencia,
+  ])
+
+  const itensConferenciaAgrupadosPorSku = useMemo(() => {
+    return itensConferenciaFiltrados.reduce<Record<string, ItemConferencia[]>>((acc, item) => {
+      const sku = item.produto.sku || "Sem SKU"
+      if (!acc[sku]) {
+        acc[sku] = []
+      }
+      acc[sku].push(item)
+      return acc
+    }, {})
+  }, [itensConferenciaFiltrados])
+
+  const itensConferenciaSkusOrdenados = useMemo(
+    () => Object.keys(itensConferenciaAgrupadosPorSku).sort((a, b) => a.localeCompare(b, "pt-BR")),
+    [itensConferenciaAgrupadosPorSku],
+  )
 
   const handleSubmit = () => {
     if (!canSubmit) return
@@ -532,91 +598,159 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
                     </p>
                   </div>
 
-                  <div className="overflow-hidden rounded-md border">
-                    <div className="overflow-x-auto">
-                      <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Produto</TableHead>
-                    <TableHead>Tamanho</TableHead>
-                    <TableHead>Cor</TableHead>
-                    <TableHead>Lote</TableHead>
-                    <TableHead className="text-right">Enviado</TableHead>
-                    <TableHead className="text-right w-32">Recebido</TableHead>
-                    <TableHead className="text-right w-32">Defeito</TableHead>
-                    <TableHead className="text-right">Quebra</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {itensConferencia.map((item) => {
-                    const quebra = item.quantidadeEnviada - item.qtdRecebida
-                    return (
-                      <TableRow key={item.direcionamentoItemId}>
-                        <TableCell>
-                          <span className="font-medium">{item.produto.nome} - {item.produto.sku}</span>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{item.tamanho}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="h-4 w-4 rounded-full border"
-                              style={{ backgroundColor: item.cor.codigoHex }}
-                            />
-                            <span>{item.cor.nome}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>{item.lote}</TableCell>
-                        <TableCell className="text-right">
-                          {item.quantidadeEnviada}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Input
-                            type="number"
-                            min={0}
-                            max={item.quantidadeEnviada}
-                            value={item.qtdRecebida}
-                            onChange={(e) =>
-                              handleUpdateItem(
-                                item.direcionamentoItemId,
-                                "qtdRecebida",
-                                parseInt(e.target.value) || 0
-                              )
-                            }
-                            className="w-20 text-right ml-auto"
-                          />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Input
-                            type="number"
-                            min={0}
-                            max={item.qtdRecebida}
-                            value={item.qtdDefeito}
-                            onChange={(e) =>
-                              handleUpdateItem(
-                                item.direcionamentoItemId,
-                                "qtdDefeito",
-                                parseInt(e.target.value) || 0
-                              )
-                            }
-                            className="w-20 text-right ml-auto"
-                          />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {quebra > 0 ? (
-                            <span className="text-destructive font-medium">{quebra}</span>
-                          ) : (
-                            <span className="text-muted-foreground">0</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-                      </Table>
+                  <div className="grid gap-3 md:grid-cols-[1fr_220px_220px_220px]">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Buscar por produto, SKU, cor, tamanho ou lote..."
+                        value={buscaItensConferencia}
+                        onChange={(e) => setBuscaItensConferencia(e.target.value)}
+                        className="pl-9"
+                      />
                     </div>
+
+                    <Select value={skuFiltroItensConferencia} onValueChange={setSkuFiltroItensConferencia}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Filtrar por SKU" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos os SKUs</SelectItem>
+                        {itemOptions.skus.map((sku) => (
+                          <SelectItem key={sku} value={sku}>
+                            {sku}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <Select value={corFiltroItensConferencia} onValueChange={setCorFiltroItensConferencia}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Filtrar por cor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todas as cores</SelectItem>
+                        {itemOptions.cores.map((cor) => (
+                          <SelectItem key={cor} value={cor}>
+                            {cor}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <Select value={tamanhoFiltroItensConferencia} onValueChange={setTamanhoFiltroItensConferencia}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Filtrar por tamanho" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos os tamanhos</SelectItem>
+                        {itemOptions.tamanhos.map((tamanho) => (
+                          <SelectItem key={tamanho} value={tamanho}>
+                            {tamanho}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+
+                  {itensConferenciaSkusOrdenados.length === 0 ? (
+                    <div className="rounded-md border bg-muted/30 p-4 text-sm text-muted-foreground">
+                      Nenhum item encontrado com os filtros selecionados.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {itensConferenciaSkusOrdenados.map((sku) => (
+                        <div key={sku} className="overflow-hidden rounded-md border">
+                          <div className="border-b bg-muted/40 px-4 py-2">
+                            <Badge variant="secondary" className="font-mono text-xs">
+                              SKU: {sku}
+                            </Badge>
+                          </div>
+
+                          <div className="overflow-x-auto">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Produto</TableHead>
+                                  <TableHead>Tamanho</TableHead>
+                                  <TableHead>Cor</TableHead>
+                                  <TableHead>Lote</TableHead>
+                                  <TableHead className="text-right">Enviado</TableHead>
+                                  <TableHead className="text-right w-32">Recebido</TableHead>
+                                  <TableHead className="text-right w-32">Defeito</TableHead>
+                                  <TableHead className="text-right">Quebra</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {itensConferenciaAgrupadosPorSku[sku].map((item) => {
+                                  const quebra = item.quantidadeEnviada - item.qtdRecebida
+                                  return (
+                                    <TableRow key={item.direcionamentoItemId}>
+                                      <TableCell>
+                                        <span className="font-medium">{item.produto.nome}</span>
+                                      </TableCell>
+                                      <TableCell>
+                                        <Badge variant="secondary">{item.tamanho}</Badge>
+                                      </TableCell>
+                                      <TableCell>
+                                        <div className="flex items-center gap-2">
+                                          <div
+                                            className="h-4 w-4 rounded-full border"
+                                            style={{ backgroundColor: item.cor.codigoHex }}
+                                          />
+                                          <span>{item.cor.nome}</span>
+                                        </div>
+                                      </TableCell>
+                                      <TableCell>{item.lote}</TableCell>
+                                      <TableCell className="text-right">{item.quantidadeEnviada}</TableCell>
+                                      <TableCell className="text-right">
+                                        <Input
+                                          type="number"
+                                          min={0}
+                                          max={item.quantidadeEnviada}
+                                          value={item.qtdRecebida}
+                                          onChange={(e) =>
+                                            handleUpdateItem(
+                                              item.direcionamentoItemId,
+                                              "qtdRecebida",
+                                              parseInt(e.target.value) || 0,
+                                            )
+                                          }
+                                          className="w-20 text-right ml-auto"
+                                        />
+                                      </TableCell>
+                                      <TableCell className="text-right">
+                                        <Input
+                                          type="number"
+                                          min={0}
+                                          max={item.qtdRecebida}
+                                          value={item.qtdDefeito}
+                                          onChange={(e) =>
+                                            handleUpdateItem(
+                                              item.direcionamentoItemId,
+                                              "qtdDefeito",
+                                              parseInt(e.target.value) || 0,
+                                            )
+                                          }
+                                          className="w-20 text-right ml-auto"
+                                        />
+                                      </TableCell>
+                                      <TableCell className="text-right">
+                                        {quebra > 0 ? (
+                                          <span className="text-destructive font-medium">{quebra}</span>
+                                        ) : (
+                                          <span className="text-muted-foreground">0</span>
+                                        )}
+                                      </TableCell>
+                                    </TableRow>
+                                  )
+                                })}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Totais */}
                   <div className="flex flex-wrap items-center justify-end gap-6 rounded-lg bg-muted/50 p-4">
@@ -904,7 +1038,7 @@ export function CriarConferenciaForm({ dataRemessas, dataResponsaveis, criarConf
       )}
 
       <div className="flex justify-end gap-4">
-        <Link href="/conferencias">
+        <Link href="/conferencia">
           <Button variant="outline">Cancelar</Button>
         </Link>
         <Button onClick={handleSubmit} disabled={!canSubmit}>
