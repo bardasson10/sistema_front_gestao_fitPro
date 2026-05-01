@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FitPro",
-  description: "Sistema de Gestão para Confecções",
+  title: "Bienjoli - Produção",
+  description: "Gestão para Confecção",
   icons: {
     icon: "/icon.svg", 
     apple: "/icon.svg", 
