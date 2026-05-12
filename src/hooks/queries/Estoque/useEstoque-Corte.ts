@@ -9,6 +9,7 @@ import { EstoqueCorte } from '@/types/EstoqueCorte';
 export type EstoqueCorteFiltros = {
     produtoId?: string;
     loteProducaoId?: string;
+    excludeTipoProdutoNome?: string;
     tamanhoId?: string;
     corId?: string;
     limit?: number;

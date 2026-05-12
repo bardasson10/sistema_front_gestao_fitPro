@@ -13,7 +13,9 @@ import { usePostCriarDirecionamentoProducaoInterna, usePostCriarDirecionamentoRe
 const InventoryDashboardContent = () => {
 
 
-    const [filters, setFilters] = useState<EstoqueCorteFiltros>({});
+    const [filters, setFilters] = useState<EstoqueCorteFiltros>({
+        excludeTipoProdutoNome: 'Forro',
+    });
     const [activeTab, setActiveTab] = useState<'estoque' | 'remessa'>('estoque');
 
     const { data: dataEstoqueCorte, isFetching: isFetchingEstoque, refetch: refetchEstoqueCorte } = useGetEstoqueCorte(filters);

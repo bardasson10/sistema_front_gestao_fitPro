@@ -2,11 +2,13 @@
 
 "use client";
 
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FormModal } from "@/components/Modal/base-modal-form";
 import { RemoveItemWarning } from "@/components/ErrorManagementComponent/WarnningRemoveItem";
 import { ProdutoTable } from "@/components/DataTable/Tables/Produto/table";
@@ -35,9 +37,19 @@ const initialValues: ProdutoFormValues = {
 export default function ProdutosPage() {
   const { data: produtosData, isLoading } = useProdutos();
   const produtos = produtosData?.data || [];
+  const [activeTab, setActiveTab] = useState("produto");
 
   const { data: tiposProdutoData } = useTiposProduto();
   const tiposProduto = tiposProdutoData?.data || [];
+  const forroTipoProdutoId = useMemo(() => {
+    return tiposProduto.find((item) => item.nome.toLowerCase() === "forro")?.id;
+  }, [tiposProduto]);
+
+  const produtosForro = useMemo(() => {
+    return produtos.filter(
+      (produto) => produto.tipoProdutoId === forroTipoProdutoId || produto.tipo?.nome === "Forro"
+    );
+  }, [forroTipoProdutoId, produtos]);
 
   const { mutate: criar, isPending: isCreating } = useCriarProduto();
   const { mutate: atualizar, isPending: isUpdating } = useAtualizarProduto();
@@ -80,10 +92,14 @@ export default function ProdutosPage() {
     },
   });
 
+  const produtosExibidos = activeTab === "forro" ? produtosForro : produtos;
+
   return (
     <main className="space-y-6">
       <div className="flex justify-between items-center">
-        <div className="text-sm text-muted-foreground">{produtos.length} produtos cadastrados</div>
+        <div className="text-sm text-muted-foreground">
+          {produtosExibidos.length} produtos cadastrados
+        </div>
 
         <Button onClick={handleOpen}>
           <Plus className="mr-2 h-4 w-4" /> Novo Produto
@@ -114,25 +130,56 @@ export default function ProdutosPage() {
         }}
       />
 
-      <div className="hidden md:block">
-        <ProdutoTable
-          produtos={produtos}
-          tiposProduto={tiposProduto}
-          isLoading={isLoading || isCreating || isUpdating}
-          onEdit={handleEdit}
-          onRemove={handleRemove}
-        />
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="mb-6 grid w-full max-w-sm grid-cols-2">
+          <TabsTrigger value="produto">Produto</TabsTrigger>
+          <TabsTrigger value="forro">Forro</TabsTrigger>
+        </TabsList>
 
-      <div className="block md:hidden">
-        <MobileViewProduto
-          produtos={produtos}
-          tiposProduto={tiposProduto}
-          isLoading={isLoading || isCreating || isUpdating}
-          onEdit={handleEdit}
-          onRemove={handleRemove}
-        />
-      </div>
+        <TabsContent value="produto" className="space-y-4">
+          <div className="hidden md:block">
+            <ProdutoTable
+              produtos={produtos}
+              tiposProduto={tiposProduto}
+              isLoading={isLoading || isCreating || isUpdating}
+              onEdit={handleEdit}
+              onRemove={handleRemove}
+            />
+          </div>
+
+          <div className="block md:hidden">
+            <MobileViewProduto
+              produtos={produtos}
+              tiposProduto={tiposProduto}
+              isLoading={isLoading || isCreating || isUpdating}
+              onEdit={handleEdit}
+              onRemove={handleRemove}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="forro" className="space-y-4">
+          <div className="hidden md:block">
+            <ProdutoTable
+              produtos={produtosForro}
+              tiposProduto={tiposProduto}
+              isLoading={isLoading || isCreating || isUpdating}
+              onEdit={handleEdit}
+              onRemove={handleRemove}
+            />
+          </div>
+
+          <div className="block md:hidden">
+            <MobileViewProduto
+              produtos={produtosForro}
+              tiposProduto={tiposProduto}
+              isLoading={isLoading || isCreating || isUpdating}
+              onEdit={handleEdit}
+              onRemove={handleRemove}
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
     </main>
   );
 }
