@@ -119,16 +119,40 @@ export const useGetEstoqueCorteLista = (
             if (filtros?.page) params.append('page', String(filtros.page));
             if (filtros?.limit) params.append('limit', String(filtros.limit));
 
-            if (!filtros?.limit) params.append('limit', '1000');
-
-            const queryString = params.toString();
+            const pageSize = filtros?.limit ?? 1000;
+            params.delete('page');
+            params.set('limit', String(pageSize));
 
             try {
-                const { data } = await apiClient.get<{ data: EstoqueCorte[]; pagination: PaginatedResponse }>(
-                    `/estoque-corte${queryString ? `?${queryString}` : ''}`,
+                const { data: firstPage } = await apiClient.get<{ data: EstoqueCorte[]; pagination: PaginatedResponse }>(
+                    `/estoque-corte?${params.toString()}`,
                 );
 
-                return data.data;
+                const totalPages = Math.max(firstPage.pagination?.pages ?? 1, 1);
+                if (totalPages === 1) {
+                    return firstPage.data;
+                }
+
+                const pageRequests: Promise<{ data: EstoqueCorte[]; pagination: PaginatedResponse }>[] = [];
+                for (let page = 2; page <= totalPages; page += 1) {
+                    pageRequests.push(
+                        apiClient
+                            .get<{ data: EstoqueCorte[]; pagination: PaginatedResponse }>('/estoque-corte', {
+                                params: {
+                                    ...filtros,
+                                    page,
+                                    limit: pageSize,
+                                },
+                            })
+                            .then((response) => response.data),
+                    );
+                }
+
+                const remainingPages = await Promise.all(pageRequests);
+                return [
+                    ...firstPage.data,
+                    ...remainingPages.flatMap((pageResult) => pageResult.data || []),
+                ];
             } catch (error: any) {
                 const mensagem = error.response?.data?.details?.[0]?.mensage ||
                     error.response?.data?.error;

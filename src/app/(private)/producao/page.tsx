@@ -1,19 +1,32 @@
 'use client'
-import { CriarRemessaProdInternaComponent } from "@/components/PageComponent/DirecionamentoProducao/criar-remessa-prodInterna";
+import { CriarRemessaComponent } from "@/components/PageComponent/DirecionamentoProducao/criar-remessa-component";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { usePostCriarDirecionamentoProducaoInterna } from "@/hooks/queries/Direcionamento/useDirecionamento";
-import { EstoqueCorteFiltros, useGetEstoqueCorte } from "@/hooks/queries/Estoque/useEstoque-Corte";
-import { Suspense, useState } from "react"
+import { useGetEstoqueCorte } from "@/hooks/queries/Estoque/useEstoque-Corte";
+import { useGetFaccoes } from "@/hooks/queries/Faccao/useFaccao";
+import type { DirecionamentoRequestBodyPayload, DirecionamentoRemessa } from "@/types/Direcionamento";
+import { PaginatedResponse } from "@/types/production";
+import type { UseMutationResult } from "@tanstack/react-query";
+import { Suspense } from "react"
 
 
 const ProductionContent = () => {
-    const [filters, setFilters] = useState<EstoqueCorteFiltros>({});
-
     //estoque-certo
-    const { data: dataEstoqueCorte, isFetching: isFetchingEstoque, refetch: refetchEstoqueCorte } = useGetEstoqueCorte(filters);
+    const { data: estoqueCorte = [], refetch: refetchEstoqueCorte } = useGetEstoqueCorte({ limit: 10000 });
+    const { data: faccoesData } = useGetFaccoes();
 
     const criarDirecionamentoProducaoInternaMutation = usePostCriarDirecionamentoProducaoInterna();
+
+    const useNoopDirecionamentoRemessa = () => ({
+        mutate: undefined,
+        isPending: false,
+    } as unknown as UseMutationResult<
+        { data: DirecionamentoRemessa[]; pagination: PaginatedResponse },
+        unknown,
+        DirecionamentoRequestBodyPayload,
+        unknown
+    >);
 
     const handleRemessaCriada = async () => {
         await refetchEstoqueCorte();
@@ -21,8 +34,11 @@ const ProductionContent = () => {
 
     return (
         <main>
-            <CriarRemessaProdInternaComponent
-                dataEstoqueCorte={dataEstoqueCorte}
+            <CriarRemessaComponent
+                dataFaccoes={faccoesData ?? []}
+                dataEstoqueCorte={estoqueCorte}
+                isProducaoInterna={true}
+                usePostCriarDirecionamentoRemessa={useNoopDirecionamentoRemessa}
                 usePostCriarDirecionamentoProducaoInterna={() => criarDirecionamentoProducaoInternaMutation}
                 onRemessaCriada={handleRemessaCriada}
             />

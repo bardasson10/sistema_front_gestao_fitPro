@@ -1,6 +1,6 @@
 'use client'
 import { useState, useMemo, Suspense } from 'react';
-import { useGetEstoqueCorte, EstoqueCorteFiltros } from '@/hooks/queries/Estoque/useEstoque-Corte';
+import { useGetEstoqueCortePaginado, EstoqueCorteFiltros } from '@/hooks/queries/Estoque/useEstoque-Corte';
 import { GroupedProduct, InventoryDashBoard, ProductVariation } from '@/components/PageComponent/estoque-corte/InventoryDashboardContent';
 import { Spinner } from '@/components/ui/spinner';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -9,30 +9,52 @@ import { CriarRemessaComponent } from '@/components/PageComponent/Direcionamento
 import { EstoqueCorte } from '@/types/EstoqueCorte';
 import { useGetFaccoes } from '@/hooks/queries/Faccao/useFaccao';
 import { usePostCriarDirecionamentoProducaoInterna, usePostCriarDirecionamentoRemessa } from '@/hooks/queries/Direcionamento/useDirecionamento';
+import { usePagination } from '@/hooks/use-pagination';
 
 const InventoryDashboardContent = () => {
 
+    const normalizeTamanhoNome = (nome: string) => nome.trim().toUpperCase();
+
 
     const [filters, setFilters] = useState<EstoqueCorteFiltros>({
-        excludeTipoProdutoNome: 'Forro',
+        limit: 10000,
     });
     const [activeTab, setActiveTab] = useState<'estoque' | 'remessa'>('estoque');
 
-    const { data: dataEstoqueCorte, isFetching: isFetchingEstoque, refetch: refetchEstoqueCorte } = useGetEstoqueCorte(filters);
-    const typedData: EstoqueCorte[] = dataEstoqueCorte;
+    const {
+        page,
+        limit: pageSize,
+        setPage,
+        setPageSize,
+    } = usePagination();
+
+    const queryFilters = useMemo(() => ({
+        ...filters,
+        page,
+        limit: pageSize,
+    }), [filters, page, pageSize]);
+
+    const { data: dataEstoqueCorte, isFetching: isFetchingEstoque, refetch: refetchEstoqueCorte } = useGetEstoqueCortePaginado(queryFilters);
+    const typedData: EstoqueCorte[] = dataEstoqueCorte?.data || [];
+    const pagination = dataEstoqueCorte?.pagination || {
+        total: 0,
+        pages: 1,
+        page,
+        limit: pageSize,
+    };
 
     const filterOptions = useMemo(() => {
         return {
             produtos: Array.from(new Map(typedData.map(item => [item.produto.id, item.produto.nome])).entries()),
             lotes: Array.from(new Map(typedData.map(item => [item.lote.id, item.lote])).values()),
             cores: Array.from(new Map(typedData.map(item => [item.cor.id, item.cor.nome])).entries()),
-            tamanhos: Array.from(new Set(typedData.map(item => item.tamanho.nome))).sort()
+            tamanhos: Array.from(new Set(typedData.map(item => normalizeTamanhoNome(item.tamanho.nome)))).sort()
         };
     }, [typedData]);
 
     const groupedInventory = useMemo<Record<string, GroupedProduct>>(() => {
         return typedData.reduce<Record<string, GroupedProduct>>((acc, item) => {
-            const groupKey = `${item.produto.id}-${item.cor.id}`;
+            const groupKey = `${item.produto.id}-${item.cor.id}-${item.lote.id}`;
             if (!acc[groupKey]) {
                 acc[groupKey] = {
                     produtoNome: item.produto.nome,
@@ -43,11 +65,16 @@ const InventoryDashboardContent = () => {
                     variacoes: {}
                 };
             }
-            const tamanhoNome = item.tamanho.nome;
+            const tamanhoNomeOriginal = item.tamanho.nome?.trim() || item.tamanho.nome;
+            const tamanhoNome = normalizeTamanhoNome(tamanhoNomeOriginal || "");
+
             if (acc[groupKey].variacoes[tamanhoNome]) {
                 acc[groupKey].variacoes[tamanhoNome].quantidade += item.quantidadeDisponivel;
             } else {
-                acc[groupKey].variacoes[tamanhoNome] = { nome: tamanhoNome, quantidade: item.quantidadeDisponivel };
+                acc[groupKey].variacoes[tamanhoNome] = {
+                    nome: tamanhoNomeOriginal || tamanhoNome,
+                    quantidade: item.quantidadeDisponivel,
+                };
             }
             return acc;
         }, {});
@@ -56,17 +83,27 @@ const InventoryDashboardContent = () => {
     const groupedItems = useMemo<GroupedProduct[]>(() => Object.values(groupedInventory), [groupedInventory]);
 
     const handleFilterChange = (key: keyof EstoqueCorteFiltros, value: string) => {
+        setPage(1);
         setFilters(prev => ({ ...prev, [key]: value || undefined }));
     };
 
-    const clearFilters = () => setFilters({ limit: 1000 });
+    const clearFilters = () => {
+        setPage(1);
+        setFilters({ limit: 10000 });
+    };
 
     const ordemTamanhos = ['P', 'M', 'G', 'GG'];
 
     const getSortedVariations = (item: GroupedProduct): ProductVariation[] => {
-        return ordemTamanhos
-            .map((tamanho) => item.variacoes[tamanho])
+        const variacoesOrdenadas = ordemTamanhos
+            .map((tamanho) => item.variacoes[normalizeTamanhoNome(tamanho)])
             .filter((variacao): variacao is ProductVariation => Boolean(variacao));
+
+        const variacoesExtras = Object.entries(item.variacoes)
+            .filter(([tamanho]) => !ordemTamanhos.includes(normalizeTamanhoNome(tamanho)))
+            .map(([, variacao]) => variacao);
+
+        return [...variacoesOrdenadas, ...variacoesExtras];
     };
 
     //Faccao
@@ -108,13 +145,23 @@ const InventoryDashboardContent = () => {
                             isLoading={isFetchingEstoque}
                             groupedItems={groupedItems}
                             getSortedVariations={getSortedVariations}
+                            pagination={{
+                                total: pagination.total,
+                                pages: pagination.pages,
+                                page,
+                                limit: pageSize,
+                            }}
+                            currentPage={page}
+                            onPageChange={setPage}
+                            pageSize={pageSize}
+                            
                         />
                     </TabsContent>
 
                     <TabsContent value="remessa">
                         <CriarRemessaComponent 
                         dataFaccoes={dataFaccoes ?? []} 
-                        dataEstoqueCorte={dataEstoqueCorte} 
+                        dataEstoqueCorte={typedData} 
                         usePostCriarDirecionamentoRemessa={() => criarDirecionamentoRemessaMutation}
                         usePostCriarDirecionamentoProducaoInterna={() => criarDirecionamentoProducaoInternaMutation}
                         onRemessaCriada={handleRemessaCriada}

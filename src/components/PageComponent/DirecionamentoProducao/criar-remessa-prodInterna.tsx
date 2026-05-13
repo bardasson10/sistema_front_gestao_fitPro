@@ -26,6 +26,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
+import { ServerPagination } from "@/components/DataTable/TablePagination/server-pagination"
 
 import type {
     ItemDirecionamento,
@@ -35,6 +36,7 @@ import type { EstoqueCorte } from "@/types/EstoqueCorte"
 import { UseMutationResult } from "@tanstack/react-query"
 import { PaginatedResponse } from "@/types/production"
 import { Spinner } from "@/components/ui/spinner"
+import { EstoqueCorteFiltros } from "@/hooks/queries/Estoque/useEstoque-Corte"
 
 
 interface ItemSelecionado extends ItemDirecionamento {
@@ -146,6 +148,14 @@ function SearchableOptionFilter({
 
 interface CriarRemessaComponentProps {
     dataEstoqueCorte: EstoqueCorte[];
+    pagination?: PaginatedResponse;
+    currentPage?: number;
+    onPageChange?: (page: number) => void;
+    pageSize?: number;
+    onPageSizeChange?: (pageSize: number) => void;
+    serverFilters?: Partial<EstoqueCorteFiltros>;
+    onServerFiltersChange?: (filters: Partial<EstoqueCorteFiltros>) => void;
+    onClearServerFilters?: () => void;
     usePostCriarDirecionamentoProducaoInterna?: () => UseMutationResult<{
         data: unknown[];
         pagination: PaginatedResponse;
@@ -155,6 +165,14 @@ interface CriarRemessaComponentProps {
 
 export function CriarRemessaProdInternaComponent({
     dataEstoqueCorte,
+    pagination,
+    currentPage = 1,
+    onPageChange,
+    pageSize,
+    onPageSizeChange,
+    serverFilters,
+    onServerFiltersChange,
+    onClearServerFilters,
     usePostCriarDirecionamentoProducaoInterna,
     onRemessaCriada,
 }: CriarRemessaComponentProps) {
@@ -201,6 +219,45 @@ export function CriarRemessaProdInternaComponent({
         [dataEstoqueCorte]
     )
 
+    const hasServerFilters = Boolean(
+        serverFilters?.produtoId ||
+        serverFilters?.loteProducaoId ||
+        serverFilters?.tamanhoId ||
+        serverFilters?.corId
+    )
+
+    const handleFiltroSkuChange = (sku: string) => {
+        setFiltroSku(sku)
+        const produtoId = dataEstoqueCorte.find((estoque) => estoque.produto.sku === sku)?.produto.id ?? ""
+        onServerFiltersChange?.({ produtoId: produtoId || undefined })
+    }
+
+    const handleFiltroTamanhoChange = (tamanho: string) => {
+        setFiltroTamanho(tamanho)
+        const tamanhoId = dataEstoqueCorte.find((estoque) => estoque.tamanho.nome === tamanho)?.tamanho.id ?? ""
+        onServerFiltersChange?.({ tamanhoId: tamanhoId || undefined })
+    }
+
+    const handleFiltroCorChange = (cor: string) => {
+        setFiltroCor(cor)
+        const corId = dataEstoqueCorte.find((estoque) => estoque.cor.nome === cor)?.cor.id ?? ""
+        onServerFiltersChange?.({ corId: corId || undefined })
+    }
+
+    const handleFiltroLoteChange = (lote: string) => {
+        setFiltroLote(lote)
+        const loteProducaoId = dataEstoqueCorte.find((estoque) => estoque.lote.codigoLote === lote)?.lote.id ?? ""
+        onServerFiltersChange?.({ loteProducaoId: loteProducaoId || undefined })
+    }
+
+    const clearServerFilters = () => {
+        setFiltroSku("")
+        setFiltroProduto("")
+        setFiltroTamanho("")
+        setFiltroCor("")
+        setFiltroLote("")
+        onClearServerFilters?.()
+    }
 
     const estoquesFiltrados = useMemo(() => {
         return dataEstoqueCorte.filter((estoque) => {
@@ -246,7 +303,6 @@ export function CriarRemessaProdInternaComponent({
                 itens,
                 totalDisponivel: itens.reduce((acc, item) => acc + item.quantidadeDisponivel, 0),
             }))
-            .sort((a, b) => a.sku.localeCompare(b.sku))
     }, [estoquesFiltrados])
 
     const totalItens = useMemo(() => {
@@ -454,14 +510,27 @@ export function CriarRemessaProdInternaComponent({
                                     Selecione os itens para a produção interna
                                 </CardDescription>
                             </div>
-                            <div className="relative w-full sm:w-64">
-                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                <Input
-                                    placeholder="Buscar produto, SKU, cor..."
-                                    value={busca}
-                                    onChange={(e) => setBusca(e.target.value)}
-                                    className="pl-9"
-                                />
+                            <div className="flex w-full flex-col gap-2 sm:w-72">
+                                <div className="relative w-full">
+                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Buscar produto, SKU, cor..."
+                                        value={busca}
+                                        onChange={(e) => setBusca(e.target.value)}
+                                        className="pl-9"
+                                    />
+                                </div>
+                                {hasServerFilters ? (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-auto px-0 text-xs text-destructive hover:text-destructive sm:self-end"
+                                        onClick={clearServerFilters}
+                                    >
+                                        Limpar filtros da API
+                                    </Button>
+                                ) : null}
                             </div>
                         </div>
                         <div className="grid gap-3 pt-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -470,7 +539,7 @@ export function CriarRemessaProdInternaComponent({
                                 placeholder="Buscar SKU"
                                 value={filtroSku}
                                 options={skuOptions}
-                                onChange={setFiltroSku}
+                                onChange={handleFiltroSkuChange}
                             />
                             {/* <SearchableOptionFilter
                                 label="Produto"
@@ -484,21 +553,21 @@ export function CriarRemessaProdInternaComponent({
                                 placeholder="Buscar cor"
                                 value={filtroCor}
                                 options={corOptions}
-                                onChange={setFiltroCor}
+                                onChange={handleFiltroCorChange}
                             />
                             <SearchableOptionFilter
                                 label="Tamanho"
                                 placeholder="Buscar tamanho"
                                 value={filtroTamanho}
                                 options={tamanhoOptions}
-                                onChange={setFiltroTamanho}
+                                onChange={handleFiltroTamanhoChange}
                             />
                             <SearchableOptionFilter
                                 label="Lote"
                                 placeholder="Buscar lote"
                                 value={filtroLote}
                                 options={loteOptions}
-                                onChange={setFiltroLote}
+                                onChange={handleFiltroLoteChange}
                             />
                         </div>
                     </CardHeader>
@@ -605,6 +674,16 @@ export function CriarRemessaProdInternaComponent({
                                 </TableBody>
                             </Table>
                         </div>
+
+                        {pagination && onPageChange ? (
+                            <ServerPagination
+                                pagination={pagination}
+                                currentPage={currentPage}
+                                onPageChange={onPageChange}
+                                pageSize={pageSize}
+                                onPageSizeChange={onPageSizeChange}
+                            />
+                        ) : null}
                     </CardContent>
                 </Card>
             </div>

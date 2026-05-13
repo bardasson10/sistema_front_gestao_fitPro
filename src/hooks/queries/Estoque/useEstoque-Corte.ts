@@ -5,6 +5,12 @@ import { PaginatedResponse } from '@/types/production';
 import { EstoqueCorte } from '@/types/EstoqueCorte';
 
 
+type EstoqueCorteResponse = {
+    data: EstoqueCorte[];
+    pagination: PaginatedResponse;
+};
+
+
 
 export type EstoqueCorteFiltros = {
     produtoId?: string;
@@ -16,29 +22,37 @@ export type EstoqueCorteFiltros = {
     page?: number;
 }
 
+const buildEstoqueCorteQueryString = (filtros?: EstoqueCorteFiltros) => {
+    const params = new URLSearchParams();
+
+    if (filtros?.produtoId) params.append('produtoId', filtros.produtoId);
+    if (filtros?.loteProducaoId) params.append('loteProducaoId', filtros.loteProducaoId);
+    if (filtros?.tamanhoId) params.append('tamanhoId', filtros.tamanhoId);
+    if (filtros?.corId) params.append('corId', filtros.corId);
+    if (filtros?.limit) params.append('limit', String(filtros.limit));
+    if (filtros?.page) params.append('page', String(filtros.page));
+
+    if (!filtros?.limit) params.append('limit', '10000');
+
+    return params.toString();
+};
+
+const fetchEstoqueCorte = async (filtros?: EstoqueCorteFiltros): Promise<EstoqueCorteResponse> => {
+    const queryString = buildEstoqueCorteQueryString(filtros);
+    const { data } = await apiClient.get<EstoqueCorteResponse>(
+        `/estoque-corte${queryString ? `?${queryString}` : ''}`
+    );
+
+    return data;
+};
+
 
 export const useGetEstoqueCorte = (filtros?: EstoqueCorteFiltros) => {
     return useSuspenseQuery({
         queryKey: ['estoqueCorte', filtros],
         queryFn: async () => {
-            const params = new URLSearchParams();
-
-            if (filtros?.produtoId) params.append('produtoId', filtros.produtoId);
-            if (filtros?.loteProducaoId) params.append('loteProducaoId', filtros.loteProducaoId);
-            if (filtros?.tamanhoId) params.append('tamanhoId', filtros.tamanhoId);
-            if (filtros?.corId) params.append('corId', filtros.corId);
-            if (filtros?.limit) params.append('limit', String(filtros.limit));
-            if (filtros?.page) params.append('page', String(filtros.page));
-
-            if (!filtros?.limit) params.append('limit', '1000');
-
-            const queryString = params.toString();
-
             try {
-                const { data } = await apiClient
-                    .get<{ data: EstoqueCorte[]; pagination: PaginatedResponse }>(
-                        `/estoque-corte${queryString ? `?${queryString}` : ''}`
-                    );
+                const data = await fetchEstoqueCorte(filtros);
                 return data.data;
             } catch (error: any) {
                 const mensagem = error.response?.data?.details?.[0]?.mensage ||
@@ -48,4 +62,28 @@ export const useGetEstoqueCorte = (filtros?: EstoqueCorteFiltros) => {
             }
         }
     })
+};
+
+export const useGetEstoqueCortePaginado = (filtros?: EstoqueCorteFiltros) => {
+    return useSuspenseQuery({
+        queryKey: ['estoqueCorte', 'paginado', filtros],
+        queryFn: async () => {
+            try {
+                return await fetchEstoqueCorte(filtros);
+            } catch (error: any) {
+                const mensagem = error.response?.data?.details?.[0]?.mensage ||
+                    error.response?.data?.error;
+                toast.error(mensagem);
+                return {
+                    data: [],
+                    pagination: {
+                        page: filtros?.page ?? 1,
+                        limit: filtros?.limit ?? 0,
+                        total: 0,
+                        pages: 1,
+                    },
+                };
+            }
+        }
+    });
 };

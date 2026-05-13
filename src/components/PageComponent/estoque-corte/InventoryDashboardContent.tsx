@@ -5,8 +5,10 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Package, Droplets, Search, X } from 'lucide-react';
+import { ServerPagination } from '@/components/DataTable/TablePagination/server-pagination';
 import { EstoqueCorteFiltros } from '@/hooks/queries/Estoque/useEstoque-Corte';
 import { EstoqueCorte } from '@/types/EstoqueCorte';
+import { PaginatedResponse } from '@/types/production';
 
 
 export interface GroupedProduct {
@@ -47,6 +49,10 @@ interface InventoryDashboardContentProps {
     isLoading: boolean;
     groupedItems: GroupedProduct[];
     getSortedVariations: (item: GroupedProduct) => ProductVariation[]
+    pagination: PaginatedResponse;
+    currentPage: number;
+    onPageChange: (page: number) => void;
+    pageSize: number;
 }
 
 const ALL_PRODUCTS = 'all-products';
@@ -61,7 +67,11 @@ export const InventoryDashBoard = ({
     handleFilterChange,
     isLoading,
     groupedItems,
-    getSortedVariations
+    getSortedVariations,
+    pagination,
+    currentPage,
+    onPageChange,
+    pageSize,
 }: InventoryDashboardContentProps) => {
     const [productSearch, setProductSearch] = useState('');
     const [colorSearch, setColorSearch] = useState('');
@@ -213,7 +223,7 @@ export const InventoryDashBoard = ({
 
                         <Card className="justify-center border-dashed py-0 shadow-none">
                             <CardContent className="flex items-center justify-center px-3 py-2 text-xs text-muted-foreground">
-                                {isLoading ? 'Atualizando dados...' : `${data.length} variações encontradas`}
+                                {isLoading ? 'Atualizando dados...' : `${pagination.total} resultados encontrados`}
                             </CardContent>
                         </Card>
                     </div>
@@ -228,6 +238,7 @@ export const InventoryDashBoard = ({
                                 <div>
                                     <span className="rounded-md bg-primary/10 px-2 py-1 text-[10px] font-semibold uppercase text-primary">{item.sku}</span>
                                     <h2 className="mt-2 text-xl font-semibold text-foreground">{item.produtoNome}</h2>
+                                    <p className="mt-1 text-xs text-muted-foreground">Lote {item.loteCodigo}</p>
                                 </div>
                                 <div className="h-10 w-10 rounded-md border border-border" style={{ backgroundColor: item.cor.codigoHex }} />
                             </div>
@@ -256,6 +267,16 @@ export const InventoryDashBoard = ({
                     </Card>
                 ))}
             </div>
+
+            {pagination.total > 0 && (
+                <ServerPagination
+                    pagination={pagination}
+                    currentPage={currentPage}
+                    onPageChange={onPageChange}
+                    pageSize={pageSize}
+                    isLoading={isLoading}
+                />
+            )}
         </main>
     )
 }

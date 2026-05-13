@@ -46,6 +46,7 @@ import { Faccao, ServicesValues } from "@/types/Faccao"
 import { PaginatedResponse } from "@/types/production"
 import { UseMutationResult } from "@tanstack/react-query"
 import { Spinner } from "@/components/ui/spinner"
+import { useGetEstoqueCorte, type EstoqueCorteFiltros } from "@/hooks/queries/Estoque/useEstoque-Corte"
 
 
 interface ItemSelecionado extends ItemDirecionamento {
@@ -178,40 +179,100 @@ export function CriarRemessaComponent({
     const [itensSelecionados, setItensSelecionados] = useState<ItemSelecionado[]>([])
     const [quantidadeInputs, setQuantidadeInputs] = useState<Record<string, string>>({})
     const [busca, setBusca] = useState("")
+    const [page, setPage] = useState(1)
+    const pageSize = 12
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [observacao, setObservacao] = useState<string>("");
 
+    const [filtroProdutoId, setFiltroProdutoId] = useState("")
+    const [filtroTamanhoId, setFiltroTamanhoId] = useState("")
+    const [filtroCorId, setFiltroCorId] = useState("")
+    const [filtroLoteId, setFiltroLoteId] = useState("")
+
+    const filtrosApiEstoque = useMemo<EstoqueCorteFiltros>(
+        () => ({
+            produtoId: filtroProdutoId || undefined,
+            tamanhoId: filtroTamanhoId || undefined,
+            corId: filtroCorId || undefined,
+            loteProducaoId: filtroLoteId || undefined,
+            limit: 10000,
+        }),
+        [filtroCorId, filtroLoteId, filtroProdutoId, filtroTamanhoId],
+    )
+
+    const { data: dadosEstoqueApi } = useGetEstoqueCorte(filtrosApiEstoque)
+    const estoqueBase = dadosEstoqueApi
+    const estoqueFiltradoApi = dadosEstoqueApi
+
     const skuOptions = useMemo(
-        () => Array.from(new Set(dataEstoqueCorte.map((estoque) => estoque.produto.sku))).sort(),
-        [dataEstoqueCorte]
+        () => Array.from(new Set(estoqueBase.map((estoque) => estoque.produto.sku))).sort(),
+        [estoqueBase]
     )
 
     const tamanhoOptions = useMemo(
-        () => Array.from(new Set(dataEstoqueCorte.map((estoque) => estoque.tamanho.nome))).sort(),
-        [dataEstoqueCorte]
+        () => Array.from(new Set(estoqueBase.map((estoque) => estoque.tamanho.nome))).sort(),
+        [estoqueBase]
     )
 
     const corOptions = useMemo(
-        () => Array.from(new Set(dataEstoqueCorte.map((estoque) => estoque.cor.nome))).sort(),
-        [dataEstoqueCorte]
+        () => Array.from(new Set(estoqueBase.map((estoque) => estoque.cor.nome))).sort(),
+        [estoqueBase]
     )
 
     const loteOptions = useMemo(
-        () => Array.from(new Set(dataEstoqueCorte.map((estoque) => estoque.lote.codigoLote))).sort(),
-        [dataEstoqueCorte]
+        () => Array.from(new Set(estoqueBase.map((estoque) => estoque.lote.codigoLote))).sort(),
+        [estoqueBase]
     )
+
+    const handleFiltroSkuChange = (sku: string) => {
+        setFiltroSku(sku)
+        setFiltroProdutoId(estoqueBase.find((estoque) => estoque.produto.sku === sku)?.produto.id ?? "")
+    }
+
+    const handleFiltroTamanhoChange = (tamanho: string) => {
+        setFiltroTamanho(tamanho)
+        setFiltroTamanhoId(estoqueBase.find((estoque) => estoque.tamanho.nome === tamanho)?.tamanho.id ?? "")
+    }
+
+    const handleFiltroCorChange = (cor: string) => {
+        setFiltroCor(cor)
+        setFiltroCorId(estoqueBase.find((estoque) => estoque.cor.nome === cor)?.cor.id ?? "")
+    }
+
+    const handleFiltroLoteChange = (lote: string) => {
+        setFiltroLote(lote)
+        setFiltroLoteId(estoqueBase.find((estoque) => estoque.lote.codigoLote === lote)?.lote.id ?? "")
+    }
+
+    useEffect(() => {
+        setPage(1)
+    }, [busca, filtroSku, filtroTamanho, filtroCor, filtroLote])
+
+    const normalizeText = (value?: string | null) => (value ?? "").trim().toLowerCase()
+
+    const matchesSearch = (estoque: EstoqueCorte, searchValue: string) => {
+        const normalizedSearch = normalizeText(searchValue)
+        if (!normalizedSearch) return true
+
+        const searchTokens = normalizedSearch.split(/\s+/).filter(Boolean)
+        const searchableFields = [
+            estoque.produto.nome,
+            estoque.produto.sku,
+            estoque.tamanho.nome,
+            estoque.cor.nome,
+            estoque.lote.codigoLote,
+        ].map(normalizeText)
+
+        return searchTokens.every((token) =>
+            searchableFields.some((field) => field.includes(token))
+        )
+    }
 
 
     const estoquesFiltrados = useMemo(() => {
-        if (!busca && !filtroSku && !filtroTamanho && !filtroCor && !filtroLote) return dataEstoqueCorte
-        const termo = busca.trim().toLowerCase()
-        return dataEstoqueCorte.filter((e) => {
-            const correspondeBusca = !termo ||
-                e.produto.nome.toLowerCase().includes(termo) ||
-                e.produto.sku.toLowerCase().includes(termo) ||
-                e.tamanho.nome.toLowerCase().includes(termo) ||
-                e.cor.nome.toLowerCase().includes(termo) ||
-                e.lote.codigoLote.toLowerCase().includes(termo)
+        if (!busca && !filtroSku && !filtroTamanho && !filtroCor && !filtroLote) return estoqueFiltradoApi
+        return estoqueFiltradoApi.filter((e) => {
+            const correspondeBusca = matchesSearch(e, busca)
 
             const correspondeSku = !filtroSku || e.produto.sku === filtroSku
             const correspondeTamanho = !filtroTamanho || e.tamanho.nome === filtroTamanho
@@ -226,7 +287,7 @@ export function CriarRemessaComponent({
                 correspondeLote
             )
         })
-    }, [busca, filtroSku, filtroTamanho, filtroCor, filtroLote, dataEstoqueCorte])
+    }, [busca, filtroSku, filtroTamanho, filtroCor, filtroLote, estoqueFiltradoApi])
 
     const estoquesAgrupadosPorSku = useMemo(() => {
         const grupos = new Map<string, EstoqueCorte[]>()
@@ -247,6 +308,12 @@ export function CriarRemessaComponent({
             .sort((a, b) => a.sku.localeCompare(b.sku))
     }, [estoquesFiltrados])
 
+    const totalPaginas = Math.max(1, Math.ceil(estoquesAgrupadosPorSku.length / pageSize))
+    const gruposPaginados = useMemo(
+        () => estoquesAgrupadosPorSku.slice((page - 1) * pageSize, page * pageSize),
+        [estoquesAgrupadosPorSku, page],
+    )
+
     const totalItens = useMemo(() => {
         return itensSelecionados.reduce((acc, item) => acc + item.quantidade, 0)
     }, [itensSelecionados])
@@ -264,7 +331,7 @@ export function CriarRemessaComponent({
 
         // Calcular disponível total por SKU (somando de todos os estoques com esse SKU)
         const skuDisponivel = new Map<string, number>()
-        dataEstoqueCorte.forEach((estoque) => {
+        estoqueBase.forEach((estoque) => {
             const sku = estoque.produto.sku
             if (!skuDisponivel.has(sku)) {
                 skuDisponivel.set(sku, 0)
@@ -277,7 +344,7 @@ export function CriarRemessaComponent({
             items,
             disponivel: skuDisponivel.get(sku) || 0,
         }))
-    }, [itensSelecionados, dataEstoqueCorte])
+    }, [itensSelecionados, estoqueBase])
 
     const handleToggleItem = (estoque: EstoqueCorte, checked: boolean) => {
         if (checked) {
@@ -592,34 +659,34 @@ export function CriarRemessaComponent({
                                 placeholder="Buscar SKU"
                                 value={filtroSku}
                                 options={skuOptions}
-                                onChange={setFiltroSku}
+                                onChange={handleFiltroSkuChange}
                             />
                             <SearchableOptionFilter
                                 label="Cor"
                                 placeholder="Buscar cor"
                                 value={filtroCor}
                                 options={corOptions}
-                                onChange={setFiltroCor}
+                                onChange={handleFiltroCorChange}
                             />
                             <SearchableOptionFilter
                                 label="Tamanho"
                                 placeholder="Buscar tamanho"
                                 value={filtroTamanho}
                                 options={tamanhoOptions}
-                                onChange={setFiltroTamanho}
+                                onChange={handleFiltroTamanhoChange}
                             />
                             <SearchableOptionFilter
                                 label="Lote"
                                 placeholder="Buscar lote"
                                 value={filtroLote}
                                 options={loteOptions}
-                                onChange={setFiltroLote}
+                                onChange={handleFiltroLoteChange}
                             />
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="max-h-[320px] overflow-auto rounded-md border sm:max-h-[340px]">
-                            <Table className="min-w-[760px]">
+                        <div className="max-h-80 overflow-auto rounded-md border sm:max-h-85">
+                            <Table className="min-w-190">
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead className="w-12"></TableHead>
@@ -632,14 +699,14 @@ export function CriarRemessaComponent({
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {estoquesAgrupadosPorSku.length === 0 ? (
+                                    {gruposPaginados.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                                                 Nenhum item encontrado
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        estoquesAgrupadosPorSku.map((grupo) => (
+                                        gruposPaginados.map((grupo) => (
                                             <Fragment key={grupo.sku}>
                                                 <TableRow className="bg-muted/40">
                                                     <TableCell colSpan={7} className="py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -718,6 +785,38 @@ export function CriarRemessaComponent({
                                 </TableBody>
                             </Table>
                         </div>
+
+                        {estoquesAgrupadosPorSku.length > pageSize && (
+                            <div className="flex flex-col gap-3 border-t px-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                                <p className="text-sm text-muted-foreground">
+                                    Mostrando {Math.min((page - 1) * pageSize + 1, estoquesAgrupadosPorSku.length)}-
+                                    {Math.min(page * pageSize, estoquesAgrupadosPorSku.length)} de {estoquesAgrupadosPorSku.length} grupos
+                                </p>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setPage((current) => Math.max(1, current - 1))}
+                                        disabled={page <= 1}
+                                    >
+                                        Anterior
+                                    </Button>
+                                    <span className="text-sm text-muted-foreground">
+                                        Página {page} de {totalPaginas}
+                                    </span>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setPage((current) => Math.min(totalPaginas, current + 1))}
+                                        disabled={page >= totalPaginas}
+                                    >
+                                        Próxima
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>

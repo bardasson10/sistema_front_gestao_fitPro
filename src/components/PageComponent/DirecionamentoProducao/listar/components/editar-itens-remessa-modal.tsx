@@ -61,7 +61,7 @@ export function EditarItensRemessaModal({ remessa, disabled }: EditarItensRemess
     const [tamanhoFiltro, setTamanhoFiltro] = useState("todos")
     const [quantidadesEditadas, setQuantidadesEditadas] = useState<QuantidadeMap>({})
 
-    const { data: estoquesData, isFetching } = useGetEstoqueCorteLista(undefined, {
+    const { data: estoquesData, isFetching } = useGetEstoqueCorteLista({ limit: 10000 }, {
         enabled: open,
     })
     const putDirecionamentoItens = usePutDirecionamentoItens()
