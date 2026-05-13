@@ -208,13 +208,12 @@ export function StockFabricForm({ cores, isEditing = false }: StockFabricFormPro
                                 return;
                               }
 
-                              // 5. TRUQUE DA VÍRGULA: Se o valor terminar com ponto (ex: "15."), 
-                              // mandamos a string temporariamente para o hook-form. Isso evita que 
-                              // o React corte a vírgula visual enquanto ele não digita o próximo número.
-                              if (rawValue.endsWith(".")) {
+                              // 5. TRUQUE DA VÍRGULA: Mantém como string enquanto houver ponto (ex: "15.", "15.0", "19.06")
+                              // Isso permite digitar decimais sem perder os zeros intermediários
+                              if (rawValue.includes(".")) {
                                 pesoField.onChange(rawValue);
                               } else {
-                                // Se for um número completo (ex: "15.25"), passamos pela sua função parseNumber
+                                // Se for um inteiro sem ponto, converte via parseNumber
                                 pesoField.onChange(parseNumber(rawValue));
                               }
                             }}

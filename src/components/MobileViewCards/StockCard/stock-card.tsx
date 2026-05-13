@@ -53,7 +53,7 @@ export const MobileViewStock = ({
     <div className="flex flex-col gap-3 py-3">
       <SemDadosComponent<EstoqueRolo> nomeDado="tecido" data={rolos} />
       {Array.isArray(rolos) && rolos.map((item) => {
-        const tecidoDoRolo = tecidos.find(t => t.id === item.tecidoId);
+        const tecidoDoRolo = item.tecido;
         
         const statusInfo = statusMap[item.situacao as keyof typeof statusMap] || statusMap.disponivel;
         return (
