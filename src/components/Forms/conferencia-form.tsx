@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { ConferenciaFormValues } from '@/schemas/conferencia-schema';
 import {
@@ -57,7 +57,8 @@ export function ConferenciaForm({ items = [] }: ConferenciaFormProps) {
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
-                <th className="text-left p-3">Tamanho</th>
+                <th className="text-left p-3">Produto</th>
+                <th className="text-left p-3">Tamanho / Cor</th>
                 <th className="text-center p-3">
                   <span className="block text-xs font-medium">Enviadas</span>
                   <span className="text-xs text-muted-foreground">(Planejado)</span>
@@ -77,88 +78,123 @@ export function ConferenciaForm({ items = [] }: ConferenciaFormProps) {
               </tr>
             </thead>
             <tbody>
-              {items.map((item, index) => {
-                const qtdPlanejada = item.quantidadePlanejada || 0;
-                const qtdRecebida = formItems?.[index]?.qtdRecebida || 0;
-                const qtdDefeito = formItems?.[index]?.qtdDefeito || 0;
-                const total = qtdRecebida + qtdDefeito;
-                const diferenca = qtdPlanejada - total;
-                
-                let statusColor = 'bg-green-50 dark:bg-green-950';
-                let statusText = 'text-green-700 dark:text-green-300';
-                let statusLabel = 'OK';
-                
-                if (diferenca > 0) {
-                  statusColor = 'bg-red-50 dark:bg-red-950';
-                  statusText = 'text-red-700 dark:text-red-300';
-                  statusLabel = `-${diferenca}`;
-                } else if (diferenca < 0) {
-                  statusColor = 'bg-blue-50 dark:bg-blue-950';
-                  statusText = 'text-blue-700 dark:text-blue-300';
-                  statusLabel = `+${Math.abs(diferenca)}`;
-                }
+              {(() => {
+                // Agrupar items por lote
+                const itemsByLote = items.reduce((acc, item, index) => {
+                  const lote = (item as any).lote || 'Sem Lote';
+                  if (!acc[lote]) {
+                    acc[lote] = [];
+                  }
+                  acc[lote].push({ item, index });
+                  return acc;
+                }, {} as Record<string, Array<{ item: any; index: number }>>);
 
-                return (
-                  <tr key={item.tamanho?.id} className="border-t hover:bg-muted/30 transition-colors">
-                    <td className="p-3 font-medium">{item.tamanho?.nome || '-'}</td>
-                    <td className="text-center p-3">
-                      <span className="font-bold text-base">{qtdPlanejada}</span>
-                    </td>
-                    <td className="text-center p-3">
-                      <FormField
-                        control={control}
-                        name={`items.${index}.qtdRecebida`}
-                        render={({ field }) => (
-                          <Input
-                            {...field}
-                            type="number"
-                            min="0"
-                            className="w-24 h-9 mx-auto text-center font-medium"
-                            value={field.value || 0}
-                            onChange={(e) =>
-                              field.onChange(parseInt(e.target.value) || 0)
-                            }
-                          />
-                        )}
-                      />
-                      <FormField
-                        control={control}
-                        name={`items.${index}.tamanhoId`}
-                        render={({ field }) => (
-                          <Input
-                            {...field}
-                            type="hidden"
-                            value={item.tamanho?.id || ''}
-                          />
-                        )}
-                      />
-                    </td>
-                    <td className="text-center p-3">
-                      <FormField
-                        control={control}
-                        name={`items.${index}.qtdDefeito`}
-                        render={({ field }) => (
-                          <Input
-                            {...field}
-                            type="number"
-                            min="0"
-                            className="w-24 h-9 mx-auto text-center font-medium"
-                            value={field.value || 0}
-                            onChange={(e) =>
-                              field.onChange(parseInt(e.target.value) || 0)
-                            }
-                          />
-                        )}
-                      />
-                    </td>
-                    <td className={`text-center p-3 ${statusColor}`}>
-                      <span className={`font-bold text-sm ${statusText}`}>
-                        {statusLabel}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
+                return Object.entries(itemsByLote).map(([lote, loteItems]) => (
+                  <React.Fragment key={lote}>
+                    {/* Header do Lote */}
+                    <tr className="bg-muted/70 border-t-2 border-b">
+                      <td colSpan={6} className="p-3 font-semibold text-sm">
+                        {lote}
+                      </td>
+                    </tr>
+
+                    {/* Items do Lote */}
+                    {loteItems.map(({ item, index }) => {
+                      const qtdPlanejada = item.quantidadePlanejada || 0;
+                      const qtdRecebida = formItems?.[index]?.qtdRecebida || 0;
+                      const qtdDefeito = formItems?.[index]?.qtdDefeito || 0;
+                      const total = qtdRecebida + qtdDefeito;
+                      const diferenca = qtdPlanejada - total;
+                      
+                      let statusColor = 'bg-green-50 dark:bg-green-950';
+                      let statusText = 'text-green-700 dark:text-green-300';
+                      let statusLabel = 'OK';
+                      
+                      if (diferenca > 0) {
+                        statusColor = 'bg-red-50 dark:bg-red-950';
+                        statusText = 'text-red-700 dark:text-red-300';
+                        statusLabel = `-${diferenca}`;
+                      } else if (diferenca < 0) {
+                        statusColor = 'bg-blue-50 dark:bg-blue-950';
+                        statusText = 'text-blue-700 dark:text-blue-300';
+                        statusLabel = `+${Math.abs(diferenca)}`;
+                      }
+
+                      return (
+                        <tr key={`${item.tamanho?.nome || item.tamanho}-${item.cor?.codigoHex || 'sem-cor'}-${item.produto?.id || index}`} className="border-t hover:bg-muted/30 transition-colors">
+                          <td className="p-3 font-medium">
+                            <div className="flex flex-col gap-1">
+                              <span>{item.produto?.nome || '-'}</span>
+                              <span className="text-xs text-muted-foreground">{item.produto?.sku || '-'}</span>
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            <div className="flex flex-col gap-1">
+                              <span className="font-medium">{item.tamanho?.nome || '-'}</span>
+                              <span className="text-xs text-muted-foreground">{item.cor?.nome || '-'}</span>
+                            </div>
+                          </td>
+                          <td className="text-center p-3">
+                            <span className="font-bold text-base">{qtdPlanejada}</span>
+                          </td>
+                          <td className="text-center p-3">
+                            <FormField
+                              control={control}
+                              name={`items.${index}.qtdRecebida`}
+                              render={({ field }) => (
+                                <Input
+                                  {...field}
+                                  type="number"
+                                  min="0"
+                                  className="w-24 h-9 mx-auto text-center font-medium"
+                                  value={field.value || 0}
+                                  onChange={(e) =>
+                                    field.onChange(parseInt(e.target.value) || 0)
+                                  }
+                                />
+                              )}
+                            />
+                            <FormField
+                              control={control}
+                              name={`items.${index}.tamanhoId`}
+                              render={({ field }) => (
+                                <Input
+                                  {...field}
+                                  type="hidden"
+                                  value={item.tamanho?.id || ''}
+                                />
+                              )}
+                            />
+                          </td>
+                          <td className="text-center p-3">
+                            <FormField
+                              control={control}
+                              name={`items.${index}.qtdDefeito`}
+                              render={({ field }) => (
+                                <Input
+                                  {...field}
+                                  type="number"
+                                  min="0"
+                                  className="w-24 h-9 mx-auto text-center font-medium"
+                                  value={field.value || 0}
+                                  onChange={(e) =>
+                                    field.onChange(parseInt(e.target.value) || 0)
+                                  }
+                                />
+                              )}
+                            />
+                          </td>
+                          <td className={`text-center p-3 ${statusColor}`}>
+                            <span className={`font-bold text-sm ${statusText}`}>
+                              {statusLabel}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </React.Fragment>
+                ));
+              })()}
             </tbody>
           </table>
         </div>

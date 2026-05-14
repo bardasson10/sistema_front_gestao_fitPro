@@ -36,6 +36,28 @@ export const useGetListAllConferencias = (filtros?: IFiltrosConferencia) => {
     });
 };
 
+
+export const useGetListAllConferenciasApproved = (filtros?: IFiltrosConferencia) => {
+    return useSuspenseQuery({
+        queryKey: ['conferencias-aprovadas', filtros],
+        queryFn: async () => {
+            const { data } = await apiClient.get<{data:Conferencia[], pagination: PaginatedResponse }>(
+                '/conferencias/aprovadas',
+                {
+                    params: filtros,
+                }
+            );
+
+            return {
+                data: data.data,
+                pagination: data.pagination,
+            };
+        },
+    });
+
+};
+
+
 export const useGetByIdConferencia = (id: string) => {
     return useSuspenseQuery({
         queryKey: ['conferencias', id],
