@@ -1,12 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { ApiLoteProducaoResponse, LoteProducao } from "@/hooks/queries/useProducao";
 import { ColumnDef } from "@tanstack/react-table";
-import { Eye, Trash2 } from "lucide-react";
+import { Eye, Trash2, Printer } from "lucide-react";
 
 
 export const getLoteProducaoColumns = (
   onView: (item: ApiLoteProducaoResponse) => void,
   onRemove: (id: string) => void,
+  onPrint: (item: ApiLoteProducaoResponse) => void,
 ): ColumnDef<ApiLoteProducaoResponse>[] => [
   {
     accessorKey: 'codigoLote',
@@ -78,6 +79,13 @@ export const getLoteProducaoColumns = (
     header: '',
     cell: ({ row }) => (
       <div className="flex justify-end gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onPrint(row.original)}
+        >
+          <Printer className="h-4 w-4" />
+        </Button>
         <Button
           variant="ghost"
           size="icon"

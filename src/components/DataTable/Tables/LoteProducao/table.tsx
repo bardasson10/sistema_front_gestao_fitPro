@@ -18,10 +18,11 @@ export const LoteProducaoTable: React.FC<LoteProducaoTableProps> = ({
   isLoading,
   onView,
   onRemove,
+  onPrint,
 }) => {
   const columns = React.useMemo(
-    () => getLoteProducaoColumns(onView, onRemove),
-    [onView, onRemove]
+    () => getLoteProducaoColumns(onView, onRemove, onPrint),
+    [onView, onRemove, onPrint]
   );
 
   return (

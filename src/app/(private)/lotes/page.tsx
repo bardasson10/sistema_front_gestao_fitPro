@@ -7,6 +7,7 @@ import { LoteProducaoAccordionForm } from "@/components/Forms/LoteProducao/accor
 import { CreateLoteForm } from "@/components/Forms/LoteProducao/subForms/createLoteForm";
 import { MobileViewLoteProducao } from "@/components/MobileViewCards/LoteProducaoCard";
 import { BaseModal } from "@/components/Modal/base-modal";
+import RomaneioDeCorte from "@/components/PDF/Romaneio";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -38,6 +39,8 @@ import { useForm } from "react-hook-form";
 import { ILoteResponse } from "@/types/Lote";
 import { IFiltrosLote, useGetListAllLotes, useGetResumoPorCor } from "@/hooks/queries/Lote/useLote";
 import { ResumoGradePorCorTabs } from "@/components/DataTable/Tables/LoteProducao/resumo-grade-por-cor-tabs";
+import { useReactToPrint } from "react-to-print";
+import { useRef } from "react";
 
 type IFiltroLoteKey = "status" | "codigoLote" | "responsavelId" | "corId" | "produtoId" | "dataInicio" | "dataFim";
 type IFiltrosFuncionaisLotes = Record<IFiltroLoteKey, string[]>;
@@ -167,6 +170,14 @@ export default function Lotes() {
     const [removingItemId, setRemovingItemId] = useState<string | null>(null);
     const [isRemoveOpen, setIsRemoveOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<Partial<ApiLoteProducaoResponse> | null>(null);
+    const [isRomaneioOpen, setIsRomaneioOpen] = useState(false);
+    const [selectedRomaneioLote, setSelectedRomaneioLote] = useState<ApiLoteProducaoResponse | null>(null);
+    const romaneioRef = useRef<HTMLDivElement>(null);
+
+    const handlePrintRomaneioPdf = useReactToPrint({
+        contentRef: romaneioRef,
+        documentTitle: selectedRomaneioLote?.codigoLote ? `Romaneio-${selectedRomaneioLote.codigoLote}` : "Romaneio-de-Corte",
+    });
 
     const opcoesCor = useMemo(() => {
         const corMap = new Map<string, string>();
@@ -333,6 +344,11 @@ export default function Lotes() {
         setIsRemoveOpen(true);
     };
 
+    const handlePrintRomaneio = (item: ApiLoteProducaoResponse) => {
+        setSelectedRomaneioLote(item);
+        setIsRomaneioOpen(true);
+    };
+
     const [histDateFilter, setHistDateFilter] = useState('');
     const [histCodigoFilter, setHistCodigoFilter] = useState('');
 
@@ -486,6 +502,7 @@ export default function Lotes() {
                                     isLoading={isLoadingLotes || isDeleting}
                                     onView={handleEdit}
                                     onRemove={handleRemove}
+                                    onPrint={handlePrintRomaneio}
                                 />
                             </CardContent>
                         </Card>
@@ -497,6 +514,7 @@ export default function Lotes() {
                             isLoading={isLoadingLotes || isDeleting}
                             onView={handleEdit}
                             onRemove={handleRemove}
+                            onPrint={handlePrintRomaneio}
                         />
                     </div>
 
@@ -567,6 +585,7 @@ export default function Lotes() {
                                                             isLoading={isLoadingLotes || isDeleting}
                                                             onView={handleEdit}
                                                             onRemove={handleRemove}
+                                                            onPrint={handlePrintRomaneio}
                                                         />
                                                     </div>
                                                 ))}
@@ -624,6 +643,24 @@ export default function Lotes() {
                         />
                     </Form>
                 )}
+            </BaseModal>
+
+            <BaseModal
+                title="Romaneio de Corte"
+                open={isRomaneioOpen}
+                onOpenChange={(open) => {
+                    setIsRomaneioOpen(open);
+                    if (!open) {
+                        setSelectedRomaneioLote(null);
+                    }
+                }}
+                description="Visualização da folha para impressão"
+            >
+                <RomaneioDeCorte
+                    ref={romaneioRef}
+                    lote={selectedRomaneioLote}
+                    onPrint={handlePrintRomaneioPdf}
+                />
             </BaseModal>
 
             <RemoveItemWarning

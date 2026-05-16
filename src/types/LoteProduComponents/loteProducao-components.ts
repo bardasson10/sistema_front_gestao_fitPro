@@ -7,6 +7,7 @@ export interface LoteProducaoProps {
   isLoading: boolean;
   onView: (item: ApiLoteProducaoResponse) => void;
   onRemove: (id: string) => void;
+  onPrint: (item: ApiLoteProducaoResponse) => void;
 }
 
 export interface LoteProducaoGradeProps {
