@@ -43,7 +43,7 @@ export const ColaboradorTable: React.FC<ColaboradorTableProps> = ({
               data={colaboradores}
               isLoading={isLoading}
               getRowId={(row) => row.id}
-              showPagination={false}
+              
             />
             {pagination && onPageChange && (
               <ServerPagination

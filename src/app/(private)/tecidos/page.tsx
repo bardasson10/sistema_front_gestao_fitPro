@@ -72,8 +72,10 @@ export default function Tecidos() {
   const { data: fornecedoresData } = useFornecedores();
   const fornecedores = fornecedoresData || [];
 
-  const { data: coresData } = useCores();
-  const cores = coresData || [];
+  const { data: coresData } = useCores({
+    limit: 1000,
+  });
+  const cores = coresData?.data || [];
 
   // Mutations
   const { mutate: criar, isPending: isCreating } = useCriarTecido();

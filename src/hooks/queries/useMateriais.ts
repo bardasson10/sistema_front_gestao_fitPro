@@ -94,12 +94,24 @@ export const useDeletarFornecedor = () => {
 
 // ============ CORES ============
 
-export const useCores = () => {
+export interface ColorFilters {
+    page?: number;
+    limit?: number;
+    nome?: string;
+    codigoHex?: string;
+}
+
+export const useCores = (filtros?: ColorFilters) => {
     return useQuery({
-        queryKey: ['cores'],
+        queryKey: ['cores', filtros],
         queryFn: async () => {
-            const response = await apiClient.get<{ data: Cor[], pagination: PaginatedResponse }>('/cores');
-            return response.data.data;
+            const response = await apiClient.get<{ data: Cor[], pagination: PaginatedResponse }>('/cores',
+                {
+                    params:  filtros ,
+
+                }
+            );
+            return response.data;
         },
     });
 };

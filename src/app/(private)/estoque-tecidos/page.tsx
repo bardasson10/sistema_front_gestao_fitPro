@@ -96,7 +96,7 @@ export default function Estoque() {
   const { data: tecidosResponse } = useTecidos();
   const tecidos = tecidosResponse?.data || [];
   const { data: coresData } = useCores();
-  const cores = coresData || [];
+  const cores = coresData?.data || [];
 
   const rolosQuery = useMemo(() => ({
     ...filtros,

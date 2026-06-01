@@ -39,7 +39,7 @@ export const StockTable = ({
           data={data}
           isLoading={isLoading}
           getRowId={(row) => row.id}
-          showPagination={false}
+          
         />
         {pagination && onPageChange && (
           <ServerPagination

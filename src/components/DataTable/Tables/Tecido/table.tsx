@@ -47,7 +47,7 @@ export const FabricTable: React.FC<FabricTableProps> = ({
             data={data}
             isLoading={isLoading}
             getRowId={(row) => row.id}
-            showPagination={false}
+          
           />
           {pagination && onPageChange && (
             <ServerPagination

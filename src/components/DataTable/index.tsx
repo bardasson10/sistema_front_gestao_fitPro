@@ -10,6 +10,7 @@ import {
   useReactTable,
   RowSelectionState,
   VisibilityState,
+  PaginationState
 } from "@tanstack/react-table"
 
 import {
@@ -35,7 +36,10 @@ interface TabelaProps<TData, TValue> {
   getRowId?: (row: TData) => string
   tabelaRepeticoes?: boolean
   columnVisibility?: VisibilityState
-  showPagination?: boolean
+  manualPagination?: boolean
+  pagination?: PaginationState
+  setPagination?: React.Dispatch<React.SetStateAction<PaginationState>>
+  pageCount?: number
 
 }
 
@@ -50,12 +54,15 @@ export function DataTable<TData, TValue>({
   getRowId,
   tabelaRepeticoes,
   columnVisibility,
-  showPagination = true,
+  manualPagination = false,
+  pagination,
+  setPagination,
+  pageCount,
 }: TabelaProps<TData, TValue>) {
   const table = useReactTable({
     data,
     columns,
-    manualPagination: !showPagination,
+    manualPagination: manualPagination,
     debugTable: true,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -63,12 +70,17 @@ export function DataTable<TData, TValue>({
     onSortingChange: setOrdenacao,
     onRowSelectionChange: setRowSelection,
     enableRowSelection: true,
+    pageCount: pageCount,
+    onPaginationChange: setPagination,
     getRowId,
     state: {
       sorting: ordenacao,
       rowSelection: rowSelection || {},
       columnVisibility: columnVisibility || {},
+      // Substitua aquela linha do pagination por esta:
+      ...(pagination !== undefined && { pagination }), 
     },
+    
   })
 
   const skeletonRows = 10
@@ -141,9 +153,11 @@ export function DataTable<TData, TValue>({
         </TableBody>
         </Table>
       </div>
-      {showPagination && table.getPrePaginationRowModel().rows.length > 9 && !isLoading &&
+      {/* Substitua a condição antiga por esta: */}
+      {!isLoading && (
         <TablePagination table={table} tabelaRepeticoes={tabelaRepeticoes} />
-      }
+      )}
     </div>
+ 
   )
 }

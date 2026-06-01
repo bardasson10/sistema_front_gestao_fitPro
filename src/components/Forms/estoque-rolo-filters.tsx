@@ -81,7 +81,7 @@ export function EstoqueRoloFilters({ onFilter, onClear }: EstoqueRoloFiltersProp
   const { data: lotesResponse } = useLotesProducaoCompleto({ limit: 1000 });
 
   const coresMap = useMemo(
-    () => new Map((coresData || []).map((cor) => [cor.id, cor])),
+    () => new Map((coresData?.data || []).map((cor) => [cor.id, cor])),
     [coresData]
   );
 
@@ -248,7 +248,7 @@ export function EstoqueRoloFilters({ onFilter, onClear }: EstoqueRoloFiltersProp
               <FormItem className="w-full">
                 <SearchablePopoverSelect
                   label="Cor"
-                  options={(coresData || []).map((c) => ({ id: c.id, label: c.nome, color: c.codigoHex }))}
+                  options={(coresData?.data || []).map((c) => ({ id: c.id, label: c.nome, color: c.codigoHex }))}
                   value={field.value}
                   onChange={(v) => field.onChange(v || undefined)}
                   placeholder="Buscar cor"

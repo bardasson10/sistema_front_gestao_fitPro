@@ -18,9 +18,12 @@ import {
   useCriarCor,
   useAtualizarCor,
   useDeletarCor,
+  ColorFilters,
 } from "@/hooks/queries/useMateriais";
 import { CorFormValues, corSchema } from "@/schemas/cor-schema";
 import { Cor } from "@/types/production";
+import { useState } from "react";
+import { PaginationState } from "@tanstack/table-core";
 
 const initialValues: CorFormValues = {
   nome: "",
@@ -28,8 +31,17 @@ const initialValues: CorFormValues = {
 };
 
 export default function CorPage() {
-  const { data: coresData, isLoading } = useCores();
-  const cores = (coresData || []) as Cor[];
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 101,
+  });
+  const filtros: ColorFilters = {
+    page: pagination.pageIndex + 1,
+    limit: pagination.pageSize,
+  };
+  const { data: coresData, isLoading } = useCores(filtros);
+  const cores = (coresData?.data || []) as Cor[];
+  const pageCount = coresData?.pagination?.total || -1;
 
   const { mutate: criar, isPending: isCreating } = useCriarCor();
   const { mutate: atualizar, isPending: isUpdating } = useAtualizarCor();
@@ -67,6 +79,8 @@ export default function CorPage() {
       }
     },
   });
+  
+  
 
   return (
     <main className="space-y-6">
@@ -108,6 +122,10 @@ export default function CorPage() {
           isLoading={isLoading || isCreating || isUpdating}
           onEdit={handleEdit}
           onRemove={handleRemove}
+          pagination={pagination}
+          setPagination={setPagination}
+          pageCount={pageCount}
+
         />
       </div>
 

@@ -165,7 +165,7 @@ export default function Lotes() {
     const { mutate: deletarLote, isPending: isDeleting } = useDeletarLoteProducao();
     const { handleEditLoteCabeçalho, isSubmitting } = useProducaoActions();
 
-    const { data: colaboradoresData } = useColaboradores();
+    const { data: colaboradoresData } = useColaboradores({limit: 1000});
     const [openCreateFormModal, setOpenCreateFormModal] = useState(false);
     const [removingItemId, setRemovingItemId] = useState<string | null>(null);
     const [isRemoveOpen, setIsRemoveOpen] = useState(false);
