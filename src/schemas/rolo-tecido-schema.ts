@@ -1,9 +1,10 @@
 import * as z from "zod";
 
 const roloLoteSchema = z.object({
-  pesoInicialKg: z
-    .number({error:"Peso inicial inválido" })
-    .positive("Peso inicial deve ser positivo"),
+  pesoInicialKg: z.coerce // <-- ADICIONE O .coerce AQUI
+    .number({ error: "O peso deve ser um número" })   
+    .nonnegative("Peso inicial inválido")
+    .refine((value) => value > 0, "Peso inicial deve ser maior que zero"),
 });
 
 export const roloTecidoSchema = z.object({

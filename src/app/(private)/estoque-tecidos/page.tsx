@@ -62,7 +62,7 @@ const normalizeSituacaoForForm = (situacao: string): RoloTecidoFormValues["situa
 const initialValues: RoloTecidoFormValues = {
   tecidoId: "",
   dataLote: getTodayDate(),
-  rolos: [{ pesoInicialKg: undefined as unknown as number }],
+  rolos: [{ pesoInicialKg: 0 }],
   codigoBarraRolo: "",
   pesoAtualKg: 0,
   situacao: "disponivel",
@@ -212,7 +212,7 @@ export default function Estoque() {
   const { mutate: deletar, isPending: isDeleting } = useDeletarEstoqueTecido();
 
   const form = useForm<RoloTecidoFormValues>({
-    resolver: zodResolver(roloTecidoSchema),
+    resolver: zodResolver(roloTecidoSchema) as any,
     defaultValues: initialValues,
   });
 
@@ -229,7 +229,7 @@ export default function Estoque() {
     setIsRemoveOpen,
   } = useFormModal<RoloTecidoFormValues, EstoqueRolo>({
       initialValues,
-      form,
+      form: form as any,
       transformItemToForm: (item) => ({
         tecidoId: item.tecidoId,
         dataLote: item.createdAt?.split("T")[0] || getTodayDate(),
