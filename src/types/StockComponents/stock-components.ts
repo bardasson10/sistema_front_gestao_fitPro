@@ -11,11 +11,6 @@ export interface StockProps {
   onEdit: (item: EstoqueRolo) => void;
   onRemove?: (id: string) => void;
   canDelete?: boolean;
-  pagination?: PaginatedResponse;
-  currentPage?: number;
-  onPageChange?: (page: number) => void;
-  pageSize?: number;
-  onPageSizeChange?: (pageSize: number) => void;
 
 }
 

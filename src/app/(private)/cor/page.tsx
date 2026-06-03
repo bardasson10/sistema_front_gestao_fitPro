@@ -33,7 +33,7 @@ const initialValues: CorFormValues = {
 export default function CorPage() {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 101,
+    pageSize: 10,
   });
   const filtros: ColorFilters = {
     page: pagination.pageIndex + 1,

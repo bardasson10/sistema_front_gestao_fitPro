@@ -44,6 +44,7 @@ import { RoloTecidoFormValues, roloTecidoSchema } from "@/schemas/rolo-tecido-sc
 import { parseNumber } from "@/utils/Formatter/parse-number-format";
 import { formatNumberToBRL } from "@/utils/Formatter/moeda-brasil-format";
 import { EstoqueRolo, IFiltroEstoqueRolo, IMovimentacaoRolo } from "@/types/EstoqueRolo";
+import { PaginationState } from "@tanstack/table-core";
 
 const getTodayDate = () => new Date().toISOString().split("T")[0];
 
@@ -74,12 +75,15 @@ export default function Estoque() {
   
   const [activeTab, setActiveTab] = useState("rolos-individuais");
   const [filtros, setFiltros] = useState<IFiltroEstoqueRolo>({});
+    const [pagination, setPagination] = useState<PaginationState>({
+      pageIndex: 0,
+      pageSize: 10,
+    });
 
   const {
     page,
     limit: pageSize,
     setPage,
-    setPageSize,
   } = usePagination();
 
   const {
@@ -100,9 +104,9 @@ export default function Estoque() {
 
   const rolosQuery = useMemo(() => ({
     ...filtros,
-    page: page,
-    limit: pageSize
-  }), [filtros, page, pageSize]);
+    page: pagination.pageIndex + 1,
+    limit: pagination.pageSize
+  }), [filtros, pagination]);
 
   const { data: rolosData, isFetching: isFetchingRolos } = useGetListAllEstoqueRolo(rolosQuery, {
     enabled: isTabRolos,
@@ -334,11 +338,9 @@ export default function Estoque() {
               onEdit={handleEdit}
               onRemove={isAdmin ? handleRemove : undefined}
               canDelete={isAdmin}
-              pagination={rolosPagination}
-              currentPage={page}
-              onPageChange={setPage}
-              pageSize={pageSize}
-              onPageSizeChange={setPageSize}
+              pagination={pagination}
+              pageCount={rolosPagination.pages}
+              setPagination={setPagination}
             />
           </div>
           <div className="block md:hidden">

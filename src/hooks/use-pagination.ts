@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { PaginatedResponse } from "@/types/production";
+import { PaginationState } from "@tanstack/react-table";
 
 interface UsePaginationOptions {
     initialPage?: number;
@@ -13,6 +14,7 @@ export function usePagination({
     serverPagination,
 }: UsePaginationOptions = {}) {
     const [page, setPage] = useState(initialPage);
+    const [pagination, setPagination] = useState<PaginationState>({ pageIndex: initialPage - 1, pageSize: initialLimit });
     const [limit, setLimit] = useState(initialLimit);
 
     const currentPage = serverPagination?.page ?? page;
@@ -29,14 +31,17 @@ export function usePagination({
 
     const previousPage = () => {
         setPage((current) => Math.max(1, current - 1));
+        setPagination((prev) => ({ ...prev, pageIndex: Math.max(0, prev.pageIndex - 1) }));
     };
 
     const nextPage = () => {
         setPage((current) => Math.min(totalPages, current + 1));
+        setPagination((prev) => ({ ...prev, pageIndex: Math.min(prev.pageIndex + 1, totalPages - 1) }));
     };
 
     const goToPage = (nextPageNumber: number) => {
         setPage(Math.min(Math.max(nextPageNumber, 1), totalPages));
+        setPagination((prev) => ({ ...prev, pageIndex: Math.min(Math.max(nextPageNumber - 1, 0), totalPages - 1) }));
     };
 
     return useMemo(
@@ -53,9 +58,11 @@ export function usePagination({
             previousPage,
             nextPage,
             goToPage,
+            setPagination,
         }),
         [
             page,
+            pagination,
             limit,
             currentPage,
             totalPages,
